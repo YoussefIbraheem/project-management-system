@@ -1,7 +1,5 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from rest_framework import exceptions, status
-from rest_framework.exceptions import NotFound
 from utils.openapi.decorators import document
 
 from app.schemas.project_schema import (
@@ -60,10 +58,8 @@ def projects_list():
 
         return jsonify(data)
 
-    except exceptions.NotFound as e:
-        return jsonify({"error": f"{e}"}), status.HTTP_404_NOT_FOUND
     except Exception as e:
-        return jsonify({"error": f"{e}"}), status.HTTP_500_INTERNAL_SERVER_ERROR
+        return jsonify({"error": f"{e}"}), 500
 
 
 @document(response_schema=ProjectResponse)
@@ -75,13 +71,13 @@ def project_details(project_id: int):
     """
     try:
         project = get_project_by_id(project_id=project_id)
-        return jsonify(project.model_dump()), status.HTTP_200_OK
-    except exceptions.NotFound as e:
-        return jsonify({"error": f"{e}"}), status.HTTP_404_NOT_FOUND
+        return jsonify(project.model_dump()), 200
+
     except Exception as e:
-        return jsonify(
-            {"error": f"Failed to retrieve project: {e}"}
-        ), status.HTTP_500_INTERNAL_SERVER_ERROR
+        return (
+            jsonify({"error": f"Failed to retrieve project: {e}"}),
+            500,
+        )
 
 
 @document(
@@ -98,20 +94,17 @@ def project_create():
         data = request.get_json()
 
         if not data:
-            return jsonify({"error": "No data found"}), status.HTTP_400_BAD_REQUEST
+            return jsonify({"error": "No data found"}), 400
 
         data["owner_id"] = get_jwt_identity()
         project_data = ProjectCreate(**data)
         project = create_project(project_data=project_data)
-        return jsonify(project.model_dump()), status.HTTP_201_CREATED
-    except exceptions.ValidationError as e:
-        return jsonify(
-            {"error": f"Validation error: {str(e)}"}
-        ), status.HTTP_400_BAD_REQUEST
+        return jsonify(project.model_dump()), 201
     except Exception as e:
-        return jsonify(
-            {"error": f"Failed to create project:{str(e)}"}
-        ), status.HTTP_500_INTERNAL_SERVER_ERROR
+        return (
+            jsonify({"error": f"Failed to create project:{str(e)}"}),
+            500,
+        )
 
 
 @document(
@@ -128,18 +121,17 @@ def project_update(project_id: int):
         data = request.get_json()
 
         if not data:
-            return jsonify({"error": "No data found"}), status.HTTP_400_BAD_REQUEST
+            return jsonify({"error": "No data found"}), 400
 
         project_data = ProjectUpdate(**data)
         project = update_project(project_id=project_id, project_data=project_data)
 
-        return jsonify(project.model_dump()), status.HTTP_201_CREATED
-    except NotFound as e:
-        return jsonify({"error": str(e)}), status.HTTP_404_NOT_FOUND
+        return jsonify(project.model_dump()), 201
     except Exception as e:
-        return jsonify(
-            {"error": f"Internal Server Error{e}"}
-        ), status.HTTP_500_INTERNAL_SERVER_ERROR
+        return (
+            jsonify({"error": f"Internal Server Error{e}"}),
+            500,
+        )
 
 
 @project_bp.route("/<int:project_id>", methods=["DELETE"])
@@ -149,8 +141,9 @@ def project_delete(project_id: int):
     """
     try:
         delete_project(project_id=project_id)
-        return jsonify({"message": "Project Deleted Successfully!"}), status.HTTP_200_OK
+        return jsonify({"message": "Project Deleted Successfully!"}), 200
     except Exception as e:
-        return jsonify(
-            {"error": f"Failed to delete project: {str(e)}"}
-        ), status.HTTP_404_NOT_FOUND
+        return (
+            jsonify({"error": f"Failed to delete project: {str(e)}"}),
+            status.HTTP_404_NOT_FOUND,
+        )
