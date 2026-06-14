@@ -8,7 +8,7 @@ from app.services.board_service import (
 )
 from flask import Blueprint, jsonify, request
 from utils.openapi.decorators import document
-
+from flask_jwt_extended import jwt_required, get_jwt_identity
 board_bp = Blueprint("board", __name__, url_prefix="/api/v1/boards/")
 
 

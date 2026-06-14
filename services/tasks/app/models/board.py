@@ -25,13 +25,3 @@ class Board(Base):
 
     project = relationship("Project", back_populates="boards")
     tasks = relationship("Task", back_populates="board", cascade="all, delete-orphan")
-
-
-# ORM Events
-
-@event.listens_for(Board, "after_insert")
-def board_created(mapped, connection, target):
-
-    event = BoardCreatedEvent(name= target.name, description = target.description, project_id=target.project_id)
-
-    publish_history_event(event.to_dict())
