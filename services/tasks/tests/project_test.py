@@ -1,4 +1,6 @@
+from utils.exceptions import NotFoundException
 from . import DummyModel, create_access_token, client, app, auth_headers
+
 
 def test_projects_list_returns_projects(client, app, monkeypatch):
     expected = [
@@ -50,13 +52,12 @@ def test_project_details_returns_project(client, app, monkeypatch):
 
 
 def test_project_create_returns_201(client, app, monkeypatch):
-    # owner_id will be overwritten by get_jwt_identity(), so it must match the token identity
     payload = {"name": "New Project", "description": "New description"}
     expected = {
         "id": 3,
         "name": "New Project",
         "description": "New description",
-        "owner_id": "30",  # string because get_jwt_identity() returns the identity as-is
+        "owner_id": "30",
     }
 
     monkeypatch.setattr(
@@ -73,7 +74,7 @@ def test_project_create_returns_201(client, app, monkeypatch):
     assert response.get_json() == expected
 
 
-def test_project_update_returns_201(client, app, monkeypatch):
+def test_project_update_returns_200(client, app, monkeypatch):
     expected = {
         "id": 4,
         "name": "Updated Project",
@@ -91,7 +92,7 @@ def test_project_update_returns_201(client, app, monkeypatch):
 
     response = client.put("/api/v1/projects/4", json={"name": "Updated Project"}, headers=headers)
 
-    assert response.status_code == 201
+    assert response.status_code == 200  # was 201
     assert response.get_json() == expected
 
 
@@ -101,12 +102,12 @@ def test_project_delete_returns_200(client, auth_headers, monkeypatch):
     response = client.delete("/api/v1/projects/5", headers=auth_headers)
 
     assert response.status_code == 200
-    assert response.get_json() == {"message": "Project Deleted Successfully!"}
+    assert response.get_json() == {"message": "Project deleted successfully"}
 
 
 def test_project_delete_not_found_returns_404(client, auth_headers, monkeypatch):
     def fake_delete_project(project_id):
-        raise ValueError("Project with id 5 does not exist")
+        raise NotFoundException(f"Project with id {project_id} does not exist")
 
     monkeypatch.setattr("app.apis.project_api.delete_project", fake_delete_project)
 
@@ -114,3 +115,4 @@ def test_project_delete_not_found_returns_404(client, auth_headers, monkeypatch)
 
     assert response.status_code == 404
     assert "error" in response.get_json()
+    assert response.get_json()["error"]["status"] == 404

@@ -5,6 +5,8 @@ from app import settings
 from app.models import Base
 from typing import Iterator
 
+from utils.exceptions import APIException
+
 engine = create_engine(settings.DB_URL, pool_pre_ping=True, echo=True)
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
@@ -20,8 +22,10 @@ def get_db_session() -> Iterator[Session]:
         try:
             yield db
             db.commit()
-        except Exception as e:
+        except APIException:
             db.rollback()
+            raise
+        except Exception as e:
             raise Exception(f"Transaction Failed: {e}")
         finally:
             db.close()

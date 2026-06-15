@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from utils.publisher import publish_history_event
-
+from utils.exceptions import NotFoundException
 from app import logger
 from app.db.database import get_db_session
 from app.events.project_event import ProjectCreatedEvent
@@ -44,7 +44,7 @@ def get_project_by_id(project_id: int) -> Optional[ProjectResponse]:
         db_project = db.query(Project).filter(Project.id == project_id).first()
         if db_project:
             return ProjectResponse.model_validate(db_project)
-        raise ValueError(f"Project with id {project_id} does not exist")
+        raise NotFoundException(f"Project with id {project_id} does not exist")
 
 
 def create_project(project_data: ProjectCreate) -> ProjectResponse:
@@ -82,7 +82,7 @@ def update_project(
         db_project = db.query(Project).filter(Project.id == project_id).first()
 
         if not db_project:
-            raise ValueError(f"Project with id {project_id} does not exist")
+            raise NotFoundException(f"Project with id {project_id} does not exist")
 
         if project_data.name is not None:
             db_project.name = project_data.name
@@ -111,4 +111,4 @@ def delete_project(project_id: int) -> bool:
             db.flush()
             return True
 
-        raise ValueError(f"Project with id {project_id} does not exist")
+        raise NotFoundException(f"Project with id {project_id} does not exist")
