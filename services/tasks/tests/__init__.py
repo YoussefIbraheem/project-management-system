@@ -8,12 +8,12 @@ from app import create_app, settings
 os.environ["DB_URL"] = "sqlite:///:memory:"
 
 class DummyModel:
-    """Shared dummy model for monkeypatching service return values."""
-    def __init__(self, data):
-        self._data = data
-
+    def __init__(self, data: dict):
+        for key, value in data.items():
+            setattr(self, key, value)
+            
     def model_dump(self):
-        return self._data
+        return self.__dict__
 
 
 @pytest.fixture

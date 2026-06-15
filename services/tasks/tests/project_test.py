@@ -92,7 +92,7 @@ def test_project_update_returns_200(client, app, monkeypatch):
 
     response = client.put("/api/v1/projects/4", json={"name": "Updated Project"}, headers=headers)
 
-    assert response.status_code == 200  # was 201
+    assert response.status_code == 200
     assert response.get_json() == expected
 
 
@@ -102,7 +102,7 @@ def test_project_delete_returns_200(client, auth_headers, monkeypatch):
     response = client.delete("/api/v1/projects/5", headers=auth_headers)
 
     assert response.status_code == 200
-    assert response.get_json() == {"message": "Project deleted successfully"}
+    assert response.get_json() == {"message": "Project with id 5 has been deleted"}
 
 
 def test_project_delete_not_found_returns_404(client, auth_headers, monkeypatch):
