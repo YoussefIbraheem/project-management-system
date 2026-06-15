@@ -4,7 +4,7 @@ from app.models.board import Board
 from app.schemas.task_schema import TaskCreate, TaskUpdate, TaskResponse
 from app.db.database import get_db_session
 from sqlalchemy import func
-
+from utils.exceptions import NotFoundException, APIException
 def get_tasks(
     board_id: int,
     user_id: Optional[str] = None,
@@ -21,7 +21,7 @@ def get_tasks(
         if board_id:
             check_board = db.query(Board).filter(Board.id == board_id).first()
             if not check_board:
-                raise ValueError(f"Board with ID of {board_id} does not exist!")
+                raise NotFoundException(message=f"Board with ID {board_id} not found!")
             query = query.filter(Task.board_id == board_id)
 
         if user_id:
@@ -43,7 +43,7 @@ def get_task_by_id(task_id: int) -> Optional[TaskResponse]:
         task = db.query(Task).filter(Task.id == task_id).first()
         if task:
             return TaskResponse.model_validate(task)
-        raise ValueError({"error": f"Task with ID {task_id} not found!"})
+        raise NotFoundException(message=f"Task with ID {task_id} not found!")
 
 
 def get_user_tasks(user_id: int):
@@ -83,7 +83,7 @@ def update_task(task_id: int, task_data: TaskUpdate) -> Optional[TaskResponse]:
         db_task = db.query(Task).filter(Task.id == task_id).first()
 
         if not db_task:
-            raise ValueError(f"Task with ID {task_id} not found!")
+            raise NotFoundException(message=f"Task with ID {task_id} not found!")
 
         for field, value in task_data.model_dump(exclude_unset=True).items():
             setattr(db_task, field, value)
@@ -100,7 +100,7 @@ def delete_task(task_id: int) -> bool:
         db_task = db.query(Task).filter(Task.id == task_id).first()
 
         if not db_task:
-            raise ValueError(f"Task with ID {task_id} not found!")
+            raise NotFoundException(message=f"Task with ID {task_id} not found!")
 
         db.delete(db_task)
         db.flush()

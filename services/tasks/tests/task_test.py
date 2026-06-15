@@ -1,32 +1,9 @@
-import os
-
-os.environ["DB_URL"] = "sqlite:///:memory:"
-
-import pytest
-from app import create_app
-import app.services.task_service as task_service
+from utils.exceptions import NotFoundException
+from . import DummyModel, create_access_token, client, app, auth_headers
 from app.models.task import TaskStatus, TaskPriority
 
-class DummyModel:
-    def __init__(self, data):
-        self._data = data
 
-    def model_dump(self):
-        return self._data
-
-
-@pytest.fixture
-def client():
-    os.environ["DB_URL"] = "sqlite:///:memory:"
-    from app.db.database import create_tables
-
-    create_tables()
-    app = create_app()
-    app.testing = True
-    return app.test_client()
-
-
-def test_tasks_list_returns_tasks(client, monkeypatch):
+def test_tasks_list_returns_tasks(client, app, monkeypatch):
     expected = [
         {
             "id": 1,
@@ -55,15 +32,19 @@ def test_tasks_list_returns_tasks(client, monkeypatch):
 
     monkeypatch.setattr("app.apis.task_api.get_tasks", fake_get_tasks)
 
+    with app.app_context():
+        headers = {"Authorization": f"Bearer {create_access_token(identity='user-1')}"}
+
     response = client.get(
-        "/api/v1/tasks/?board_id=21&user_id=user-1&assigned_to=assignee-1&status=TODO&priority=MEDIUM&limit=10&offset=0"
+        "/api/v1/tasks/?board_id=21&user_id=user-1&assigned_to=assignee-1&status=TODO&priority=MEDIUM&limit=10&offset=0",
+        headers=headers,
     )
 
     assert response.status_code == 200
     assert response.get_json() == expected
 
 
-def test_task_get_returns_task(client, monkeypatch):
+def test_task_get_returns_task(client, app, monkeypatch):
     expected = {
         "id": 2,
         "title": "Task Two",
@@ -82,13 +63,16 @@ def test_task_get_returns_task(client, monkeypatch):
         "app.apis.task_api.get_task_by_id", lambda task_id: DummyModel(expected)
     )
 
-    response = client.get("/api/v1/tasks/2")
+    with app.app_context():
+        headers = {"Authorization": f"Bearer {create_access_token(identity='user-2')}"}
+
+    response = client.get("/api/v1/tasks/2", headers=headers)
 
     assert response.status_code == 200
     assert response.get_json() == expected
 
 
-def test_task_create_returns_task(client, monkeypatch):
+def test_task_create_returns_task(client, app, monkeypatch):
     payload = {
         "title": "New Task",
         "description": "New task description",
@@ -108,13 +92,16 @@ def test_task_create_returns_task(client, monkeypatch):
         "app.apis.task_api.create_task", lambda task_data: DummyModel(expected)
     )
 
-    response = client.post("/api/v1/tasks/", json=payload)
+    with app.app_context():
+        headers = {"Authorization": f"Bearer {create_access_token(identity='user-3')}"}
+
+    response = client.post("/api/v1/tasks/", json=payload, headers=headers)
 
     assert response.status_code == 200
     assert response.get_json() == expected
 
 
-def test_task_update_returns_task(client, monkeypatch):
+def test_task_update_returns_task(client, app, monkeypatch):
     expected = {
         "id": 4,
         "title": "Updated Task",
@@ -131,23 +118,28 @@ def test_task_update_returns_task(client, monkeypatch):
         "app.apis.task_api.update_task", lambda task_id, task_data: DummyModel(expected)
     )
 
-    response = client.put("/api/v1/tasks/4", json={"title": "Updated Task"})
+    with app.app_context():
+        headers = {"Authorization": f"Bearer {create_access_token(identity='user-4')}"}
+
+    response = client.put(
+        "/api/v1/tasks/4", json={"title": "Updated Task"}, headers=headers
+    )
 
     assert response.status_code == 200
     assert response.get_json() == expected
 
 
-def test_task_delete_returns_200(client, monkeypatch):
+def test_task_delete_returns_200(client, auth_headers, monkeypatch):
     monkeypatch.setattr("app.apis.task_api.delete_task", lambda task_id: True)
 
-    response = client.delete("/api/v1/tasks/5")
+    response = client.delete("/api/v1/tasks/5", headers=auth_headers)
 
     assert response.status_code == 200
     assert response.get_json() == {"message": "Task deleted successfully!"}
 
 
-def test_task_update_no_data_returns_400(client):
-    response = client.put("/api/v1/tasks/6",json={})
+def test_task_update_no_data_returns_400(client, auth_headers):
+    response = client.put("/api/v1/tasks/6", json={}, headers=auth_headers)
 
     assert response.status_code == 400
     assert response.get_json() == {"error": "No Data Provided"}
