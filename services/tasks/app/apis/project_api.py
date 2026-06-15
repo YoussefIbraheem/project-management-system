@@ -12,15 +12,37 @@ from app.services.project_service import (
     get_projects_by_owner,
     update_project,
 )
+from utils.publisher import publish_history_event
+
+from app.events.project_event import (
+    ProjectCreatedEvent,
+    ProjectDeletedEvent,
+    ProjectUpdatedEvent,
+)
 
 project_bp = Blueprint("project", __name__, url_prefix="/api/v1/projects")
 
 
 @document(
     query_params=[
-        {"name": "owner_id", "type": "string",  "required": True,  "description": "Owner ID to filter projects"},
-        {"name": "limit",    "type": "integer", "required": False, "description": "Max number of projects to retrieve"},
-        {"name": "offset",   "type": "integer", "required": False, "description": "Pagination offset"},
+        {
+            "name": "owner_id",
+            "type": "string",
+            "required": True,
+            "description": "Owner ID to filter projects",
+        },
+        {
+            "name": "limit",
+            "type": "integer",
+            "required": False,
+            "description": "Max number of projects to retrieve",
+        },
+        {
+            "name": "offset",
+            "type": "integer",
+            "required": False,
+            "description": "Pagination offset",
+        },
     ],
     response_schema=ProjectResponse,
 )
@@ -63,7 +85,6 @@ def project_create():
         data["owner_id"] = get_jwt_identity()
         project_data = ProjectCreate(**data)
         project = create_project(project_data=project_data)
-        return jsonify(project.model_dump()), 201
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
@@ -71,6 +92,16 @@ def project_create():
         ).to_response()
     except APIException as e:
         return e.to_response()
+
+    event = ProjectCreatedEvent(
+        actor_id=get_jwt_identity(),
+        subject_id=str(project.id),
+        name=project.name,
+        owner_id=project.owner_id,
+        description=project.description,
+    )
+    publish_history_event(event.to_dict())
+    return jsonify(project.model_dump()), 201
 
 
 @document(request_schema=ProjectUpdate, response_schema=ProjectResponse)
@@ -84,7 +115,6 @@ def project_update(project_id: int):
             raise BadRequestException("Request body is missing or not valid JSON")
         project_data = ProjectUpdate(**data)
         project = update_project(project_id=project_id, project_data=project_data)
-        return jsonify(project.model_dump()), 200  # 200 not 201
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
@@ -92,6 +122,18 @@ def project_update(project_id: int):
         ).to_response()
     except APIException as e:
         return e.to_response()
+    else:
+        event = ProjectUpdatedEvent(
+            actor_id=get_jwt_identity(),
+            subject_id=str(project.id),
+            owner_id=project.owner_id,
+            updated_fields=[
+                {"name": field, "new_value": getattr(project, field)}
+                for field in project_data.model_fields_set if getattr(project_data, field) is not None
+            ],
+        )
+        publish_history_event(event.to_dict())
+        return jsonify(project.model_dump()), 200
 
 
 @project_bp.route("/<int:project_id>", methods=["DELETE"])
@@ -100,6 +142,17 @@ def project_delete(project_id: int):
     """Delete a project by ID."""
     try:
         delete_project(project_id=project_id)
-        return jsonify({"message": "Project deleted successfully"}), 200
     except APIException as e:
         return e.to_response()
+    else:
+        event = ProjectDeletedEvent(
+            name=str(project_id),
+            actor_id=get_jwt_identity(),
+            subject_id=str(project_id),
+            owner_id=get_jwt_identity(),
+        )
+        publish_history_event(event.to_dict())
+        return (
+            jsonify({"message": f"Project with id {project_id} has been deleted"}),
+            200,
+        )

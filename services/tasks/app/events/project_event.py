@@ -1,5 +1,4 @@
 from typing import Optional
-
 from app.events.base_event import BaseEvent, dataclass
 
 
@@ -7,34 +6,58 @@ from app.events.base_event import BaseEvent, dataclass
 class ProjectCreatedEvent(BaseEvent):
     def __init__(
         self,
-        project_name: str,
+        actor_id: str,
+        subject_id: str,
+        name: str,
         owner_id: str,
         description: Optional[dict] = None,
     ):
-        self.details = {
-            "project_name": project_name,
+        self.metadata = {
+            "name": name,
             "description": description,
             "owner_id": owner_id,
         }
-        super().__init__(details=self.details)
+        super().__init__(
+            metadata=self.metadata,
+            subject_id=subject_id,
+            subject_type="project",
+            actor_id=actor_id,
+        )
 
 
 class ProjectUpdatedEvent(BaseEvent):
-    def __init__(self, owner_id: str, updated_fields: Optional[list] = None):
-        self.details = {"updated_fields": updated_fields, "owner_id": owner_id}
-        super().__init__(details=self.details)
+    def __init__(
+        self,
+        actor_id: str,
+        subject_id: str,
+        owner_id: str,
+        updated_fields: Optional[list] = [],
+    ):
+
+        self.metadata = {"updated_fields": updated_fields, "owner_id": owner_id}
+        super().__init__(
+            metadata=self.metadata,
+            subject_id=subject_id,
+            subject_type="project",
+            actor_id=actor_id,
+        )
 
 
 class ProjectDeletedEvent(BaseEvent):
     def __init__(
         self,
-        project_name: str,
+        name: str,
+        actor_id: str,
+        subject_id: str,
         owner_id: str,
-        description: Optional[dict] = None,
     ):
-        self.details = {
-            "project_name": project_name,
-            "description": description,
+        self.metadata = {
+            "name": name,
             "owner_id": owner_id,
         }
-        super().__init__(details=self.details)
+        super().__init__(
+            metadata=self.metadata,
+            subject_id=subject_id,
+            subject_type="project",
+            actor_id=actor_id,
+        )
