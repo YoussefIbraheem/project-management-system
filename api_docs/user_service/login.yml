@@ -14,7 +14,7 @@ http:
     data:
       - name: email
         type: text
-        value: test11@test.com
+        value: test@test.com
       - name: password
         type: text
         value: password@123

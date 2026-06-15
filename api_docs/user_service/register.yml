@@ -13,9 +13,9 @@ http:
     type: form-urlencoded
     data:
       - name: username
-        value: testuser11
+        value: testuser
       - name: email
-        value: test11@test.com
+        value: test@test.com
       - name: password
         value: password@123
       - name: password_confirm
