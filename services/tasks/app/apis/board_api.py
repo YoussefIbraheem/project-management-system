@@ -8,7 +8,15 @@ from app.services.board_service import (
 )
 from flask import Blueprint, jsonify, request
 from utils.openapi.decorators import document
+from utils.exceptions import (
+    APIException,
+    BadRequestException,
+    ValidationException,
+    NotFoundException,
+)
+from pydantic import ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity
+
 board_bp = Blueprint("board", __name__, url_prefix="/api/v1/boards/")
 
 
@@ -36,6 +44,7 @@ board_bp = Blueprint("board", __name__, url_prefix="/api/v1/boards/")
     response_schema=BoardResponse,
 )
 @board_bp.route("/", methods=["GET"])
+@jwt_required()
 def boards_list():
     """
     Retrieve a list of boards for a specific project.
@@ -51,12 +60,13 @@ def boards_list():
         data = [board.model_dump() for board in boards]
 
         return jsonify(data), 200
-    except Exception as e:
-        return jsonify({"error": f"{e}"}), 500
+    except APIException as e:
+        return e.to_response()
 
 
 @document(response_schema=BoardResponse)
 @board_bp.route("/<int:board_id>", methods=["GET"])
+@jwt_required()
 def board_get(board_id: int):
     """
     Retrieve a specific board by its ID.
@@ -67,8 +77,8 @@ def board_get(board_id: int):
         board = get_board_by_id(board_id=board_id)
 
         return jsonify(board.model_dump()), 200
-    except Exception as e:
-        return jsonify({"error": f"{e}"}), 500
+    except APIException as e:
+        return e.to_response()
 
 
 @document(
@@ -76,6 +86,7 @@ def board_get(board_id: int):
     response_schema=BoardResponse,
 )
 @board_bp.route("/", methods=["POST"])
+@jwt_required()
 def board_create():
     """
     Create a new board.
@@ -84,14 +95,18 @@ def board_create():
     data = request.get_json()
 
     if not data:
-        return jsonify({"error": "No Data Provided"}), 400
-
+        return BadRequestException(message="No Data Provided").to_response()
+    
     try:
         board_data = BoardCreate(**data)
         created_board = create_board(board_data=board_data)
         return jsonify(created_board.model_dump())
-    except Exception as e:
-        return jsonify({"error": f"{e}"}), 500
+    except ValidationError as e:
+        return ValidationException(
+            message="Validation Error", data=e.errors()
+        ).to_response()
+    except APIException as e:
+        return e.to_response()
 
 
 @document(
@@ -99,6 +114,7 @@ def board_create():
     response_schema=BoardResponse,
 )
 @board_bp.route("/<int:board_id>", methods=["PUT"])
+@jwt_required()
 def board_update(board_id: int):
     """
     Update a specific board by its ID.
@@ -106,17 +122,22 @@ def board_update(board_id: int):
     data = request.get_json()
 
     if not data:
-        return jsonify({"error": "No Data Provided"}), 400
+        return BadRequestException(message="No Data Provided").to_response()
 
     try:
         board_data = BoardUpdate(**data)
         updated_board = update_board(board_id=board_id, board_data=board_data)
         return jsonify(updated_board.model_dump())
-    except Exception as e:
-        return jsonify({"error": f"{e}"}), 500
+    except ValidationError as e:
+        return ValidationException(
+            message="Validation Error", data=e.errors()
+        ).to_response()
+    except APIException as e:
+        return e.to_response()
 
 
 @board_bp.route("/<int:board_id>", methods=["DELETE"])
+@jwt_required()
 def board_delete(board_id: int):
     """
     Delete a specific board by its ID.
@@ -126,8 +147,8 @@ def board_delete(board_id: int):
         success = delete_board(board_id=board_id)
 
         if not success:
-            return jsonify({"error": "tests/board_test.py::test_board_update_returns_updated_boardd"}), 404
+            return NotFoundException(message="Board not found").to_response()
 
         return jsonify({"message": "Board Deleted Successfully"}), 200
-    except Exception as e:
-        return jsonify({"error": f"{e}"}), 500
+    except APIException as e:
+        return e.to_response()

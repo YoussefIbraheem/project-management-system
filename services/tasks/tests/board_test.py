@@ -1,31 +1,8 @@
-import os
-
-os.environ["DB_URL"] = "sqlite:///:memory:"
-
-import pytest
-from app import create_app
+from utils.exceptions import NotFoundException
+from . import DummyModel, create_access_token, client, app, auth_headers
 
 
-class DummyModel:
-    def __init__(self, data):
-        self._data = data
-
-    def model_dump(self):
-        return self._data
-
-
-@pytest.fixture
-def client():
-    os.environ["DB_URL"] = "sqlite:///:memory:"
-    from app.db.database import create_tables
-
-    create_tables()
-    app = create_app()
-    app.testing = True
-    return app.test_client()
-
-
-def test_boards_list_returns_boards(client, monkeypatch):
+def test_boards_list_returns_boards(client, app, monkeypatch):
 
     expected = [
         {
@@ -47,13 +24,18 @@ def test_boards_list_returns_boards(client, monkeypatch):
         "app.apis.board_api.get_board_by_project", fake_get_board_by_project
     )
 
-    response = client.get("/api/v1/boards/?project_id=11&limit=2&offset=0")
+    with app.app_context():
+        headers = {"Authorization": f"Bearer {create_access_token(identity='11')}"}
+
+    response = client.get(
+        "/api/v1/boards/?project_id=11&limit=2&offset=0", headers=headers
+    )
 
     assert response.status_code == 200
     assert response.get_json() == expected
 
 
-def test_board_get_returns_board(client, monkeypatch):
+def test_board_get_returns_board(client, app, monkeypatch):
     expected = {
         "id": 2,
         "name": "Board 2",
@@ -68,13 +50,16 @@ def test_board_get_returns_board(client, monkeypatch):
         "app.apis.board_api.get_board_by_id", lambda board_id: DummyModel(expected)
     )
 
-    response = client.get("/api/v1/boards/2")
+    with app.app_context():
+        headers = {"Authorization": f"Bearer {create_access_token(identity='12')}"}
+
+    response = client.get("/api/v1/boards/2", headers=headers)
 
     assert response.status_code == 200
     assert response.get_json() == expected
 
 
-def test_board_create_returns_created_board(client, monkeypatch):
+def test_board_create_returns_created_board(client, app, monkeypatch):
     payload = {
         "name": "New Board",
         "description": "Board test",
@@ -95,13 +80,16 @@ def test_board_create_returns_created_board(client, monkeypatch):
         "app.apis.board_api.create_board", lambda board_data: DummyModel(expected)
     )
 
-    response = client.post("/api/v1/boards/", json=payload)
+    with app.app_context():
+        headers = {"Authorization": f"Bearer {create_access_token(identity='13')}"}
+
+    response = client.post("/api/v1/boards/", json=payload, headers=headers)
 
     assert response.status_code == 200
     assert response.get_json() == expected
 
 
-def test_board_update_returns_updated_board(client, monkeypatch):
+def test_board_update_returns_updated_board(client, app, monkeypatch):
     expected = {
         "id": 4,
         "name": "Updated Board",
@@ -113,32 +101,38 @@ def test_board_update_returns_updated_board(client, monkeypatch):
     }
 
     monkeypatch.setattr(
-        "app.apis.board_api.update_board", lambda board_id, board_data: DummyModel(expected)
+        "app.apis.board_api.update_board",
+        lambda board_id, board_data: DummyModel(expected),
     )
 
-    response = client.put("/api/v1/boards/4", json={"name": "Updated Board"})
+    with app.app_context():
+        headers = {"Authorization": f"Bearer {create_access_token(identity='14')}"}
+
+    response = client.put(
+        "/api/v1/boards/4", json={"name": "Updated Board"}, headers=headers
+    )
 
     assert response.status_code == 200
     assert response.get_json() == expected
 
 
-def test_board_delete_returns_200(client, monkeypatch):
+def test_board_delete_returns_200(client, auth_headers, monkeypatch):
     monkeypatch.setattr("app.apis.board_api.delete_board", lambda board_id: True)
 
-    response = client.delete("/api/v1/boards/5")
+    response = client.delete("/api/v1/boards/5", headers=auth_headers)
 
     assert response.status_code == 200
     assert response.get_json() == {"message": "Board Deleted Successfully"}
 
 
-def test_board_delete_not_found_returns_404(client, monkeypatch):
+def test_board_delete_not_found_returns_404(client, auth_headers, monkeypatch):
     def fake_delete_board(board_id):
         assert board_id == 5  # board_id is an int, not a string
         return False
 
     monkeypatch.setattr("app.apis.board_api.delete_board", fake_delete_board)
 
-    response = client.delete("/api/v1/boards/5")
+    response = client.delete("/api/v1/boards/5", headers=auth_headers)
 
     assert response.status_code == 404
     assert "error" in response.get_json()
