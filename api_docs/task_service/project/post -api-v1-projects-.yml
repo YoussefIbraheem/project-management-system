@@ -8,12 +8,15 @@ info:
 http:
   method: POST
   url: "{{url}}/projects/"
+  headers:
+    - name: Accept
+      value: application/json
   body:
     type: json
     data: |-
       {
-        "name": "dilly_dally",
-        "description": "dumb project"
+        "name": "LOLOL",
+        "description": "LOLOLOOL"
       }
   auth: inherit
 

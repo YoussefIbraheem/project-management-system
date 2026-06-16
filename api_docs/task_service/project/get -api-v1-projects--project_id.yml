@@ -10,7 +10,7 @@ http:
   url: "{{url}}/projects/:project_id"
   params:
     - name: project_id
-      value: "1"
+      value: "2"
       type: path
   auth: inherit
 
