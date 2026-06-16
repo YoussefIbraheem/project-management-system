@@ -122,7 +122,7 @@ def test_board_delete_returns_200(client, auth_headers, monkeypatch):
     response = client.delete("/api/v1/boards/5", headers=auth_headers)
 
     assert response.status_code == 200
-    assert response.get_json() == {"message": "Board Deleted Successfully"}
+    assert response.get_json() == {"message": "Board with id 5 deleted successfully"}
 
 
 def test_board_delete_not_found_returns_404(client, auth_headers, monkeypatch):

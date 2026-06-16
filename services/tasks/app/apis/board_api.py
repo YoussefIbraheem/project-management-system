@@ -14,6 +14,12 @@ from utils.exceptions import (
     ValidationException,
     NotFoundException,
 )
+from utils.publisher import publish_history_event
+from app.events.board_event import (
+    BoardCreatedEvent,
+    BoardUpdatedEvent,
+    BoardDeletedEvent,
+)
 from pydantic import ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -96,17 +102,27 @@ def board_create():
 
     if not data:
         return BadRequestException(message="No Data Provided").to_response()
-    
+
     try:
         board_data = BoardCreate(**data)
         created_board = create_board(board_data=board_data)
-        return jsonify(created_board.model_dump())
     except ValidationError as e:
         return ValidationException(
             message="Validation Error", data=e.errors()
         ).to_response()
     except APIException as e:
         return e.to_response()
+    else:
+        event = BoardCreatedEvent(
+            actor_id=get_jwt_identity(),
+            subject_id=str(created_board.id),
+            project_id=str(created_board.project_id),
+            name=created_board.name,
+            description=created_board.description,
+            columns=[col for col in created_board.columns],
+        )
+        publish_history_event(event.to_dict())
+        return jsonify(created_board.model_dump())
 
 
 @document(
@@ -127,13 +143,25 @@ def board_update(board_id: int):
     try:
         board_data = BoardUpdate(**data)
         updated_board = update_board(board_id=board_id, board_data=board_data)
-        return jsonify(updated_board.model_dump())
     except ValidationError as e:
         return ValidationException(
             message="Validation Error", data=e.errors()
         ).to_response()
     except APIException as e:
         return e.to_response()
+    else:
+        event = BoardUpdatedEvent(
+            actor_id=get_jwt_identity(),
+            subject_id=str(updated_board.id),
+            project_id=str(updated_board.project_id),
+            updated_fields=[
+                {"name": field, "new_value": getattr(updated_board, field)}
+                for field in board_data.model_fields_set
+                if getattr(board_data, field) is not None
+            ],
+        )
+        publish_history_event(event.to_dict())
+        return jsonify(updated_board.model_dump()), 200
 
 
 @board_bp.route("/<int:board_id>", methods=["DELETE"])
@@ -148,7 +176,15 @@ def board_delete(board_id: int):
 
         if not success:
             return NotFoundException(message="Board not found").to_response()
-
-        return jsonify({"message": "Board Deleted Successfully"}), 200
     except APIException as e:
         return e.to_response()
+    else:
+        event = BoardDeletedEvent(
+            actor_id=get_jwt_identity(),
+            subject_id=str(board_id),
+        )
+        publish_history_event(event.to_dict())
+        return (
+            jsonify({"message": f"Board with id {board_id} deleted successfully"}),
+            200,
+        )

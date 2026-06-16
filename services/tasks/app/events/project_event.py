@@ -24,7 +24,7 @@ class ProjectCreatedEvent(BaseEvent):
             actor_id=actor_id,
         )
 
-
+@dataclass
 class ProjectUpdatedEvent(BaseEvent):
     def __init__(
         self,
@@ -42,7 +42,7 @@ class ProjectUpdatedEvent(BaseEvent):
             actor_id=actor_id,
         )
 
-
+@dataclass
 class ProjectDeletedEvent(BaseEvent):
     def __init__(
         self,

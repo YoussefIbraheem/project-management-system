@@ -141,7 +141,11 @@ class UserProfileView(views.APIView):
 
             actor_id = request.user.id if request.user.id else user_profile.user.id
 
-            updated_fields = list(serializer.validated_data.keys())
+            updated_fields = [
+                {"name": field, "new_value": getattr(user_profile, field)}
+                for field in serializer.validated_data.keys()
+                if getattr(serializer.validated_data, field) is not None
+            ]
 
             event = UserProfileUpdateEvent(
                 actor_id=str(actor_id),
