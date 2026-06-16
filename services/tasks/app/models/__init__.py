@@ -16,6 +16,7 @@ class Base(DeclarativeBase):
         return data
 
 
+# Added for Alembic auto generation to recognize the base class for models
 from .board import Board
 from .project import Project
 from .task import Task
