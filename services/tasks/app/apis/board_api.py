@@ -122,7 +122,7 @@ def board_create():
             columns=[col for col in created_board.columns],
         )
         publish_history_event(event.to_dict())
-        return jsonify(created_board.model_dump())
+        return jsonify(created_board.model_dump()) , 201
 
 
 @document(

@@ -85,7 +85,7 @@ def test_board_create_returns_created_board(client, app, monkeypatch):
 
     response = client.post("/api/v1/boards/", json=payload, headers=headers)
 
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.get_json() == expected
 
 
