@@ -1,8 +1,6 @@
-from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, Text, event
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from utils.publisher import publish_history_event
-from app.events.board_event import BoardCreatedEvent
 
 from .. import logger
 from . import Base

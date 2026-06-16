@@ -19,3 +19,4 @@ class Base(DeclarativeBase):
 from .board import Board
 from .project import Project
 from .task import Task
+from .associations import ProjectMember, TaskAssignee
