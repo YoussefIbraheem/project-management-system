@@ -1,5 +1,5 @@
 from typing import List, Optional
-from app.models.task import Task, TaskStatus, TaskPriority
+from app.models.task import Task, TaskPriority
 from app.models.board import Board
 from app.schemas.task_schema import TaskCreate, TaskUpdate, TaskResponse
 from app.db.database import get_db_session
@@ -9,7 +9,6 @@ def get_tasks(
     board_id: int,
     user_id: Optional[str] = None,
     assigned_to: Optional[str] = None,
-    status: Optional[TaskStatus] = None,
     priority: Optional[TaskPriority] = None,
     limit: int = 50,
     offest: int = 0,
@@ -28,8 +27,6 @@ def get_tasks(
             query = query.filter(Task.user_id == user_id)
         if assigned_to:
             query = query.filter(Task.assigned_to == assigned_to)
-        if status:
-            query = query.filter(Task.status == status)
         if priority:
             query = query.filter(Task.priority == priority)
 
@@ -109,19 +106,16 @@ def delete_task(task_id: int) -> bool:
 
 def get_task_stats() -> dict:
     with get_db_session() as db:
-        db_rows = db.query(Task.status, Task.priority, Task.user_id).all()
+        db_rows = db.query(Task.priority, Task.user_id).all()
 
-        tasks_by_status = {s.value: 0 for s in TaskStatus}
         tasks_by_priority = {p.value: 0 for p in TaskPriority}
         tasks_by_user = {}
-        for status, priority, user_id in db_rows:
-            tasks_by_status[status.value] += 1
+        for priority, user_id in db_rows:
             tasks_by_priority[priority.value] += 1
             tasks_by_user[user_id] = tasks_by_user.get(user_id, 0) + 1
 
         return {
             "total_tasks": len(db_rows),
-            "tasks_by_status": tasks_by_status,
             "tasks_by_priority": tasks_by_priority,
             "tasks_by_user": tasks_by_user,
         }

@@ -1,14 +1,13 @@
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
-from app.models.task import TaskPriority, TaskStatus
+from app.models.task import TaskPriority
 
 
 
 class TaskBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255, description="Task title")
     description: Optional[str] = Field(None, max_length=1000, description="Description")
-    status: TaskStatus = Field(default=TaskStatus.TODO, description="Task status")
     priority: TaskPriority = Field(
         default=TaskPriority.MEDIUM, description="Task priority"
     )
@@ -36,7 +35,6 @@ class TaskUpdate(BaseModel):
         None, min_length=1, max_length=255, description="Task title"
     )
     description: Optional[str] = Field(None, max_length=1000, description="Description")
-    status: Optional[TaskStatus] = Field(None, description="Task status")
     priority: Optional[TaskPriority] = Field(None, description="Task priority")
     user_id: Optional[str] = Field(None, description="ID of the task owner")
     assigned_to: Optional[str] = Field(None, description="ID of the task assingee")

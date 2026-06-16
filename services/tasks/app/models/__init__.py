@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -20,4 +19,4 @@ class Base(DeclarativeBase):
 from .board import Board
 from .project import Project
 from .task import Task
-from .associations import ProjectMember, TaskAssignee
+from .associations import ProjectMember, TaskAssignee , MemberRole, BoardColumn

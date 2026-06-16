@@ -4,19 +4,6 @@ from sqlalchemy.orm import relationship
 from enum import Enum as FlaskEnum
 from . import Base
 
-
-class TaskStatus(FlaskEnum):
-    """
-    Enum for task status.
-    TODO: Task is not started yet.
-    IN_PROGRESS: Task is currently being worked on.
-    DONE: Task is completed.
-    """
-    TODO = "todo"
-    IN_PROGRESS = "in_progress"
-    DONE = "done"
-
-
 class TaskPriority(FlaskEnum):
     """
     Enum for task priority.
@@ -33,18 +20,16 @@ class Task(Base):
 
     __tablename__ = "tasks"
 
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(255), nullable=False, index=True)
+    id = Column(Integer, primary_key=True)
+    title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    status = Column(Enum(TaskStatus), default=TaskStatus.TODO)
+    column_id = Column(Integer,ForeignKey("board_columns.id"),nullable=False)
     priority = Column(Enum(TaskPriority), default=TaskPriority.MEDIUM)
     due_date = Column(DateTime(timezone=True),nullable=False)
-
-    user_id = Column(String(255), nullable=False, index=True)
-    assigned_to = Column(String(255), nullable=False, index=True)
+    owner_id = Column(String(255), nullable=False, index=True)
     board_id = Column(Integer, ForeignKey("boards.id"), nullable=False, index=True)
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     board = relationship("Board",back_populates="tasks")
+    column = relationship("BoardColumn",back_populates="tasks")
