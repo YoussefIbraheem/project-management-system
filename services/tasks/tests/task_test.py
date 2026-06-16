@@ -97,7 +97,7 @@ def test_task_create_returns_task(client, app, monkeypatch):
 
     response = client.post("/api/v1/tasks/", json=payload, headers=headers)
 
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.get_json() == expected
 
 
@@ -135,7 +135,7 @@ def test_task_delete_returns_200(client, auth_headers, monkeypatch):
     response = client.delete("/api/v1/tasks/5", headers=auth_headers)
 
     assert response.status_code == 200
-    assert response.get_json() == {"message": "Task deleted successfully!"}
+    assert response.get_json() == {"message": "Task with id 5 has been deleted!"}
 
 
 def test_task_update_no_data_returns_400(client, auth_headers):

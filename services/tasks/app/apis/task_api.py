@@ -10,11 +10,12 @@ from flask import jsonify, request, Blueprint
 from utils.openapi.decorators import document
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from utils.exceptions import (
-    BadRequestException,
-    NotFoundException,
     APIException,
     ValidationException,
+    NotFoundException,
 )
+from utils.publisher import publish_history_event
+from app.events.task_event import TaskCreatedEvent, TaskUpdatedEvent, TaskDeletedEvent
 from pydantic import ValidationError
 
 task_bp = Blueprint("task", __name__, url_prefix="/api/v1/tasks/")
@@ -129,13 +130,23 @@ def task_create():
 
         task_data = TaskCreate(**data)
         created_task = create_task(task_data=task_data)
-        return jsonify(created_task.model_dump())
     except ValidationError as e:
         return ValidationException(
             message="Validation Error", data=e.errors()
         ).to_response()
     except APIException as e:
         return e.to_response()
+    else:
+        event = TaskCreatedEvent(
+            actor_id=get_jwt_identity(),
+            subject_id=str(created_task.id),
+            board_id=str(created_task.board_id),
+            title=created_task.title,
+            description=created_task.description,
+            status=created_task.status,
+        )
+        publish_history_event(event.to_dict())
+        return jsonify(created_task.model_dump()), 201
 
 
 @document(
@@ -156,13 +167,25 @@ def task_update(task_id):
     try:
         task_data = TaskUpdate(**data)
         updated_task = update_task(task_id=task_id, task_data=task_data)
-        return jsonify(updated_task.model_dump())
     except ValidationError as e:
         return ValidationException(
             message="Validation Error", data=e.errors()
         ).to_response()
     except APIException as e:
         return e.to_response()
+    else:
+        event = TaskUpdatedEvent(
+            actor_id=get_jwt_identity(),
+            subject_id=str(updated_task.id),
+            board_id=str(updated_task.board_id),
+            updated_fields=[
+                {"name": field, "new_value": getattr(updated_task, field)}
+                for field in task_data.model_fields_set
+                if getattr(task_data, field) is not None
+            ],
+        )
+        publish_history_event(event.to_dict())
+        return jsonify(updated_task.model_dump()), 200
 
 
 @task_bp.route("/<int:task_id>", methods=["DELETE"])
@@ -176,7 +199,13 @@ def task_delete(task_id: int):
         success = delete_task(task_id=task_id)
 
         if not success:
-            return jsonify({"error": "Task not found!"}), 404
-        return jsonify({"message": "Task deleted successfully!"}), 200
+            return jsonify({"error": "Task not found"}), 404
     except APIException as e:
         return e.to_response()
+    else:
+        event = TaskDeletedEvent(
+            actor_id=get_jwt_identity(),
+            subject_id=str(task_id),
+        )
+        publish_history_event(event.to_dict())
+        return jsonify({"message": f"Task with id {task_id} has been deleted!"}), 200
