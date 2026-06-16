@@ -1,5 +1,6 @@
 from typing import Optional
-from app.events.base_event import BaseEvent, dataclass
+from dataclasses import dataclass
+from . import BaseEvent
 
 
 @dataclass
