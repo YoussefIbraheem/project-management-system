@@ -13,8 +13,7 @@ class Project(Base):
     description = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
-    owner_id = Column(String(255), nullable=False, index=True)
-
+    
     boards = relationship(
         "Board", back_populates="project", cascade="all, delete-orphan"
     )
