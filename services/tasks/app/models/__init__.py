@@ -1,6 +1,8 @@
 from datetime import datetime
 from sqlalchemy.orm import DeclarativeBase
-
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, CheckConstraint
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 class Base(DeclarativeBase):
     def to_dict(self):
@@ -19,4 +21,6 @@ class Base(DeclarativeBase):
 from .board import Board
 from .project import Project
 from .task import Task
-from .associations import ProjectMember, TaskAssignee , MemberRole, BoardColumn
+from .board_column import BoardColumn
+from .project_member import ProjectMember
+from .task_assignee import TaskAssignee

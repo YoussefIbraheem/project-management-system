@@ -1,6 +1,7 @@
 from enum import Enum as FlaskEnum
 
-from sqlalchemy import (
+from . import (
+    Base,
     CheckConstraint,
     Column,
     DateTime,
@@ -8,11 +9,9 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    func,
+    relationship,
 )
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-
-from . import Base
 
 
 class TaskPriority(FlaskEnum):
@@ -44,5 +43,6 @@ class Task(Base):
 
     board = relationship("Board", back_populates="tasks")
     column = relationship("BoardColumn", back_populates="tasks")
-    __table_args__ = (CheckConstraint(priority.in_(["low", "medium", "high"]), name='valid_priority'),)
-
+    __table_args__ = (
+        CheckConstraint(priority.in_(["low", "medium", "high"]), name="valid_priority"),
+    )

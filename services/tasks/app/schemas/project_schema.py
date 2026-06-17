@@ -6,19 +6,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ProjectBase(BaseModel):
     """Shared project fields used by project creation and response models."""
-
     name: str = Field(..., min_length=1, max_length=255, description="Project Name")
     description: Optional[str] = Field(None, description="Project Description")
-    owner_id: int = Field(..., description="Owner ID")
-
+    
     model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectCreate(ProjectBase):
     """Model for creating a new project."""
-    owner_id: int = Field(...,exclude=True)
-
-    model_config = ConfigDict(from_attributes=True)
+    pass
 
 
 class ProjectUpdate(BaseModel):

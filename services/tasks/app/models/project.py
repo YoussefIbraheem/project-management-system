@@ -1,8 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, String, Text
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-
-from . import Base
+from . import Base, Column, DateTime, Integer, String, Text, func, relationship
 
 
 class Project(Base):
@@ -13,7 +9,7 @@ class Project(Base):
     description = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     boards = relationship(
         "Board", back_populates="project", cascade="all, delete-orphan"
     )

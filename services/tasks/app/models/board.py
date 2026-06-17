@@ -1,8 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-
-from . import Base
+from . import Base, Column, Integer, String, Text, DateTime, ForeignKey, func , relationship
 
 
 class Board(Base):
