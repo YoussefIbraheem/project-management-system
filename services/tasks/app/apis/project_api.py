@@ -1,9 +1,15 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from pydantic import ValidationError
-
 from utils.exceptions import APIException, BadRequestException, ValidationException
 from utils.openapi.decorators import document
+from utils.publisher import publish_history_event
+
+from app.events.project_event import (
+    ProjectCreatedEvent,
+    ProjectDeletedEvent,
+    ProjectUpdatedEvent,
+)
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.services.project_service import (
     create_project,
@@ -11,13 +17,6 @@ from app.services.project_service import (
     get_project_by_id,
     get_projects_by_owner,
     update_project,
-)
-from utils.publisher import publish_history_event
-
-from app.events.project_event import (
-    ProjectCreatedEvent,
-    ProjectDeletedEvent,
-    ProjectUpdatedEvent,
 )
 
 project_bp = Blueprint("project", __name__, url_prefix="/api/v1/projects")
@@ -129,7 +128,8 @@ def project_update(project_id: int):
             owner_id=project.owner_id,
             updated_fields=[
                 {"name": field, "new_value": getattr(project, field)}
-                for field in project_data.model_fields_set if getattr(project_data, field) is not None
+                for field in project_data.model_fields_set
+                if getattr(project_data, field) is not None
             ],
         )
         publish_history_event(event.to_dict())

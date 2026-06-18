@@ -1,10 +1,6 @@
 from typing import List, Optional
-
-from utils.publisher import publish_history_event
 from utils.exceptions import NotFoundException
-from app import logger
 from app.db.database import get_db_session
-from app.events.project_event import ProjectCreatedEvent
 from app.models.project import Project
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
 

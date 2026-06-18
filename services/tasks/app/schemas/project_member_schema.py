@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProjectMemberBase(BaseModel):
-    project_id: int = Field(..., gt=0, alias="proejctId")
+    project_id: int = Field(..., gt=0, ,alias="proejctId")
     user_id: int = Field(..., gt=0, alias="userId")
     role_id: int = Field(..., gt=0, alias="roleId")
 

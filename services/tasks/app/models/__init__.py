@@ -1,8 +1,18 @@
 from datetime import datetime
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, CheckConstraint
-from sqlalchemy.orm import relationship
+
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy.sql import func
+
 
 class Base(DeclarativeBase):
     def to_dict(self):
@@ -19,8 +29,8 @@ class Base(DeclarativeBase):
 
 # Added for Alembic auto generation to recognize the base class for models
 from .board import Board
-from .project import Project
-from .task import Task
 from .board_column import BoardColumn
+from .project import Project
 from .project_member import ProjectMember
+from .task import Task
 from .task_assignee import TaskAssignee

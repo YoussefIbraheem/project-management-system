@@ -1,4 +1,14 @@
-from . import Base, Column, DateTime, ForeignKey, Integer, String, func, relationship
+from . import (
+    Base,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+    relationship,
+)
 
 
 class ProjectMember(Base):
@@ -14,3 +24,5 @@ class ProjectMember(Base):
 
     project = relationship("Project", back_populates="members")
     role = relationship("MemberRole", back_populates="members")
+
+    __table_args__ = (UniqueConstraint("project_id", "user_id"),)
