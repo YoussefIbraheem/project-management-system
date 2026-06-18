@@ -1,4 +1,12 @@
 from . import Base, Column, Integer, String, ForeignKey, relationship, UniqueConstraint, CheckConstraint
+from enum import Enum as FlaskEnum
+
+class StatusGroup(FlaskEnum):
+    TODO = "todo" , "To-DO"
+    IN_PROGRESS = "in_progress" , "In Progress"
+    DONE = "done" , "Done"
+    CANCELLED = "cancelled" , "Cancelled"
+
 
 class BoardColumn(Base):
     __tablename__ = "board_columns"
