@@ -2,12 +2,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from datetime import datetime
 
-
 class BoardBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255, description="Board Name")
     description: Optional[str] = Field(None, description="Board Description")
     project_id: int = Field(..., description="Parent Project")
-    columns: List[str] = Field(default=["ToDO", "InProgress", "Done"])
+    columns: list = Field(..., description="Board Columns")
 
     model_config = ConfigDict(from_attributes=True)
 
