@@ -34,3 +34,4 @@ from .project import Project
 from .project_member import ProjectMember
 from .task import Task
 from .task_assignee import TaskAssignee
+from .member_role import MemberRole 

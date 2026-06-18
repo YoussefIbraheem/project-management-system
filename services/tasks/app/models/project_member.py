@@ -23,6 +23,6 @@ class ProjectMember(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     project = relationship("Project", back_populates="members")
-    role = relationship("MemberRole", back_populates="members")
+    role = relationship("MemberRole", back_populates="project_members")
 
     __table_args__ = (UniqueConstraint("project_id", "user_id"),)

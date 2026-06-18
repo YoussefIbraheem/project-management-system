@@ -2,23 +2,19 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProjectMemberBase(BaseModel):
-    project_id: int = Field(..., gt=0, ,alias="proejctId")
-    user_id: int = Field(..., gt=0, alias="userId")
-    role_id: int = Field(..., gt=0, alias="roleId")
+    project_id: int = Field(..., gt=0)
+    user_id: str = Field(...)
+    role_id: int = Field(..., gt=0)
 
     model_config = ConfigDict(from_attributes=True)
 
-class ProjectMemberCreate(ProjectMemberBase):
-    pass
+
+class ProjectMemberCreate(BaseModel):
+    user_id: str = Field(...)
+    role_id: int = Field(..., gt=0)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectMemberResponse(ProjectMemberBase):
-    project_id: int = Field(..., alias="proejctId")
-    user_id: int = Field(..., alias="userId")
-    role_id: int = Field(..., alias="roleId")
-
-
-class ProjectMemberUpdate(BaseModel):
-    role_id: int = Field(..., alias="roleId")
-
-    model_config = ConfigDict(from_attributes=True)
+    pass

@@ -43,6 +43,9 @@ class Task(Base):
 
     board = relationship("Board", back_populates="tasks")
     column = relationship("BoardColumn", back_populates="tasks")
+    assignees = relationship(
+        "TaskAssignee", back_populates="task", cascade="all, delete-orphan"
+    )
     __table_args__ = (
         CheckConstraint(priority.in_(["low", "medium", "high"]), name="valid_priority"),
     )

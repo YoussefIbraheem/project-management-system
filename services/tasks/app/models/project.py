@@ -1,4 +1,14 @@
-from . import Base, Column, DateTime, Integer, String, Text, func, relationship
+from . import (
+    Base,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+    relationship,
+)
 
 
 class Project(Base):
@@ -13,3 +23,4 @@ class Project(Base):
     boards = relationship(
         "Board", back_populates="project", cascade="all, delete-orphan"
     )
+    members = relationship("ProjectMember", back_populates="project")

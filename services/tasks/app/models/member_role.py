@@ -1,4 +1,4 @@
-from . import Base, Column, Integer, String
+from . import Base, Column, Integer, String, relationship
 
 
 class MemberRole(Base):
@@ -9,3 +9,5 @@ class MemberRole(Base):
     id = Column(Integer, primary_key=True)
     slug = Column(String, nullable=False, unique=True)
     label = Column(String, nullable=False)
+
+    project_members = relationship("ProjectMember", back_populates="role")
