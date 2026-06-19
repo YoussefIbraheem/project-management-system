@@ -22,9 +22,9 @@ class TaskPriority(FlaskEnum):
     HIGH: High priority.
     """
 
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
+    LOW = "low", "Low"
+    MEDIUM = "medium", "Medium"
+    HIGH = "high", "High"
 
 
 class Task(Base):

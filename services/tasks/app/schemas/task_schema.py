@@ -1,29 +1,27 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 from datetime import datetime
-from app.models.task import TaskPriority
+from typing import Optional
 
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.models.task import TaskPriority
 
 
 class TaskBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255, description="Task title")
     description: Optional[str] = Field(None, max_length=1000, description="Description")
-    priority: TaskPriority = Field(
-        default=TaskPriority.MEDIUM, description="Task priority"
-    )
+    priority: TaskPriority = TaskPriority.LOW
     user_id: str = Field(..., description="ID of the task owner")
     assigned_to: str = Field(..., description="ID of the task assingee")
     board_id: int = Field(..., description="ID of the parent board")
     due_date: Optional[datetime] = Field(None, description="Due date of the task")
-    
-    model_config = ConfigDict(from_attributes=True,use_enum_values=True)
+
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class TaskResponse(TaskBase):
     id: int = Field(..., description="ID of the task")
     created_at: datetime = Field(..., description="Task creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Task update timestamp")
-
 
 
 class TaskCreate(TaskBase):
@@ -40,8 +38,8 @@ class TaskUpdate(BaseModel):
     assigned_to: Optional[str] = Field(None, description="ID of the task assingee")
     board_id: Optional[int] = Field(None, description="ID of the parent board")
     due_date: Optional[datetime] = Field(None, description="Due date of the task")
-    
-    model_config = ConfigDict(from_attributes=True,use_enum_values=True)
+
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class TaskStats(BaseModel):
