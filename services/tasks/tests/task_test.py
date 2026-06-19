@@ -1,6 +1,6 @@
 from utils.exceptions import NotFoundException
 from . import DummyModel, create_access_token, client, app, auth_headers
-from app.models.task import TaskStatus, TaskPriority
+from app.models.task import TaskPriority
 
 
 def test_tasks_list_returns_tasks(client, app, monkeypatch):
@@ -9,22 +9,20 @@ def test_tasks_list_returns_tasks(client, app, monkeypatch):
             "id": 1,
             "title": "Task One",
             "description": "Task description",
-            "status": TaskStatus.TODO.value,
+            "column_id":1,
             "priority": TaskPriority.MEDIUM.value,
-            "user_id": "user-1",
-            "assigned_to": "assignee-1",
+            "creator_id": "1",
+            "assigned_to": "1",
             "board_id": 21,
             "due_date": "2024-05-01T00:00:00",
-            "created_at": "2024-05-01T00:00:00",
-            "updated_at": None,
         }
     ]
 
-    def fake_get_tasks(board_id, user_id, assigned_to, status, priority, limit, offset):
+    def fake_get_tasks(board_id, creator_id, assigned_to, column_id, priority, limit, offset):
         assert board_id == "21"
-        assert user_id == "user-1"
-        assert assigned_to == "assignee-1"
-        assert status == "TODO"
+        assert creator_id == "1"
+        assert assigned_to == "1"
+        assert column_id == 1
         assert priority == "MEDIUM"
         assert limit == "10"
         assert offset == "0"

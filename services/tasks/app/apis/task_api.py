@@ -1,22 +1,23 @@
-from app.schemas.task_schema import TaskCreate, TaskUpdate, TaskStats, TaskResponse
-from app.services.task_service import (
-    get_tasks,
-    get_task_by_id,
-    create_task,
-    update_task,
-    delete_task,
-)
-from flask import jsonify, request, Blueprint
-from utils.openapi.decorators import document
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from pydantic import ValidationError
 from utils.exceptions import (
     APIException,
-    ValidationException,
     NotFoundException,
+    ValidationException,
 )
+from utils.openapi.decorators import document
 from utils.publisher import publish_history_event
-from app.events.task_event import TaskCreatedEvent, TaskUpdatedEvent, TaskDeletedEvent
-from pydantic import ValidationError
+
+from app.events.task_event import TaskCreatedEvent, TaskDeletedEvent, TaskUpdatedEvent
+from app.schemas.task_schema import TaskCreate, TaskResponse, TaskStats, TaskUpdate
+from app.services.task_service import (
+    create_task,
+    delete_task,
+    get_task_by_id,
+    get_tasks,
+    update_task,
+)
 
 task_bp = Blueprint("task", __name__, url_prefix="/api/v1/tasks/")
 
@@ -127,7 +128,8 @@ def task_create():
     if not data:
         return jsonify({"error": "No Data Provided"})
     try:
-
+        logged_in_user = get_jwt_identity()
+        data["creator_id"] = logged_in_user
         task_data = TaskCreate(**data)
         created_task = create_task(task_data=task_data)
     except ValidationError as e:

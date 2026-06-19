@@ -1,20 +1,22 @@
 from typing import List, Optional
-from app.models.task import Task, TaskPriority
-from app.models.board import Board
-from app.schemas.task_schema import TaskCreate, TaskUpdate, TaskResponse
-from app.db.database import get_db_session
 from sqlalchemy import func
-from utils.exceptions import NotFoundException, APIException
+from utils.exceptions import NotFoundException
+from app.db.database import get_db_session
+from app.models import Board, Task
+from app.models.task import TaskPriority
+from app.schemas.task_schema import TaskCreate, TaskResponse, TaskUpdate
+
+
 def get_tasks(
     board_id: int,
-    user_id: Optional[str] = None,
+    creator_id: Optional[str] = None,
     assigned_to: Optional[str] = None,
+    column_id: Optional[int] = None,
     priority: Optional[TaskPriority] = None,
     limit: int = 50,
     offest: int = 0,
 ) -> List[TaskResponse]:
     with get_db_session() as db:
-
         query = db.query(Task)
 
         if board_id:
@@ -23,10 +25,12 @@ def get_tasks(
                 raise NotFoundException(message=f"Board with ID {board_id} not found!")
             query = query.filter(Task.board_id == board_id)
 
-        if user_id:
-            query = query.filter(Task.user_id == user_id)
+        if creator_id:
+            query = query.filter(Task.creator_id == creator_id)
         if assigned_to:
-            query = query.filter(Task.assigned_to == assigned_to)
+            query = query.filter(Task.assignees.any(user_id=assigned_to))
+        if column_id:
+            query = query.filter(Task.column_id == column_id)
         if priority:
             query = query.filter(Task.priority == priority)
 
@@ -47,7 +51,7 @@ def get_user_tasks(user_id: int):
     with get_db_session() as db:
         data = (
             db.query(Task)
-            .filter(Task.user_id == user_id)
+            .filter(Task.creator_id == user_id)
             .order_by(Task.created_at.desc())
             .all()
         )
@@ -60,10 +64,10 @@ def create_task(task_data: TaskCreate) -> TaskResponse:
         db_task = Task(
             title=task_data.title,
             description=task_data.description,
-            status=task_data.status,
+            column_id=task_data.column_id,
             priority=task_data.priority,
-            user_id=task_data.user_id,
-            assigned_to=task_data.assigned_to,
+            creator_id=task_data.creator_id,
+            assignees=task_data.assignees,
             board_id=task_data.board_id,
             due_date=task_data.due_date,
         )
@@ -75,7 +79,7 @@ def create_task(task_data: TaskCreate) -> TaskResponse:
         return TaskResponse.model_validate(db_task)
 
 
-def update_task(task_id: int, task_data: TaskUpdate) -> Optional[TaskResponse]:
+def update_task(task_id: int, task_data: TaskUpdate) -> TaskResponse:
     with get_db_session() as db:
         db_task = db.query(Task).filter(Task.id == task_id).first()
 
@@ -106,16 +110,16 @@ def delete_task(task_id: int) -> bool:
 
 def get_task_stats() -> dict:
     with get_db_session() as db:
-        db_rows = db.query(Task.priority, Task.user_id).all()
+        db_rows = db.query(Task.priority, Task.creator_id).all()
 
         tasks_by_priority = {p.value: 0 for p in TaskPriority}
-        tasks_by_user = {}
-        for priority, user_id in db_rows:
+        tasks_by_creator = {}
+        for priority, creator_id in db_rows:
             tasks_by_priority[priority.value] += 1
-            tasks_by_user[user_id] = tasks_by_user.get(user_id, 0) + 1
+            tasks_by_creator[creator_id] = tasks_by_creator.get(creator_id, 0) + 1
 
         return {
             "total_tasks": len(db_rows),
             "tasks_by_priority": tasks_by_priority,
-            "tasks_by_user": tasks_by_user,
+            "tasks_by_user": tasks_by_creator,
         }
