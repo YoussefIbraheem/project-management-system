@@ -13,7 +13,7 @@ from . import (
 
 
 class StatusGroup(FlaskEnum):
-    TODO = "todo", "To-DO"
+    PENDING = "pending" , "Pending"
     IN_PROGRESS = "in_progress", "In Progress"
     DONE = "done", "Done"
     CANCELLED = "cancelled", "Cancelled"
@@ -34,7 +34,7 @@ class BoardColumn(Base):
     __table_args__ = (
         UniqueConstraint("board_id", "slug"),
         CheckConstraint(
-            "status_group IN ('todo', 'in_progress', 'done', 'cancelled')",
+            "status_group IN ('pending', 'in_progress', 'done', 'cancelled')",
             name="check_status_group",
         ),
     )
