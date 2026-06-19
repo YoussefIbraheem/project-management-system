@@ -1,4 +1,4 @@
-from enum import Enum as FlaskEnum
+from app.core.flask_enum import FlaskEnum
 
 from . import (
     Base,
@@ -15,16 +15,11 @@ from . import (
 
 
 class TaskPriority(FlaskEnum):
-    """
-    Enum for task priority.
-    LOW: Low priority.
-    MEDIUM: Medium priority.
-    HIGH: High priority.
-    """
 
     LOW = "low", "Low"
     MEDIUM = "medium", "Medium"
     HIGH = "high", "High"
+
 
 
 class Task(Base):

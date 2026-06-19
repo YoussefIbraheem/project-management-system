@@ -1,4 +1,4 @@
-from enum import Enum as FlaskEnum
+from app.core.flask_enum import FlaskEnum
 
 from . import (
     Base,
@@ -13,10 +13,11 @@ from . import (
 
 
 class StatusGroup(FlaskEnum):
-    PENDING = "pending" , "Pending"
+    PENDING = "pending", "Pending"
     IN_PROGRESS = "in_progress", "In Progress"
     DONE = "done", "Done"
     CANCELLED = "cancelled", "Cancelled"
+
 
 
 class BoardColumn(Base):
