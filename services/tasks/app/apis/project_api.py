@@ -135,7 +135,7 @@ def project_update(project_id: int):
 
 
 @project_bp.route("/<int:project_id>", methods=["DELETE"])
-@jwt_required()  # was missing
+@jwt_required()
 def project_delete(project_id: int):
     """Delete a project by ID."""
     try:
