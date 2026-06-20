@@ -1,8 +1,9 @@
+from datetime import datetime, timezone
 from typing import List, Optional
 from sqlalchemy import func
 from utils.exceptions import NotFoundException
 from app.db.database import get_db_session
-from app.models import Board, Task
+from app.models import Board, Task, BoardColumn
 from app.models.task import TaskPriority
 from app.schemas.task_schema import TaskCreate, TaskResponse, TaskUpdate
 
@@ -61,13 +62,26 @@ def get_user_tasks(user_id: int):
 
 def create_task(task_data: TaskCreate) -> TaskResponse:
     with get_db_session() as db:
+        board_exist = db.query(Board).filter(Board.id == task_data.board_id).first()
+
+        if not board_exist:
+            raise NotFoundException(message=f"Board with ID {task_data.board_id} not found!")
+        
+        column_exist = db.query(BoardColumn).filter(BoardColumn.id == task_data.column_id).first()
+
+        if not column_exist:
+            raise NotFoundException(message=f"Column with ID {task_data.column_id} not found!")
+        
+        if task_data.due_date and task_data.due_date < datetime.now(timezone.utc):
+            raise ValueError("Due date cannot be in the past.")
+
+        
         db_task = Task(
             title=task_data.title,
             description=task_data.description,
             column_id=task_data.column_id,
             priority=task_data.priority,
             creator_id=task_data.creator_id,
-            assignees=task_data.assignees,
             board_id=task_data.board_id,
             due_date=task_data.due_date,
         )
