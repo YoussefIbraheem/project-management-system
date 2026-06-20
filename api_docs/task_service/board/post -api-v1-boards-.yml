@@ -12,10 +12,9 @@ http:
     type: json
     data: |-
       {
-        "name": "",
-        "description": "",
-        "project_id": 0,
-        "columns": []
+        "name": "LOLO_2",
+        "description": "2",
+        "project_id": 1
       }
   auth: inherit
 

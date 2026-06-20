@@ -7,18 +7,21 @@ info:
 
 http:
   method: GET
-  url: "{{url}}/boards/"
+  url: "{{url}}/boards/?project_id=1"
   params:
     - name: limit
-      value: ""
+      value: "null"
       type: query
       description: The maximum number of boards to retrieve
       disabled: true
     - name: offset
-      value: ""
+      value: "null"
       type: query
       description: The offset for pagination
       disabled: true
+    - name: project_id
+      value: "1"
+      type: query
   auth: inherit
 
 settings:

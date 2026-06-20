@@ -7,7 +7,7 @@ info:
 
 http:
   method: GET
-  url: "{{url}}/tasks/"
+  url: "{{url}}/tasks/?column_id=1"
   params:
     - name: board_id
       value: ""
@@ -20,17 +20,16 @@ http:
       description: The ID of the user for which to retrieve tasks
       disabled: true
     - name: assigned_to
-      value: ""
+      value: "1"
       type: query
       description: The ID of the assignee for which to retrieve tasks
       disabled: true
-    - name: status
-      value: ""
+    - name: column_id
+      value: "1"
       type: query
       description: The status of the tasks to retrieve
-      disabled: true
     - name: priority
-      value: ""
+      value: high
       type: query
       description: The priority of the tasks to retrieve
       disabled: true

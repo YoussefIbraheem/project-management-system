@@ -10,7 +10,7 @@ http:
   url: "{{url}}/boards/:board_id"
   params:
     - name: board_id
-      value: "1"
+      value: "2"
       type: path
   auth: inherit
 

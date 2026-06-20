@@ -12,14 +12,9 @@ http:
     type: json
     data: |-
       {
-        "title": "",
-        "description": "",
-        "status": "",
-        "priority": "",
-        "user_id": "",
-        "assigned_to": "",
-        "board_id": 0,
-        "due_date": ""
+        "title": "LOL",
+        "column_id":1,
+        "board_id": 2
       }
   auth: inherit
 
