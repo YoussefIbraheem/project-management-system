@@ -16,10 +16,16 @@ class BoardColumnBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class BoardColumnResponse(BoardColumnBase):
+class BoardColumnDetailsResponse(BoardColumnBase):
     """Class for responding with board column information. Inherits from BoardColumnBase and adds ID field."""
-
     pass
+
+
+class BoardColumnResponse(BaseModel):
+     id: int = Field(..., description="Board Column ID")
+     label: str = Field(..., min_length=1, max_length=100, description="Column Label")
+
+     model_config = ConfigDict(from_attributes=True)
 
 
 class BoardColumnCreate(BaseModel):
