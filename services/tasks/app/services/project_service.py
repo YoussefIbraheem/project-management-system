@@ -1,13 +1,13 @@
 from typing import List, Optional
+
 from utils.exceptions import NotFoundException
+
 from app.db.database import get_db_session
 from app.models.project import Project
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
 
 
-def get_projects_by_owner(
-    owner_id: str, limit: int = 50, offset: int = 0
-) -> List[ProjectResponse]:
+def get_projects(limit: int = 50, offset: int = 0) -> List[ProjectResponse]:
     """Get a list of projects for a specific owner.
 
     Keyword arguments:
@@ -18,18 +18,12 @@ def get_projects_by_owner(
     Return: a list of ProjectResponse objects representing the projects owned by the specified owner.
     """
     with get_db_session() as db:
-        db_projects = (
-            db.query(Project)
-            .filter(Project.owner_id == owner_id)
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
+        db_projects = db.query(Project).offset(offset).limit(limit).all()
 
         return [ProjectResponse.model_validate(project) for project in db_projects]
 
 
-def get_project_by_id(project_id: int) -> Optional[ProjectResponse]:
+def get_project_by_id(project_id: int) -> ProjectResponse:
     """Get Project Details
 
     Keyword arguments:
@@ -54,7 +48,6 @@ def create_project(project_data: ProjectCreate) -> ProjectResponse:
         db_project = Project(
             name=project_data.name,
             description=project_data.description,
-            owner_id=project_data.owner_id,
         )
 
         db.add(db_project)
@@ -66,7 +59,7 @@ def create_project(project_data: ProjectCreate) -> ProjectResponse:
 
 def update_project(
     project_id: int, project_data: ProjectUpdate
-) -> Optional[ProjectResponse]:
+) -> ProjectResponse:
     """Update Project
 
     Keyword arguments:
