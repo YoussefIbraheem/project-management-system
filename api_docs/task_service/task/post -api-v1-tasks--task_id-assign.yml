@@ -1,0 +1,50 @@
+info:
+  name: post /api/v1/tasks/:task_id/assign
+  type: http
+  seq: 6
+  tags:
+    - task_api
+
+http:
+  method: POST
+  url: "{{url}}/tasks/:task_id/assign"
+  params:
+    - name: task_id
+      value: ""
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "assignees_ids": []
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: 200 Response
+    description: Successful Response
+    request:
+      url: "{{baseUrl}}/api/v1/tasks/:task_id/assign"
+      method: POST
+      params:
+        - name: task_id
+          value: ""
+          type: path
+      body:
+        type: json
+        data: |-
+          {
+            "assignees_ids": []
+          }
+    response:
+      status: 200
+      statusText: OK
+      body:
+        type: text
+        data: ""
