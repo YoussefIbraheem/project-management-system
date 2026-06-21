@@ -3,19 +3,20 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from pydantic import ValidationError
 from utils.exceptions import (
     APIException,
-    NotFoundException,
     ValidationException,
 )
 from utils.openapi.decorators import document
 from utils.publisher import publish_history_event
 
 from app.events.task_event import TaskCreatedEvent, TaskDeletedEvent, TaskUpdatedEvent
-from app.schemas.task_schema import TaskCreate, TaskResponse, TaskStats, TaskUpdate
+from app.schemas.task_schema import TaskCreate, TaskResponse, TaskUpdate, TaskAssign, TaskUnassign
 from app.services.task_service import (
+    assign_task,
     create_task,
     delete_task,
     get_task_by_id,
     get_tasks,
+    unassign_task,
     update_task,
 )
 
@@ -139,15 +140,15 @@ def task_create():
     except APIException as e:
         return e.to_response()
     else:
-        event = TaskCreatedEvent(
-            actor_id=get_jwt_identity(),
-            subject_id=str(created_task.id),
-            board_id=str(created_task.board_id),
-            title=created_task.title,
-            description=created_task.description,
-            status=created_task.status,
-        )
-        publish_history_event(event.to_dict())
+        # event = TaskCreatedEvent(
+        #     actor_id=get_jwt_identity(),
+        #     subject_id=str(created_task.id),
+        #     board_id=str(created_task.board_id),
+        #     title=created_task.title,
+        #     description=created_task.description,
+        #     status=created_task.status,
+        # )
+        # publish_history_event(event.to_dict())
         return jsonify(created_task.model_dump()), 201
 
 
@@ -211,3 +212,28 @@ def task_delete(task_id: int):
         )
         publish_history_event(event.to_dict())
         return jsonify({"message": f"Task with id {task_id} has been deleted!"}), 200
+
+@document(request_schema=TaskAssign,response_schema=TaskResponse)
+@task_bp.route("/<int:task_id>/assign", methods=["POST"])
+@jwt_required()
+def task_assign(task_id):
+    try:
+        data = request.get_json()
+        assignees_ids = data.get("assignees_ids",[])
+        task = assign_task(task_id=task_id, assignees_ids=assignees_ids)
+        return jsonify(task.model_dump())
+    except APIException as e:
+        return e.to_response()
+
+
+@document(request_schema=TaskUnassign,response_schema=TaskResponse)
+@task_bp.route("/<int:task_id>/unassign", methods=["POST"])
+@jwt_required()
+def task_unassign(task_id):
+    try:
+        data = request.get_json()
+        assignees_ids = data.get("assignees_ids",[])
+        task = unassign_task(task_id=task_id, assignees_ids=assignees_ids)
+        return jsonify(task.model_dump())
+    except APIException as e:
+        return e.to_response()

@@ -32,6 +32,6 @@ from .board import Board
 from .board_column import BoardColumn
 from .project import Project
 from .project_member import ProjectMember
-from .task import Task
+from .task import Task, TaskPriority
 from .task_assignee import TaskAssignee
 from .member_role import MemberRole 

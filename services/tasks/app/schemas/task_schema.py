@@ -3,8 +3,12 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.task import TaskPriority
+from app.models import TaskPriority
 
+class TaskAssignee(BaseModel):
+    user_id: str
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class TaskBase(BaseModel):
     id: int = Field(..., description="Task ID")
@@ -15,6 +19,7 @@ class TaskBase(BaseModel):
     creator_id: str = Field(..., description="ID of the task creator")
     board_id: int = Field(..., description="ID of the parent board")
     due_date: Optional[datetime] = Field(None, description="Due date of the task")
+    assignees: list[TaskAssignee] = Field([], description="List of assignees")
     created_at: datetime = Field(..., description="Task creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Task update timestamp")
 
@@ -52,3 +57,14 @@ class TaskStats(BaseModel):
     total_tasks: int = Field(..., description="Total number of tasks")
     tasks_by_status: dict = Field(..., description="Number of tasks by status")
     tasks_by_priority: dict = Field(..., description="Number of tasks by priority")
+
+class TaskAssign(BaseModel):
+    assignees_ids: list[str] = Field(..., description="List of assignee IDs")
+
+
+class TaskUnassign(BaseModel):
+    assignees_ids: list[str] = Field(..., description="List of unassignee IDs")
+
+
+
+    
