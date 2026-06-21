@@ -10,20 +10,16 @@ http:
   url: "{{url}}/tasks/:task_id"
   params:
     - name: task_id
-      value: ""
+      value: "7"
       type: path
   body:
     type: json
     data: |-
       {
-        "title": "",
-        "description": "",
-        "status": "",
-        "priority": "",
-        "user_id": "",
-        "assigned_to": "",
-        "board_id": "",
-        "due_date": ""
+        "title": "LOL2",
+        "description": "This is fun",
+        "priority": "high",
+        "due_date":"2026-06-22"
       }
   auth: inherit
 

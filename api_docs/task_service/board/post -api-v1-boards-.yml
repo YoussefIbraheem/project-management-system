@@ -12,8 +12,8 @@ http:
     type: json
     data: |-
       {
-        "name": "LOLO_2",
-        "description": "2",
+        "name": "LOLO",
+        "description": "",
         "project_id": 1
       }
   auth: inherit

@@ -10,7 +10,7 @@ http:
   url: "{{url}}/tasks/:task_id"
   params:
     - name: task_id
-      value: ""
+      value: "7"
       type: path
   auth: inherit
 

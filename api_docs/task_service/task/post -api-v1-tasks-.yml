@@ -14,7 +14,7 @@ http:
       {
         "title": "LOL",
         "column_id":1,
-        "board_id": 2
+        "board_id": 1
       }
   auth: inherit
 
