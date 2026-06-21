@@ -10,13 +10,13 @@ http:
   url: "{{url}}/tasks/:task_id/assign"
   params:
     - name: task_id
-      value: ""
+      value: "1"
       type: path
   body:
     type: json
     data: |-
       {
-        "assignees_ids": []
+        "assignees_ids": ["2"]
       }
   auth: inherit
 
