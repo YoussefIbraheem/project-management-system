@@ -1,14 +1,22 @@
-
 from datetime import datetime, timezone
 from typing import List, Optional
-from utils.exceptions import BadRequestException, NotFoundException
+
 from app.db.database import get_db_session
-from app.models import Board, BoardColumn, Task
-from app.models.project_member import ProjectMember
+from app.models import Task
 from app.models.task import TaskPriority
 from app.models.task_assignee import TaskAssignee
 from app.schemas.task_schema import TaskCreate, TaskResponse, TaskUpdate
-from app import  logger
+from app.validators.task_validator import (
+    ensure_board_exists,
+    ensure_column_exists,
+    get_task_assignees_by_ids,
+    get_task_or_404,
+    normalize_assignee_ids,
+    validate_project_membership,
+    validate_task_assignment_state,
+    validate_task_unassignment_state,
+)
+
 
 def get_tasks(
     board_id: int,
@@ -23,9 +31,7 @@ def get_tasks(
         query = db.query(Task)
 
         if board_id:
-            check_board = db.query(Board).filter(Board.id == board_id).first()
-            if not check_board:
-                raise NotFoundException(message=f"Board with ID {board_id} not found!")
+            ensure_board_exists(db, board_id)
             query = query.filter(Task.board_id == board_id)
 
         if creator_id:
@@ -38,16 +44,13 @@ def get_tasks(
             query = query.filter(Task.priority == priority)
 
         data = query.order_by(Task.created_at.desc()).limit(limit).offset(offest).all()
-
         return [TaskResponse.model_validate(task) for task in data]
 
 
 def get_task_by_id(task_id: int) -> Optional[TaskResponse]:
     with get_db_session() as db:
-        task = db.query(Task).filter(Task.id == task_id).first()
-        if task:
-            return TaskResponse.model_validate(task)
-        raise NotFoundException(message=f"Task with ID {task_id} not found!")
+        task = get_task_or_404(db, task_id)
+        return TaskResponse.model_validate(task)
 
 
 def get_user_tasks(user_id: int):
@@ -64,24 +67,8 @@ def get_user_tasks(user_id: int):
 
 def create_task(task_data: TaskCreate) -> TaskResponse:
     with get_db_session() as db:
-        board_exist = db.query(Board).filter(Board.id == task_data.board_id).first()
-
-        if not board_exist:
-            raise NotFoundException(
-                message=f"Board with ID {task_data.board_id} not found!"
-            )
-
-        column_exist = (
-            db.query(BoardColumn).filter(BoardColumn.id == task_data.column_id).first()
-        )
-
-        if not column_exist:
-            raise NotFoundException(
-                message=f"Column with ID {task_data.column_id} not found!"
-            )
-
-        # if task_data.due_date and task_data.due_date.date < datetime.today().date:
-        #     raise ValueError("Due date cannot be in the past.")
+        ensure_board_exists(db, task_data.board_id)
+        ensure_column_exists(db, task_data.column_id)
 
         db_task = Task(
             title=task_data.title,
@@ -96,16 +83,12 @@ def create_task(task_data: TaskCreate) -> TaskResponse:
         db.add(db_task)
         db.flush()
         db.refresh(db_task)
-
         return TaskResponse.model_validate(db_task)
 
 
 def update_task(task_id: int, task_data: TaskUpdate) -> TaskResponse:
     with get_db_session() as db:
-        db_task = db.query(Task).filter(Task.id == task_id).first()
-
-        if not db_task:
-            raise NotFoundException(message=f"Task with ID {task_id} not found!")
+        db_task = get_task_or_404(db, task_id)
 
         for field, value in task_data.model_dump(exclude_unset=True).items():
             setattr(db_task, field, value)
@@ -113,17 +96,12 @@ def update_task(task_id: int, task_data: TaskUpdate) -> TaskResponse:
         db_task.updated_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         db.flush()
         db.refresh(db_task)
-
         return TaskResponse.model_validate(db_task)
 
 
 def delete_task(task_id: int) -> bool:
     with get_db_session() as db:
-        db_task = db.query(Task).filter(Task.id == task_id).first()
-
-        if not db_task:
-            raise NotFoundException(message=f"Task with ID {task_id} not found!")
-
+        db_task = get_task_or_404(db, task_id)
         db.delete(db_task)
         db.flush()
         return True
@@ -131,77 +109,33 @@ def delete_task(task_id: int) -> bool:
 
 def assign_task(task_id: int, assignees_ids: list[str]) -> TaskResponse:
     with get_db_session() as db:
-        task = db.query(Task).filter(Task.id == task_id).first()
+        task = get_task_or_404(db, task_id)
+        normalized_assignees_ids = normalize_assignee_ids(assignees_ids)
+        validate_project_membership(db, task, normalized_assignees_ids)
+        validate_task_assignment_state(db, task, normalized_assignees_ids)
 
-        if not task:
-            raise NotFoundException(message=f"Task with ID {task_id} not found!")
-
-        if not assignees_ids:
-            raise BadRequestException(message="Assignees list is empty!")
-
-        assignees = []
-        
-        for assignee_id in assignees_ids:
-            user_in_project = (
-                db.query(ProjectMember)
-                .filter(ProjectMember.user_id == assignee_id)
-                .first()
-            )
-            if not user_in_project:
-                logger.warning(f"User with ID {assignee_id} is not a project member!")
-                continue
-            assignee = TaskAssignee(
-                user_id=assignee_id,
-                task_id=task.id,
-            )
-
-            assignees.append(assignee)
-
-        if not assignees:
-            raise BadRequestException(
-                message="No valid assignees were provided to the task!"
-            )
-
-        db.bulk_save_objects(assignees)
-        db.commit()
-        
+        db.add_all(
+            [
+                TaskAssignee(user_id=assignee_id, task_id=task.id)
+                for assignee_id in normalized_assignees_ids
+            ]
+        )
+        db.flush()
+        db.refresh(task)
         return TaskResponse.model_validate(task)
 
 
 def unassign_task(task_id: int, assignees_ids: list[str]) -> TaskResponse:
     with get_db_session() as db:
-        task = db.query(Task).filter(Task.id == task_id).first()
+        task = get_task_or_404(db, task_id)
+        normalized_assignees_ids = normalize_assignee_ids(assignees_ids)
+        validate_task_unassignment_state(db, task, normalized_assignees_ids)
 
-        if not task:
-            raise NotFoundException(message=f"Task with ID {task_id} not found!")
-
-        assignees = []
-
-        for assignee_id in assignees_ids:
-
-            assignee_in_task = (
-                db.query(TaskAssignee)
-                .filter(
-                    TaskAssignee.task_id == task.id, TaskAssignee.user_id == assignee_id
-                )
-                .first()
-            )
-            if not assignee_in_task:
-                logger.warning(f"User with ID {assignee_id} is not assigned to the task!")
-                continue
-            # TODO:: Improve validation and handling
-            assignees.append(assignee_in_task)
-
-        if not assignees:
-            raise BadRequestException(
-                message="No valid assignees provided to unassign from the task!"
-            )
-
-        for assignee in assignees:
+        for assignee in get_task_assignees_by_ids(db, task, normalized_assignees_ids):
             db.delete(assignee)
 
-        db.commit()
-
+        db.flush()
+        db.refresh(task)
         return TaskResponse.model_validate(task)
 
 
