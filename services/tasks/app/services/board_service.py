@@ -1,11 +1,10 @@
 from typing import List, Optional
 
-from utils.exceptions import APIException, NotFoundException , InternalServerException
-
 from app.db.database import get_db_session
-from app.models import Board, BoardColumn, Project
-from app.models.board_column import StatusGroup
+from app.models import Board
 from app.schemas.board_schema import BoardCreate, BoardResponse, BoardUpdate
+from app.validators.board_validator import create_default_columns, get_board_or_404
+from app.validators.project_validator import get_project_or_404
 
 
 def get_board_by_project(
@@ -49,11 +48,7 @@ def get_board_by_id(board_id: int) -> Optional[BoardResponse]:
     """
 
     with get_db_session() as db:
-        db_board = db.query(Board).filter(Board.id == board_id).first()
-
-        if not db_board:
-            raise NotFoundException(f"Board with id {board_id} does not exist")
-
+        db_board = get_board_or_404(db, board_id)
         return BoardResponse.model_validate(db_board)
 
 
@@ -69,12 +64,7 @@ def create_board(board_data: BoardCreate) -> BoardResponse:
     """
 
     with get_db_session() as db:
-        project = db.query(Project).filter(Project.id == board_data.project_id).first()
-
-        if not project:
-            raise NotFoundException(
-                f"Project with id {board_data.project_id} does not exist"
-            )
+        get_project_or_404(db, board_data.project_id)
 
         db_board = Board(
             name=board_data.name,
@@ -85,24 +75,9 @@ def create_board(board_data: BoardCreate) -> BoardResponse:
         db.add(db_board)
         db.flush()
         db.refresh(db_board)
-        db.commit()
-        
 
         if board_data.default_columns:
-            try:
-                with db.begin():
-                    for column in StatusGroup:
-                        
-                        db_board_column = BoardColumn(
-                            board_id=db_board.id,
-                            slug=column.db_value,
-                            label=column.label,
-                            status_group=column.db_value,
-                        )
-                        db.add(db_board_column)
-            except Exception as e:
-                db.rollback()
-                raise InternalServerException(f"Failed to create default columns for board {db_board.id}: {e}")
+            create_default_columns(db, db_board.id)
 
         return BoardResponse.model_validate(db_board)
 
@@ -120,16 +95,13 @@ def update_board(board_id: int, board_data: BoardUpdate) -> Optional[BoardRespon
         Optional[BoardResponse]: The updated board details if the update was successful, or None if the board was not found
     """
     with get_db_session() as db:
-        db_board = db.query(Board).filter(Board.id == board_id).first()
-
-        if not db_board:
-            raise NotFoundException(f"Board with id {board_id} does not exist")
+        db_board = get_board_or_404(db, board_id)
 
         if board_data.name is not None:
-            db_board.name = board_data.name
+            db_board.name = board_data.name  # type: ignore[assignment]
 
         if board_data.description is not None:
-            db_board.description = board_data.description
+            db_board.description = board_data.description  # type: ignore[assignment]
 
         db.flush()
         db.refresh(db_board)
@@ -151,10 +123,7 @@ def delete_board(board_id: int) -> bool:
         bool: True if the board was deleted successfully, False otherwise
     """
     with get_db_session() as db:
-        db_board = db.query(Board).filter(Board.id == board_id).first()
-
-        if not db_board:
-            return False
+        db_board = get_board_or_404(db, board_id)
 
         db.delete(db_board)
         db.flush()
