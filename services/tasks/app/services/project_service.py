@@ -1,10 +1,9 @@
-from typing import List, Optional
-
-from utils.exceptions import NotFoundException
+from typing import List
 
 from app.db.database import get_db_session
 from app.models.project import Project
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
+from app.validators.project_validator import get_project_or_404
 
 
 def get_projects(limit: int = 50, offset: int = 0) -> List[ProjectResponse]:
@@ -31,10 +30,8 @@ def get_project_by_id(project_id: int) -> ProjectResponse:
     Return: a ProjectResponse object representing the project with the specified ID, or None if not found
     """
     with get_db_session() as db:
-        db_project = db.query(Project).filter(Project.id == project_id).first()
-        if db_project:
-            return ProjectResponse.model_validate(db_project)
-        raise NotFoundException(f"Project with id {project_id} does not exist")
+        db_project = get_project_or_404(db, project_id)
+        return ProjectResponse.model_validate(db_project)
 
 
 def create_project(project_data: ProjectCreate) -> ProjectResponse:
@@ -57,9 +54,7 @@ def create_project(project_data: ProjectCreate) -> ProjectResponse:
         return ProjectResponse.model_validate(db_project)
 
 
-def update_project(
-    project_id: int, project_data: ProjectUpdate
-) -> ProjectResponse:
+def update_project(project_id: int, project_data: ProjectUpdate) -> ProjectResponse:
     """Update Project
 
     Keyword arguments:
@@ -68,16 +63,13 @@ def update_project(
     Return: a ProjectResponse object representing the updated project, or None if not found
     """
     with get_db_session() as db:
-        db_project = db.query(Project).filter(Project.id == project_id).first()
-
-        if not db_project:
-            raise NotFoundException(f"Project with id {project_id} does not exist")
+        db_project = get_project_or_404(db, project_id)
 
         if project_data.name is not None:
-            db_project.name = project_data.name
+            db_project.name = project_data.name  # type: ignore[assignment]
 
         if project_data.description is not None:
-            db_project.description = project_data.description
+            db_project.description = project_data.description  # type: ignore[assignment]
 
         db.flush()
         db.refresh(db_project)
@@ -93,11 +85,7 @@ def delete_project(project_id: int) -> bool:
     Return: True if the project was deleted, False otherwise
     """
     with get_db_session() as db:
-        db_project = db.query(Project).filter(Project.id == project_id).first()
-
-        if db_project:
-            db.delete(db_project)
-            db.flush()
-            return True
-
-        raise NotFoundException(f"Project with id {project_id} does not exist")
+        db_project = get_project_or_404(db, project_id)
+        db.delete(db_project)
+        db.flush()
+        return True

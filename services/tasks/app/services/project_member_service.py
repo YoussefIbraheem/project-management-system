@@ -1,19 +1,13 @@
-from utils.exceptions import NotFoundException
-
 from app.db.database import get_db_session
-from app.models import MemberRole, ProjectMember
+from app.models import ProjectMember
 from app.schemas.project_member_schema import ProjectMemberCreate, ProjectMemberResponse
-
-from .project_service import get_project_by_id
+from app.validators.project_member_validator import get_member_or_404, get_role_or_404
+from app.validators.project_validator import get_project_or_404
 
 
 def get_members(project_id: int):
     with get_db_session() as db:
-        project = get_project_by_id(project_id)
-        print(project)
-        if not project:
-            raise NotFoundException(f"Project with id {project_id} does not exist")
-
+        project = get_project_or_404(db, project_id)
         members = (
             db.query(ProjectMember).filter(ProjectMember.project_id == project.id).all()
         )
@@ -22,24 +16,14 @@ def get_members(project_id: int):
 
 def get_member(project_id: int, user_id: str):
     with get_db_session() as db:
-        member = (
-            db.query(ProjectMember)
-            .filter_by(project_id=project_id, user_id=user_id)
-            .first()
-        )
-        if not member:
-            raise NotFoundException(
-                f"User with id {user_id} does not exist in project with id {project_id}"
-            )
-
+        member = get_member_or_404(db, project_id, user_id)
         return ProjectMemberResponse.model_validate(member)
 
 
 def create_member(project_id: int, member_data: ProjectMemberCreate):
     with get_db_session() as db:
-        project = get_project_by_id(project_id)
-        if not project:
-            raise NotFoundException(f"Project with id {project_id} does not exist")
+        get_project_or_404(db, project_id)
+        get_role_or_404(db, member_data.role_id)
 
         member = ProjectMember(
             project_id=project_id,
@@ -54,19 +38,10 @@ def create_member(project_id: int, member_data: ProjectMemberCreate):
 
 def update_member_role(project_id: int, role_id: int, user_id: str):
     with get_db_session() as db:
-        member = get_member(project_id, user_id)
+        member = get_member_or_404(db, project_id, user_id)
+        get_role_or_404(db, role_id)
 
-        if not member:
-            raise NotFoundException(
-                f"User with id {user_id} does not exist in project with id {project_id}"
-            )
-
-        role = db.query(MemberRole).filter_by(id=role_id).first()
-
-        if not role:
-            raise NotFoundException(f"Role with id {role_id} does not exist")
-
-        member.role_id = role_id
+        member.role_id = role_id  # type: ignore[assignment]
         db.flush()
         db.refresh(member)
 
@@ -75,19 +50,7 @@ def update_member_role(project_id: int, role_id: int, user_id: str):
 
 def delete_member(project_id: int, user_id: str):
     with get_db_session() as db:
-        project = get_project_by_id(project_id)
-        if not project:
-            raise NotFoundException(f"Project with id {project_id} does not exist")
-
-        member = (
-            db.query(ProjectMember)
-            .filter_by(project_id=project.id, user_id=user_id)
-            .first()
-        )
-        if not member:
-            raise NotFoundException(
-                f"User with id {user_id} does not exist in project with id {project_id}"
-            )
+        member = get_member_or_404(db, project_id, user_id)
 
         db.delete(member)
         db.flush()

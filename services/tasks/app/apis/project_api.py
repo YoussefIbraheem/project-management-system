@@ -48,11 +48,9 @@ project_bp = Blueprint("project", __name__, url_prefix="/api/v1/projects")
 @project_bp.route("/", methods=["GET"])
 @jwt_required()
 def projects_list():
-    """Retrieve a paginated list of projects filtered by owner."""
     try:
-        current_user = get_jwt_identity()
-        limit = request.args.get("limit",50)
-        offset = request.args.get("offset",0)
+        limit = request.args.get("limit", 50)
+        offset = request.args.get("offset", 0)
         projects = get_projects(limit=int(limit), offset=int(offset))
         return jsonify([p.model_dump() for p in projects]), 200
     except APIException as e:
@@ -63,7 +61,6 @@ def projects_list():
 @project_bp.route("/<int:project_id>", methods=["GET"])
 @jwt_required()
 def project_details(project_id: int):
-    """Retrieve details of a specific project by ID."""
     try:
         project = get_project_by_id(project_id=project_id)
         return jsonify(project.model_dump()), 200
@@ -75,7 +72,6 @@ def project_details(project_id: int):
 @project_bp.route("/", methods=["POST"])
 @jwt_required()
 def project_create():
-    """Create a new project with provided data."""
     try:
         data = request.get_json()
         if not data:
@@ -89,15 +85,6 @@ def project_create():
         ).to_response()
     except APIException as e:
         return e.to_response()
-
-    # event = ProjectCreatedEvent(
-    #     actor_id=get_jwt_identity(),
-    #     subject_id=str(project.id),
-    #     name=project.name,
-
-    #     description=project.description,
-    # )
-    # publish_history_event(event.to_dict())
     return jsonify(project.model_dump()), 201
 
 
@@ -105,7 +92,6 @@ def project_create():
 @project_bp.route("/<int:project_id>", methods=["PUT"])
 @jwt_required()
 def project_update(project_id: int):
-    """Update an existing project with new data."""
     try:
         data = request.get_json()
         if not data:
@@ -120,37 +106,17 @@ def project_update(project_id: int):
     except APIException as e:
         return e.to_response()
     else:
-        # event = ProjectUpdatedEvent(
-        #     actor_id=get_jwt_identity(),
-        #     subject_id=str(project.id),
-        #     owner_id=project.owner_id,
-        #     updated_fields=[
-        #         {"name": field, "new_value": getattr(project, field)}
-        #         for field in project_data.model_fields_set
-        #         if getattr(project_data, field) is not None
-        #     ],
-        # )
-        # publish_history_event(event.to_dict())
         return jsonify(project.model_dump()), 200
 
 
 @project_bp.route("/<int:project_id>", methods=["DELETE"])
 @jwt_required()
 def project_delete(project_id: int):
-    """Delete a project by ID."""
     try:
         delete_project(project_id=project_id)
     except APIException as e:
         return e.to_response()
     else:
-        # event = ProjectDeletedEvent(
-        #     name=str(project_id),
-        #     actor_id=get_jwt_identity(),
-        #     subject_id=str(project_id),
-        #     owner_id=get_jwt_identity(),
-        # )
-        # publish_history_event(event.to_dict())
-        return (
-            jsonify({"message": f"Project with id {project_id} has been deleted"}),
-            200,
-        )
+        return jsonify(
+            {"message": f"Project with id {project_id} has been deleted"}
+        ), 200
