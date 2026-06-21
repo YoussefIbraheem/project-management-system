@@ -189,7 +189,7 @@ def unassign_task(task_id: int, assignees_ids: list[str]) -> TaskResponse:
             if not assignee_in_task:
                 logger.warning(f"User with ID {assignee_id} is not assigned to the task!")
                 continue
-
+            # TODO:: Improve validation and handling
             assignees.append(assignee_in_task)
 
         if not assignees:
