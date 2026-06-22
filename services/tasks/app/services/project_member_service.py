@@ -23,7 +23,7 @@ def get_member(project_id: int, user_id: str):
 def create_member(project_id: int, member_data: ProjectMemberCreate):
     with get_db_session() as db:
         get_project_or_404(db, project_id)
-        get_role_or_404(db, member_data.role_id)
+        get_role_or_404(db, role_id)
 
         member = ProjectMember(
             project_id=project_id,
