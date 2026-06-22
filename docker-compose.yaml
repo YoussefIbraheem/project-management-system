@@ -56,14 +56,15 @@ services:
         condition: service_started
 
   mongodb:
-    image: mongodb/mongodb-community-server:latest
+    image: mongo:latest
     container_name: mongodb
+    stop_grace_period: 90s
     restart: always
     ports:
       - "27017:27017"
     environment:
-    - MONGODB_INITDB_ROOT_USERNAME=user
-    - MONGODB_INITDB_ROOT_PASSWORD=pass
+    - MONGO_INITDB_ROOT_USERNAME=user
+    - MONGO_INITDB_ROOT_PASSWORD=pass
     volumes:
       - ./init:/docker-entrypoint-initdb.d
       - db:/data/db
