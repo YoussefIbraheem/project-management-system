@@ -43,15 +43,23 @@ def create_app() -> Flask:
     migrate.init_app(app=app, db=None, directory="./migrations")
 
     from .apis.project_api import project_bp
+
     app.register_blueprint(project_bp)
-    
+
     from .apis.board_api import board_bp
+
     app.register_blueprint(board_bp)
-    
+
     from .apis.task_api import task_bp
+
     app.register_blueprint(task_bp)
 
     from .apis.project_member_api import project_member_bp
+
     app.register_blueprint(project_member_bp)
+
+    from .apis.board_column_api import column_bp
+
+    app.register_blueprint(column_bp)
 
     return app

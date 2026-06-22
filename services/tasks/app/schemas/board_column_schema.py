@@ -31,7 +31,6 @@ class BoardColumnResponse(BaseModel):
 class BoardColumnCreate(BaseModel):
     """Class for creating a new board column."""
 
-    board_id: int = Field(..., description="Parent Board ID")
     slug: str = Field(..., min_length=1, max_length=50, description="Column Slug")
     label: str = Field(..., min_length=1, max_length=100, description="Column Label")
     status_group: str = Field(
