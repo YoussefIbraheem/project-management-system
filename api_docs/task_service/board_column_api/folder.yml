@@ -1,7 +1,7 @@
 info:
-  name: project
+  name: board_column_api
   type: folder
-  seq: 2
+  seq: 1
 
 request:
   auth: inherit
