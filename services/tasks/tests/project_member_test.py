@@ -61,7 +61,7 @@ def test_project_members_list_project_not_found_returns_404(
 
     monkeypatch.setattr("app.apis.project_member_api.get_members", fake_get_members)
 
-    response = client.get("/api/v1/projects/999/members", headers=auth_headers)
+    response = client.get("/api/v1/projects/999/members", headers=auth_headers())
 
     assert response.status_code == 404
     assert "error" in response.get_json()
@@ -103,7 +103,7 @@ def test_project_member_details_user_not_in_project_returns_404(
 
     monkeypatch.setattr("app.apis.project_member_api.get_member", fake_get_member)
 
-    response = client.get("/api/v1/projects/1/members/999", headers=auth_headers)
+    response = client.get("/api/v1/projects/1/members/999", headers=auth_headers())
 
     assert response.status_code == 404
     assert "error" in response.get_json()
@@ -144,7 +144,7 @@ def test_project_member_create_missing_body_returns_400(
     client, auth_headers, monkeypatch
 ):
     """Test POST /projects/<project_id>/members returns error when body is missing."""
-    response = client.post("/api/v1/projects/1/members", headers=auth_headers)
+    response = client.post("/api/v1/projects/1/members", headers=auth_headers())
 
     assert response.status_code == 415  # Unsupported Media Type
 
@@ -155,7 +155,7 @@ def test_project_member_create_invalid_json_returns_400(client, auth_headers):
         "/api/v1/projects/1/members",
         data="invalid json",
         content_type="application/json",
-        headers=auth_headers,
+        headers=auth_headers(),
     )
 
     assert response.status_code == 400
@@ -176,7 +176,7 @@ def test_project_member_create_project_not_found_returns_404(
     monkeypatch.setattr("app.apis.project_member_api.create_member", fake_create_member)
 
     response = client.post(
-        "/api/v1/projects/999/members", json=payload, headers=auth_headers
+        "/api/v1/projects/999/members", json=payload, headers=auth_headers()
     )
 
     assert response.status_code == 404
@@ -217,11 +217,10 @@ def test_project_member_update_role_returns_200(client, app, monkeypatch):
 
 
 def test_project_member_update_role_missing_role_id_returns_400(client, auth_headers):
-    """Test PUT /projects/<project_id>/members/<user_id> returns 400 when role_id is missing."""
+    """Test PUT /projects/<project_id>/members/<user_id> returns error when role_id is missing."""
     payload = {}
-
     response = client.put(
-        "/api/v1/projects/1/members/1", json=payload, headers=auth_headers
+        "/api/v1/projects/1/members/1", json=payload, headers=auth_headers()
     )
 
     assert response.status_code == 400
@@ -230,7 +229,7 @@ def test_project_member_update_role_missing_role_id_returns_400(client, auth_hea
 
 def test_project_member_update_role_missing_body_returns_400(client, auth_headers):
     """Test PUT /projects/<project_id>/members/<user_id> returns error when body is missing."""
-    response = client.put("/api/v1/projects/1/members/1", headers=auth_headers)
+    response = client.put("/api/v1/projects/1/members/1", headers=auth_headers())
 
     assert response.status_code == 415  # Unsupported Media Type
 
@@ -254,7 +253,7 @@ def test_project_member_update_role_member_not_found_returns_404(
     )
 
     response = client.put(
-        "/api/v1/projects/1/members/999", json=payload, headers=auth_headers
+        "/api/v1/projects/1/members/999", json=payload, headers=auth_headers()
     )
 
     assert response.status_code == 404
@@ -278,7 +277,7 @@ def test_project_member_update_role_invalid_role_returns_404(
     )
 
     response = client.put(
-        "/api/v1/projects/1/members/1", json=payload, headers=auth_headers
+        "/api/v1/projects/1/members/1", json=payload, headers=auth_headers()
     )
 
     assert response.status_code == 404
@@ -291,7 +290,7 @@ def test_project_member_delete_returns_200(client, auth_headers, monkeypatch):
         "app.apis.project_member_api.delete_member", lambda project_id, user_id: True
     )
 
-    response = client.delete("/api/v1/projects/1/members/1", headers=auth_headers)
+    response = client.delete("/api/v1/projects/1/members/1", headers=auth_headers())
 
     assert response.status_code == 200
     assert response.get_json() == {"message": "Member deleted successfully"}
@@ -309,7 +308,7 @@ def test_project_member_delete_member_not_found_returns_404(
 
     monkeypatch.setattr("app.apis.project_member_api.delete_member", fake_delete_member)
 
-    response = client.delete("/api/v1/projects/1/members/999", headers=auth_headers)
+    response = client.delete("/api/v1/projects/1/members/999", headers=auth_headers())
 
     assert response.status_code == 404
     assert "error" in response.get_json()
@@ -325,7 +324,7 @@ def test_project_member_delete_project_not_found_returns_404(
 
     monkeypatch.setattr("app.apis.project_member_api.delete_member", fake_delete_member)
 
-    response = client.delete("/api/v1/projects/999/members/1", headers=auth_headers)
+    response = client.delete("/api/v1/projects/999/members/1", headers=auth_headers())
 
     assert response.status_code == 404
     assert "error" in response.get_json()

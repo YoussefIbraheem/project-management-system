@@ -1,5 +1,6 @@
 from utils.exceptions import NotFoundException
-from . import DummyModel, create_access_token, client, app, auth_headers
+
+from . import DummyModel, app, auth_headers, client, create_access_token
 
 
 def test_boards_list_returns_boards(client, app, monkeypatch):
@@ -119,7 +120,7 @@ def test_board_update_returns_updated_board(client, app, monkeypatch):
 def test_board_delete_returns_200(client, auth_headers, monkeypatch):
     monkeypatch.setattr("app.apis.board_api.delete_board", lambda board_id: True)
 
-    response = client.delete("/api/v1/boards/5", headers=auth_headers)
+    response = client.delete("/api/v1/boards/5", headers=auth_headers())
 
     assert response.status_code == 200
     assert response.get_json() == {"message": "Board with id 5 deleted successfully"}
@@ -132,7 +133,7 @@ def test_board_delete_not_found_returns_404(client, auth_headers, monkeypatch):
 
     monkeypatch.setattr("app.apis.board_api.delete_board", fake_delete_board)
 
-    response = client.delete("/api/v1/boards/5", headers=auth_headers)
+    response = client.delete("/api/v1/boards/5", headers=auth_headers())
 
     assert response.status_code == 404
     assert "error" in response.get_json()
