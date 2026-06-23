@@ -24,7 +24,7 @@ services:
 
   # Flask Tasks Service
   tasks-service:
-    build: 
+    build:
       context: ./services/tasks
       dockerfile: Dockerfile
     container_name: tasks_service
@@ -39,7 +39,7 @@ services:
         condition: service_healthy
 
   history-service:
-    build: 
+    build:
       context: ./services/history
       dockerfile: Dockerfile
     container_name: history_service
@@ -58,20 +58,35 @@ services:
   mongodb:
     image: mongo:latest
     container_name: mongodb
-    stop_grace_period: 90s
     restart: always
     ports:
       - "27017:27017"
     environment:
-    - MONGO_INITDB_ROOT_USERNAME=user
-    - MONGO_INITDB_ROOT_PASSWORD=pass
+      - MONGO_INITDB_ROOT_USERNAME=user
+      - MONGO_INITDB_ROOT_PASSWORD=pass
     volumes:
       - ./init:/docker-entrypoint-initdb.d
       - db:/data/db
       - configdb:/data/configdb
       - mongot:/data/mongot
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "-u",
+          "user",
+          "-p",
+          "pass",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.runCommand({ ping: 1 })",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   postgresdb:
     image: postgres:16-alpine
@@ -84,7 +99,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql  # ← Create databases on startup
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql # ← Create databases on startup
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRESQL_USER:-postgres}"]
       interval: 10s
@@ -170,4 +185,3 @@ volumes:
   db:
   configdb:
   mongot:
-
