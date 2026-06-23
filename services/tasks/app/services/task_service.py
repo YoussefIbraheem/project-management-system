@@ -6,9 +6,11 @@ from app.models import Task
 from app.models.task import TaskPriority
 from app.models.task_assignee import TaskAssignee
 from app.schemas.task_schema import TaskCreate, TaskResponse, TaskUpdate
+from app.validators.board_validator import (
+    get_board_or_404,
+    get_column_or_404,
+)
 from app.validators.task_validator import (
-    ensure_board_exists,
-    ensure_column_exists,
     get_task_assignees_by_ids,
     get_task_or_404,
     normalize_assignee_ids,
@@ -31,8 +33,8 @@ def get_tasks(
         query = db.query(Task)
 
         if board_id:
-            ensure_board_exists(db, board_id)
-            query = query.filter(Task.board_id == board_id)
+            board = get_board_or_404(db, board_id)
+            query = query.filter(Task.board_id == board.id)
 
         if creator_id:
             query = query.filter(Task.creator_id == creator_id)
@@ -67,13 +69,13 @@ def get_user_tasks(user_id: int):
 
 def create_task(task_data: TaskCreate) -> TaskResponse:
     with get_db_session() as db:
-        ensure_board_exists(db, task_data.board_id)
-        ensure_column_exists(db, task_data.column_id)
+        board = get_board_or_404(db, task_data.board_id)
+        column = get_column_or_404(db, board.id, task_data.column_id)  # type: ignore[assignment]
 
         db_task = Task(
             title=task_data.title,
             description=task_data.description,
-            column_id=task_data.column_id,
+            column_id=column.id,
             priority=task_data.priority,
             creator_id=task_data.creator_id,
             board_id=task_data.board_id,

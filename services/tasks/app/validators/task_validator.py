@@ -8,27 +8,24 @@ from app.models.task_assignee import TaskAssignee
 
 
 def get_task_or_404(db, task_id: int) -> Task:
+    """
+    Retrieve a task by its ID or raise a 404 error if not found.
+    :param db: SQLAlchemy database session
+    :param task_id: ID of the task to retrieve
+    :return: The retrieved task object
+    """
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise NotFoundException(message=f"Task with ID {task_id} not found!")
     return task
 
 
-def ensure_board_exists(db, board_id: int) -> Board:
-    board = db.query(Board).filter(Board.id == board_id).first()
-    if not board:
-        raise NotFoundException(message=f"Board with ID {board_id} not found!")
-    return board
-
-
-def ensure_column_exists(db, column_id: int) -> BoardColumn:
-    column = db.query(BoardColumn).filter(BoardColumn.id == column_id).first()
-    if not column:
-        raise NotFoundException(message=f"Column with ID {column_id} not found!")
-    return column
-
-
 def normalize_assignee_ids(assignees_ids: list[str]) -> list[str]:
+    """
+    Normalize and validate a list of assignee IDs.
+    :param assignees_ids: List of assignee IDs as strings
+    :return: Normalized list of assignee IDs
+    """
     if not assignees_ids:
         raise ValidationException(message="Assignees list cannot be empty.")
 
@@ -55,6 +52,14 @@ def normalize_assignee_ids(assignees_ids: list[str]) -> list[str]:
 
 
 def validate_project_membership(db, task: Task, assignees_ids: list[str]) -> list[str]:
+    """
+    Validate that all assignee IDs belong to the same project as the task.
+
+    :param db: Database session.
+    :param task: The task to validate.
+    :param assignees_ids: List of assignee IDs to validate.
+
+    """    
     project_member_ids = {
         user_id
         for (user_id,) in db.query(ProjectMember.user_id)
@@ -97,6 +102,12 @@ def validate_task_assignment_state(db, task: Task, assignees_ids: list[str]) -> 
 
 
 def validate_task_unassignment_state(db, task: Task, assignees_ids: list[str]) -> None:
+    """
+    Validate that the task has at least one assignee before unassigning.
+    :param db: Database session.
+    :param task: Task object.
+    :param assignees_ids: List of assignee IDs to unassign.
+    """
     assigned_ids = {
         user_id
         for (user_id,) in db.query(TaskAssignee.user_id)
@@ -116,21 +127,20 @@ def validate_task_unassignment_state(db, task: Task, assignees_ids: list[str]) -
             data={"missing_assignees": missing_assignees},
         )
 
-
-def get_assignments_for_task(db, task: Task) -> list[TaskAssignee]:
-    return db.query(TaskAssignee).filter(TaskAssignee.task_id == task.id).all()
-
-
-def get_task_assignees_by_ids(
-    db,
-    task: Task,
-    assignees_ids: Iterable[str],
-) -> list[TaskAssignee]:
+def get_task_assignees_by_ids(db, task: Task, assignees_ids: list[str]) -> list[TaskAssignee]:
+    """
+    Retrieve a list of TaskAssignee objects for the given task and assignee IDs.
+    
+    :param db: Database session.
+    :param task: Task object.
+    :param assignee_ids: List of assignee IDs to retrieve.
+    :return: List of TaskAssignee objects.
+    """
     return (
         db.query(TaskAssignee)
         .filter(
             TaskAssignee.task_id == task.id,
-            TaskAssignee.user_id.in_(list(assignees_ids)),
+            TaskAssignee.user_id.in_(assignees_ids),
         )
         .all()
     )

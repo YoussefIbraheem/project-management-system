@@ -1,8 +1,11 @@
 from app.db.database import get_db_session
 from app.models import ProjectMember
 from app.schemas.project_member_schema import ProjectMemberCreate, ProjectMemberResponse
-from app.validators.project_member_validator import get_member_or_404, get_role_or_404
-from app.validators.project_validator import get_project_or_404
+from app.validators.project_validator import (
+    get_member_or_404,
+    get_project_or_404,
+    get_role_or_404,
+)
 
 
 def get_members(project_id: int):
@@ -22,13 +25,13 @@ def get_member(project_id: int, user_id: str):
 
 def create_member(project_id: int, member_data: ProjectMemberCreate):
     with get_db_session() as db:
-        get_project_or_404(db, project_id)
-        get_role_or_404(db, role_id)
+        project = get_project_or_404(db, project_id)
+        role = get_role_or_404(db, member_data.role_id)
 
         member = ProjectMember(
-            project_id=project_id,
+            project_id=project.id,
             user_id=member_data.user_id,
-            role_id=member_data.role_id,
+            role_id=role.id,
         )
         db.add(member)
         db.flush()

@@ -1,11 +1,11 @@
 from app.db.database import get_db_session
 from app.models import BoardColumn
 from app.schemas.board_column_schema import BoardColumnDetailsResponse
-from app.validators.board_column_validator import (
+from app.validators.board_validator import (
     ensure_column_not_duplicate,
+    get_board_or_404,
     get_column_or_404,
 )
-from app.validators.board_validator import ensure_board_exists
 
 
 def get_columns(board_id: int):
@@ -19,7 +19,7 @@ def get_columns(board_id: int):
         list[BoardColumnDetailsResponse]: A list of column details.
     """
     with get_db_session() as db:
-        columns = db.query(BoardColumn).filter(BoardColumn.board_id==board_id).all()
+        columns = db.query(BoardColumn).filter(BoardColumn.board_id == board_id).all()
         return [BoardColumnDetailsResponse.model_validate(column) for column in columns]
 
 
@@ -51,9 +51,9 @@ def create_column(board_id: int, data: dict):
         BoardColumnDetailsResponse: The details of the newly created column.
     """
     with get_db_session() as db:
-        ensure_board_exists(db, board_id)
-        ensure_column_not_duplicate(db, board_id, data["slug"])
-        new_column = BoardColumn(**data, board_id=board_id)
+        board = get_board_or_404(db, board_id)
+        ensure_column_not_duplicate(db, board.id, data["name"])  # type: ignore[assignment]
+        new_column = BoardColumn(**data, board_id=board.id)
         db.add(new_column)
         db.commit()
         db.refresh(new_column)
@@ -72,8 +72,8 @@ def delete_column(board_id: int, column_id: int):
         bool: True if the deletion was successful, False otherwise.
     """
     with get_db_session() as db:
-        ensure_board_exists(db, board_id)
-        column = get_column_or_404(db, board_id, column_id)
+        board = get_board_or_404(db, board_id)
+        column = get_column_or_404(db, board.id, column_id)  # type: ignore[assignment]
         db.delete(column)
         db.commit()
 

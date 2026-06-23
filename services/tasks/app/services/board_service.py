@@ -64,12 +64,12 @@ def create_board(board_data: BoardCreate) -> BoardResponse:
     """
 
     with get_db_session() as db:
-        get_project_or_404(db, board_data.project_id)
+        project = get_project_or_404(db, board_data.project_id)
 
         db_board = Board(
             name=board_data.name,
             description=board_data.description,
-            project_id=board_data.project_id,
+            project_id=project.id,
         )
 
         db.add(db_board)
