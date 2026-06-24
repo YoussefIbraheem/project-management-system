@@ -4,4 +4,9 @@ info:
   seq: 1
 
 request:
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+  variables:
+    - name: url
+      value: "{{baseUrl}}5005/api/v1"

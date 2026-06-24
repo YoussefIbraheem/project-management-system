@@ -28,8 +28,8 @@ runtime:
       code: |-
         let accessToken = res.body["tokens"]["access"]
         let refreshToken = res.body["tokens"]["refresh"]
-        bru.setEnvVar("accessToken", accessToken)
-        bru.setEnvVar("refreshToken", refreshToken)
+        bru.setVar("accessToken", accessToken)
+        bru.setVar("refreshToken", refreshToken)
 
 settings:
   encodeUrl: true
