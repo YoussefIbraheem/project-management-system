@@ -1,4 +1,4 @@
-from . import Base, Column, Integer, String, relationship
+from . import Base, Column, DateTime, Integer, String, func, relationship
 
 
 class MemberRole(Base):
@@ -10,4 +10,8 @@ class MemberRole(Base):
     slug = Column(String, nullable=False, unique=True)
     label = Column(String, nullable=False)
 
-    project_members = relationship("ProjectMember", back_populates="role")
+    project_members = relationship(
+        "ProjectMember", back_populates="role", cascade="all, delete-orphan"
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now())
