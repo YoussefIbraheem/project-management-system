@@ -1,7 +1,7 @@
 opencollection: 1.0.0
 
 info:
-  name: trello_clone_django_api_docs
+  name: project_management_system_api_docs
 config:
   proxy:
     inherit: true
