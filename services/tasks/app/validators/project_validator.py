@@ -1,5 +1,5 @@
 from utils.exceptions import BadRequestException, NotFoundException
-from app.models import MemberRole, Project, ProjectMember
+from app.models import Project, ProjectMember
 from slugify import slugify
 
 
@@ -34,40 +34,6 @@ def get_member_or_404(db, project_id: int, user_id: str) -> ProjectMember:
             f"User with id {user_id} does not exist in project with id {project_id}"
         )
     return member
-
-
-def get_role_or_404(db, role_id: int) -> MemberRole:
-    """
-    Retrieve a role by its ID or raise a 404 error if the role is not found.
-    - db: SQLAlchemy database session.
-    - role_id: ID of the role to retrieve.
-    - return:
-    """
-    role = db.query(MemberRole).filter_by(id=role_id).first()
-    if not role:
-        raise NotFoundException(f"Role with id {role_id} does not exist")
-    return role
-
-def ensure_role_is_unique(db,slug:str):
-    """
-    Ensure that a role slug is unique.
-    - db: SQLAlchemy database session.
-    - slug: Slug of the role to check.
-    - return:
-    """
-    existing_role = db.query(MemberRole).filter_by(slug=slug).first()
-    if existing_role:
-        raise BadRequestException(f"Role slug '{slug}' is already taken")
-
-
-def slugify_role(input: str) -> str:
-    """
-    Convert a role name to a slug.
-    - name: Name of the role to convert.
-    - return:
-    """
-    return slugify(input)
-
 
 def ensure_member_in_project(db, project_id, user_id):
     """

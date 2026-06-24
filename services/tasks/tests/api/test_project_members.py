@@ -28,7 +28,7 @@ def test_create_project_member_serialization_fails(client, auth_headers, seeded_
         client.post(
             f"/api/v1/projects/{project_id}/members",
             headers=auth_headers(),
-            json={"user_id": "user-2", "role_id": seeded_data["role"].id},
+            json={"user_id": "user-2", "role": "admin"},
         )
 
 

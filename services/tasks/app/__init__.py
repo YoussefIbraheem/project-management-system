@@ -62,7 +62,4 @@ def create_app() -> Flask:
 
     app.register_blueprint(column_bp)
 
-    from .apis.member_role_api import member_role_bp
-    app.register_blueprint(member_role_bp)
-
     return app

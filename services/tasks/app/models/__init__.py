@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from sqlalchemy import (
     CheckConstraint,
     Column,
@@ -34,4 +33,3 @@ from .project import Project
 from .project_member import ProjectMember
 from .task import Task, TaskPriority
 from .task_assignee import TaskAssignee
-from .member_role import MemberRole 

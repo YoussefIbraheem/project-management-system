@@ -12,13 +12,13 @@ def test_project_members_list_returns_members(client, app, monkeypatch):
             "id": 1,
             "project_id": 1,
             "user_id": "user1",
-            "role_id": 1,
+            "role": "member",
         },
         {
             "id": 2,
             "project_id": 1,
             "user_id": "user2",
-            "role_id": 2,
+            "role": "member"
         },
     ]
 
@@ -73,7 +73,7 @@ def test_project_member_details_returns_member(client, app, monkeypatch):
         "id": 1,
         "project_id": 1,
         "user_id": 1,
-        "role_id": 1,
+        "role": "member",
     }
 
     def fake_get_member(project_id, user_id):
@@ -113,19 +113,19 @@ def test_project_member_create_returns_201(client, app, monkeypatch):
     """Test POST /projects/<project_id>/members creates new member."""
     payload = {
         "user_id": "newuser",
-        "role_id": 2,
+        "role": "member",
     }
     expected = {
         "id": 3,
         "project_id": 1,
         "user_id": "newuser",
-        "role_id": 2,
+        "role": "member",
     }
 
     def fake_create_member(project_id, member_data):
         assert project_id == 1
         assert member_data.user_id == "newuser"
-        assert member_data.role_id == 2
+        assert member_data.role == "member"
         return expected
 
     monkeypatch.setattr("app.apis.project_member_api.create_member", fake_create_member)
@@ -167,7 +167,7 @@ def test_project_member_create_project_not_found_returns_404(
     """Test POST /projects/<project_id>/members returns 404 when project doesn't exist."""
     payload = {
         "user_id": "newuser",
-        "role_id": 2,
+        "role": "member",
     }
 
     def fake_create_member(project_id, member_data):
@@ -186,19 +186,19 @@ def test_project_member_create_project_not_found_returns_404(
 def test_project_member_update_role_returns_200(client, app, monkeypatch):
     """Test PUT /projects/<project_id>/members/<user_id> updates member role."""
     payload = {
-        "role_id": 3,
+        "role": "member",
     }
     expected = {
         "id": 1,
         "project_id": 1,
         "user_id": "user1",
-        "role_id": 3,
+        "role": "member",
     }
 
-    def fake_update_member_role(project_id, user_id, role_id):
+    def fake_update_member_role(project_id, user_id, role):
         assert project_id == 1
         assert user_id == 1
-        assert role_id == 3
+        assert role == "member"
         return expected
 
     monkeypatch.setattr(
@@ -216,8 +216,8 @@ def test_project_member_update_role_returns_200(client, app, monkeypatch):
     assert response.get_json() == expected
 
 
-def test_project_member_update_role_missing_role_id_returns_400(client, auth_headers):
-    """Test PUT /projects/<project_id>/members/<user_id> returns error when role_id is missing."""
+def test_project_member_update_role_missing_role_returns_400(client, auth_headers):
+    """Test PUT /projects/<project_id>/members/<user_id> returns error when role is missing."""
     payload = {}
     response = client.put(
         "/api/v1/projects/1/members/1", json=payload, headers=auth_headers()
@@ -239,10 +239,10 @@ def test_project_member_update_role_member_not_found_returns_404(
 ):
     """Test PUT /projects/<project_id>/members/<user_id> returns 404 when member doesn't exist."""
     payload = {
-        "role_id": 3,
+        "role": "member",
     }
 
-    def fake_update_member_role(project_id, user_id, role_id):
+    def fake_update_member_role(project_id, user_id, role       ):
         raise NotFoundException(
             f"User with id {user_id} does not exist in project with id {project_id}"
         )
@@ -265,11 +265,11 @@ def test_project_member_update_role_invalid_role_returns_404(
 ):
     """Test PUT /projects/<project_id>/members/<user_id> returns 404 when role doesn't exist."""
     payload = {
-        "role_id": 999,
+        "role":"member"
     }
 
-    def fake_update_member_role(project_id, user_id, role_id):
-        raise NotFoundException(f"Role with id {role_id} does not exist")
+    def fake_update_member_role(project_id, user_id, role):
+        raise NotFoundException(f"Role with id {role} does not exist")
 
     monkeypatch.setattr(
         "app.apis.project_member_api.update_member_role",

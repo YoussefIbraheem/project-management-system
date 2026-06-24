@@ -65,12 +65,12 @@ def project_member_role_update(project_id, user_id):
         data = request.get_json()
         if not data:
             raise BadRequestException("Request body is missing or not valid JSON")
-        role_id = data.get("role_id", None)
-        if not role_id:
-            raise BadRequestException("Role ID is missing in the request data")
+        role = data.get("role", None)
+        if not role:
+            raise BadRequestException("Role is missing in the request data")
 
         member = update_member_role(
-            project_id=project_id, user_id=user_id, role_id=role_id
+            project_id=project_id, user_id=user_id, role=role
         )
         return jsonify(member)
     except APIException as e:

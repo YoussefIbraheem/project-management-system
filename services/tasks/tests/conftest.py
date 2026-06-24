@@ -21,15 +21,8 @@ from datetime import datetime, timezone
 
 from app import create_app
 from app.db import database as db_module
-from app.models import (
-    Base,
-    Board,
-    BoardColumn,
-    MemberRole,
-    Project,
-    ProjectMember,
-    Task,
-)
+from app.models import Base, Board, BoardColumn, Project, ProjectMember, Task
+from app.models.project_member import MemberRole
 
 
 @pytest.fixture()
@@ -85,12 +78,13 @@ def auth_headers(app):
 
 @pytest.fixture()
 def seeded_data(db_session):
-    role = MemberRole(id=1, slug="admin", label="Admin")
     project = Project(name="Alpha", description="Project Alpha")
-    db_session.add_all([role, project])
+    db_session.add(project)
     db_session.flush()
 
-    member = ProjectMember(project_id=project.id, user_id="user-1", role_id=role.id)
+    member = ProjectMember(
+        project_id=project.id, user_id="user-1", role=MemberRole.ADMIN.db_value
+    )
     board = Board(name="Board 1", description="Main board", project_id=project.id)
     db_session.add_all([member, board])
     db_session.flush()
@@ -117,7 +111,6 @@ def seeded_data(db_session):
     db_session.commit()
 
     return {
-        "role": role,
         "project": project,
         "member": member,
         "board": board,

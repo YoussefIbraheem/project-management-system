@@ -4,7 +4,6 @@ from app.schemas.project_member_schema import ProjectMemberCreate, ProjectMember
 from app.validators.project_validator import (
     get_member_or_404,
     get_project_or_404,
-    get_role_or_404,
 )
 
 
@@ -43,12 +42,12 @@ def create_member(project_id: int, member_data: ProjectMemberCreate):
     """
     with get_db_session() as db:
         project = get_project_or_404(db, project_id)
-        role = get_role_or_404(db, member_data.role_id)
+        role = member_data.role
 
         member = ProjectMember(
             project_id=project.id,
             user_id=member_data.user_id,
-            role_id=role.id,
+            role=role,
         )
         db.add(member)
         db.flush()
@@ -56,7 +55,7 @@ def create_member(project_id: int, member_data: ProjectMemberCreate):
         return ProjectMemberResponse.model_validate(member)
 
 
-def update_member_role(project_id: int, role_id: int, user_id: str):
+def update_member_role(project_id: int, role: str, user_id: str):
     """
     Update the role of a member in a project.
     - project_id: The ID of the project.
@@ -65,9 +64,8 @@ def update_member_role(project_id: int, role_id: int, user_id: str):
     """
     with get_db_session() as db:
         member = get_member_or_404(db, project_id, user_id)
-        get_role_or_404(db, role_id)
-
-        member.role_id = role_id  # type: ignore[assignment]
+        
+        member.role = role  # type: ignore[assignment]
         db.flush()
         db.refresh(member)
 
