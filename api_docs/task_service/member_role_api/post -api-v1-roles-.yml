@@ -1,17 +1,13 @@
 info:
-  name: get /api/v1/tasks/:task_id
+  name: post /api/v1/roles/
   type: http
-  seq: 1
+  seq: 2
   tags:
-    - task
+    - member_role_api
 
 http:
-  method: GET
-  url: "{{url}}/tasks/:task_id"
-  params:
-    - name: task_id
-      value: "1"
-      type: path
+  method: POST
+  url: "{{url}}/roles/"
   auth: inherit
 
 settings:
@@ -24,12 +20,8 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{baseUrl}}/api/v1/tasks/:task_id"
-      method: GET
-      params:
-        - name: task_id
-          value: ""
-          type: path
+      url: "{{url}}/roles/"
+      method: POST
     response:
       status: 200
       statusText: OK

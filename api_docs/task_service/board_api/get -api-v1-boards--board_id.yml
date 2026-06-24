@@ -1,15 +1,15 @@
 info:
-  name: post /api/v1/projects/:project_id/members
+  name: get /api/v1/boards/:board_id
   type: http
-  seq: 2
+  seq: 4
   tags:
-    - project_member_api
+    - board_api
 
 http:
-  method: POST
-  url: "{{url}}/projects/:project_id/members"
+  method: GET
+  url: "{{url}}/boards/:board_id"
   params:
-    - name: project_id
+    - name: board_id
       value: ""
       type: path
   auth: inherit
@@ -24,10 +24,10 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/projects/:project_id/members"
-      method: POST
+      url: "{{url}}/boards/:board_id"
+      method: GET
       params:
-        - name: project_id
+        - name: board_id
           value: ""
           type: path
     response:

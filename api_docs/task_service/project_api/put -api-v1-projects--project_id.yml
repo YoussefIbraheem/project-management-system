@@ -1,24 +1,23 @@
 info:
-  name: post /api/v1/boards/:board_id/columns
+  name: put /api/v1/projects/:project_id
   type: http
-  seq: 2
+  seq: 5
   tags:
-    - board_column_api
+    - project_api
 
 http:
-  method: POST
-  url: "{{url}}/boards/:board_id/columns"
+  method: PUT
+  url: "{{url}}/projects/:project_id"
   params:
-    - name: board_id
+    - name: project_id
       value: ""
       type: path
   body:
     type: json
     data: |-
       {
-        "label": "",
-        "slug": "",
-        "status_group": ""
+        "description": "",
+        "name": ""
       }
   auth: inherit
 
@@ -32,19 +31,18 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/boards/:board_id/columns"
-      method: POST
+      url: "{{url}}/projects/:project_id"
+      method: PUT
       params:
-        - name: board_id
+        - name: project_id
           value: ""
           type: path
       body:
         type: json
         data: |-
           {
-            "label": "",
-            "slug": "",
-            "status_group": ""
+            "description": "",
+            "name": ""
           }
     response:
       status: 200

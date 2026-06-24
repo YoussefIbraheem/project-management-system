@@ -1,16 +1,16 @@
 info:
-  name: get /api/v1/boards/:board_id
+  name: delete /api/v1/roles/:role_id
   type: http
   seq: 3
   tags:
-    - board
+    - member_role_api
 
 http:
-  method: GET
-  url: "{{url}}/boards/:board_id"
+  method: DELETE
+  url: "{{url}}/roles/:role_id"
   params:
-    - name: board_id
-      value: "15"
+    - name: role_id
+      value: ""
       type: path
   auth: inherit
 
@@ -24,10 +24,10 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{baseUrl}}/api/v1/boards/:board_id"
-      method: GET
+      url: "{{url}}/roles/:role_id"
+      method: DELETE
       params:
-        - name: board_id
+        - name: role_id
           value: ""
           type: path
     response:

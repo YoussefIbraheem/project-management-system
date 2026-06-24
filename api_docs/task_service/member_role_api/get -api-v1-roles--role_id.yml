@@ -1,15 +1,15 @@
 info:
-  name: delete /api/v1/projects/:project_id
+  name: get /api/v1/roles/:role_id
   type: http
-  seq: 5
+  seq: 4
   tags:
-    - project
+    - member_role_api
 
 http:
-  method: DELETE
-  url: "{{url}}/projects/:project_id"
+  method: GET
+  url: "{{url}}/roles/:role_id"
   params:
-    - name: project_id
+    - name: role_id
       value: ""
       type: path
   auth: inherit
@@ -24,10 +24,10 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{baseUrl}}/api/v1/projects/:project_id"
-      method: DELETE
+      url: "{{url}}/roles/:role_id"
+      method: GET
       params:
-        - name: project_id
+        - name: role_id
           value: ""
           type: path
     response:

@@ -1,20 +1,22 @@
 info:
-  name: post /api/v1/tasks/
+  name: post /api/v1/tasks/:task_id/unassign
   type: http
-  seq: 1
+  seq: 7
   tags:
-    - task
+    - task_api
 
 http:
   method: POST
-  url: "{{url}}/tasks/"
+  url: "{{url}}/tasks/:task_id/unassign"
+  params:
+    - name: task_id
+      value: ""
+      type: path
   body:
     type: json
     data: |-
       {
-        "title": "LOL",
-        "column_id":1,
-        "board_id": 1
+        "assignees_ids": []
       }
   auth: inherit
 
@@ -28,20 +30,17 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{baseUrl}}/api/v1/tasks/"
+      url: "{{url}}/tasks/:task_id/unassign"
       method: POST
+      params:
+        - name: task_id
+          value: ""
+          type: path
       body:
         type: json
         data: |-
           {
-            "title": "",
-            "description": "",
-            "status": "",
-            "priority": "",
-            "user_id": "",
-            "assigned_to": "",
-            "board_id": 0,
-            "due_date": ""
+            "assignees_ids": []
           }
     response:
       status: 200
