@@ -1,7 +1,7 @@
 services:
   # Django Users Service
   users-service:
-    image: trello_clone_django
+    image: project_management_system_django
     build:
       context: ./services/users
       dockerfile: Dockerfile

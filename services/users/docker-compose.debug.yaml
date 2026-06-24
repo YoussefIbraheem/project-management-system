@@ -1,6 +1,6 @@
 services:
-  trelloclonedjango:
-    image: trelloclonedjango
+  projectmanagementsystem:
+    image: projectmanagementsystem
     build:
       context: .
       dockerfile: ./Dockerfile
