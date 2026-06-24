@@ -8,9 +8,9 @@ def get_board_or_404(db, board_id: int) -> Board:
     """
     Retrieve a board by its ID or raise a 404 error if it doesn't exist.
 
-    :param db: SQLAlchemy database session
-    :param board_id: The ID of the board to retrieve
-    :return: The Board object
+    - db: SQLAlchemy database session
+    - board_id: The ID of the board to retrieve
+    - return: The Board object
     """
     board = db.query(Board).filter(Board.id == board_id).first()
     if not board:
@@ -21,8 +21,8 @@ def create_default_columns(db, board_id) -> None:
     """
     Create default columns for a given board ID.
 
-    :param db: SQLAlchemy database session
-    :param board_id: The ID of the board to create columns for
+    - db: SQLAlchemy database session
+    - board_id: The ID of the board to create columns for
     """
     board_id = int(board_id)
     try:
@@ -44,9 +44,9 @@ def get_column_or_404(db, board_id: int, column_id: int)-> BoardColumn:
     """
     Retrieve a column by its ID or raise a 404 error if it does not exist.
 
-    :param db: SQLAlchemy database session
-    :param board_id: The ID of the board to check columns for
-    :param column_id: The ID of the column to retrieve
+    - db: SQLAlchemy database session
+    - board_id: The ID of the board to check columns for
+    - column_id: The ID of the column to retrieve
     """
     column = db.query(BoardColumn).filter_by(board_id=board_id, id=column_id).first()
     if not column:
