@@ -46,7 +46,6 @@ def get_board_by_id(board_id: int) -> Optional[BoardResponse]:
     Returns:
         Optional[BoardResponse]: The board details if found, otherwise None
     """
-
     with get_db_session() as db:
         db_board = get_board_or_404(db, board_id)
         return BoardResponse.model_validate(db_board)
@@ -62,7 +61,6 @@ def create_board(board_data: BoardCreate) -> BoardResponse:
     Returns:
         BoardResponse: The created board details
     """
-
     with get_db_session() as db:
         project = get_project_or_404(db, board_data.project_id)
 

@@ -48,7 +48,7 @@ def create_project(project_data: ProjectCreate) -> ProjectResponse:
         )
 
         db.add(db_project)
-        db.flush()
+        db.commit()
         db.refresh(db_project)
 
         return ProjectResponse.model_validate(db_project)
@@ -71,7 +71,7 @@ def update_project(project_id: int, project_data: ProjectUpdate) -> ProjectRespo
         if project_data.description is not None:
             db_project.description = project_data.description  # type: ignore[assignment]
 
-        db.flush()
+        db.commit()
         db.refresh(db_project)
 
         return ProjectResponse.model_validate(db_project)
@@ -87,5 +87,5 @@ def delete_project(project_id: int) -> bool:
     with get_db_session() as db:
         db_project = get_project_or_404(db, project_id)
         db.delete(db_project)
-        db.flush()
+        db.commit()
         return True

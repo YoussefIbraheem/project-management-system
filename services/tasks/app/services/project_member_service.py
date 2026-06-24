@@ -9,6 +9,11 @@ from app.validators.project_validator import (
 
 
 def get_members(project_id: int):
+    """
+    Retrieve all members of a project.
+    - project_id: The ID of the project.
+    - return: A list of ProjectMemberResponse objects representing the members.
+    """
     with get_db_session() as db:
         project = get_project_or_404(db, project_id)
         members = (
@@ -18,12 +23,24 @@ def get_members(project_id: int):
 
 
 def get_member(project_id: int, user_id: str):
+    """
+    Retrieve a specific member of a project by their user ID.
+    - project_id: The ID of the project.
+    - user_id: The user ID of the member.
+    - return: A ProjectMemberResponse object representing the member.
+    """
     with get_db_session() as db:
         member = get_member_or_404(db, project_id, user_id)
         return ProjectMemberResponse.model_validate(member)
 
 
 def create_member(project_id: int, member_data: ProjectMemberCreate):
+    """
+    Create a new member for a project.
+    - project_id: The ID of the project.
+    - member_data: A ProjectMemberCreate object containing the member's data.
+    - return: A ProjectMemberResponse object representing the newly created member.
+    """
     with get_db_session() as db:
         project = get_project_or_404(db, project_id)
         role = get_role_or_404(db, member_data.role_id)
@@ -40,6 +57,12 @@ def create_member(project_id: int, member_data: ProjectMemberCreate):
 
 
 def update_member_role(project_id: int, role_id: int, user_id: str):
+    """
+    Update the role of a member in a project.
+    - project_id: The ID of the project.
+    - role_id: The ID of the new role.
+    - user_id: The ID of the member to update.
+    """
     with get_db_session() as db:
         member = get_member_or_404(db, project_id, user_id)
         get_role_or_404(db, role_id)
@@ -52,6 +75,12 @@ def update_member_role(project_id: int, role_id: int, user_id: str):
 
 
 def delete_member(project_id: int, user_id: str):
+    """
+    Delete a member from a project.
+    - project_id: The ID of the project.
+    - user_id: The ID of the member to delete.
+    - return: A boolean indicating whether the deletion was successful.
+    """
     with get_db_session() as db:
         member = get_member_or_404(db, project_id, user_id)
 
