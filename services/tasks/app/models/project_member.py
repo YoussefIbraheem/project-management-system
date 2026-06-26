@@ -1,22 +1,17 @@
-from app.core.flask_enum import FlaskEnum
+from app.security.roles import MemberRole
+
 from . import (
     Base,
+    CheckConstraint,
     Column,
     DateTime,
     ForeignKey,
     Integer,
     String,
     UniqueConstraint,
-    CheckConstraint,
     func,
     relationship,
 )
-
-
-class MemberRole(FlaskEnum):
-    OWNER = "owner", "Owner"
-    ADMIN = "admin", "Admin"
-    MEMBER = "member", "Member"
 
 
 class ProjectMember(Base):
@@ -35,5 +30,5 @@ class ProjectMember(Base):
 
     __table_args__ = (
         UniqueConstraint("project_id", "user_id"),
-        CheckConstraint("role IN ('owner', 'admin', 'member')", name="check_role"),
+        CheckConstraint("role IN ('owner', 'manager', 'member')", name="check_role"),
     )

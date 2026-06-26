@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pytest
 from app.db.database import get_db_session
 from app.models import Board, BoardColumn, Project, ProjectMember, Task
-from app.models.project_member import MemberRole
+from app.security.roles import MemberRole
 from app.models.task import TaskPriority
 from app.schemas.task_schema import TaskCreate, TaskUpdate
 from app.services.task_service import (
@@ -25,7 +25,7 @@ def _seed_task():
         db.flush()
 
         member = ProjectMember(
-            project_id=project.id, user_id="user-1", role=MemberRole.ADMIN.db_value
+            project_id=project.id, user_id="user-1", role=MemberRole.MANAGER.db_value
         )
         board = Board(name="Board 1", description="Main board", project_id=project.id)
         db.add_all([member, board])
