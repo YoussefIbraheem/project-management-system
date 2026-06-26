@@ -26,7 +26,7 @@ def test_project_members_list_returns_members(client, app, monkeypatch):
         assert project_id == 1
         return expected
 
-    monkeypatch.setattr("app.apis.project_member_api.get_members", fake_get_members)
+    monkeypatch.setattr("app.apis.project_api.get_members", fake_get_members)
 
     with app.app_context():
         headers = {"Authorization": f"Bearer {create_access_token(identity='10')}"}
@@ -40,7 +40,7 @@ def test_project_members_list_returns_members(client, app, monkeypatch):
 def test_project_members_list_empty_returns_empty_list(client, app, monkeypatch):
     """Test GET /projects/<project_id>/members returns empty list when no members exist."""
     monkeypatch.setattr(
-        "app.apis.project_member_api.get_members", lambda project_id: []
+        "app.apis.project_api.get_members", lambda project_id: []
     )
 
     with app.app_context():
@@ -59,7 +59,7 @@ def test_project_members_list_project_not_found_returns_404(
     def fake_get_members(project_id):
         raise NotFoundException(f"Project with id {project_id} does not exist")
 
-    monkeypatch.setattr("app.apis.project_member_api.get_members", fake_get_members)
+    monkeypatch.setattr("app.apis.project_api.get_members", fake_get_members)
 
     response = client.get("/api/v1/projects/999/members", headers=auth_headers())
 
@@ -81,7 +81,7 @@ def test_project_member_details_returns_member(client, app, monkeypatch):
         assert user_id == 1
         return expected
 
-    monkeypatch.setattr("app.apis.project_member_api.get_member", fake_get_member)
+    monkeypatch.setattr("app.apis.project_api.get_member", fake_get_member)
 
     with app.app_context():
         headers = {"Authorization": f"Bearer {create_access_token(identity='10')}"}
@@ -101,7 +101,7 @@ def test_project_member_details_user_not_in_project_returns_404(
             f"User with id {user_id} does not exist in project with id {project_id}"
         )
 
-    monkeypatch.setattr("app.apis.project_member_api.get_member", fake_get_member)
+    monkeypatch.setattr("app.apis.project_api.get_member", fake_get_member)
 
     response = client.get("/api/v1/projects/1/members/999", headers=auth_headers())
 
@@ -128,7 +128,7 @@ def test_project_member_create_returns_201(client, app, monkeypatch):
         assert member_data.role == "member"
         return expected
 
-    monkeypatch.setattr("app.apis.project_member_api.create_member", fake_create_member)
+    monkeypatch.setattr("app.apis.project_api.create_member", fake_create_member)
 
     with app.app_context():
         headers = {"Authorization": f"Bearer {create_access_token(identity='10')}"}
@@ -173,7 +173,7 @@ def test_project_member_create_project_not_found_returns_404(
     def fake_create_member(project_id, member_data):
         raise NotFoundException(f"Project with id {project_id} does not exist")
 
-    monkeypatch.setattr("app.apis.project_member_api.create_member", fake_create_member)
+    monkeypatch.setattr("app.apis.project_api.create_member", fake_create_member)
 
     response = client.post(
         "/api/v1/projects/999/members", json=payload, headers=auth_headers()
@@ -202,7 +202,7 @@ def test_project_member_update_role_returns_200(client, app, monkeypatch):
         return expected
 
     monkeypatch.setattr(
-        "app.apis.project_member_api.update_member_role",
+        "app.apis.project_api.update_member_role",
         fake_update_member_role,
     )
 
@@ -248,7 +248,7 @@ def test_project_member_update_role_member_not_found_returns_404(
         )
 
     monkeypatch.setattr(
-        "app.apis.project_member_api.update_member_role",
+        "app.apis.project_api.update_member_role",
         fake_update_member_role,
     )
 
@@ -272,7 +272,7 @@ def test_project_member_update_role_invalid_role_returns_404(
         raise NotFoundException(f"Role with id {role} does not exist")
 
     monkeypatch.setattr(
-        "app.apis.project_member_api.update_member_role",
+        "app.apis.project_api.update_member_role",
         fake_update_member_role,
     )
 
@@ -287,7 +287,7 @@ def test_project_member_update_role_invalid_role_returns_404(
 def test_project_member_delete_returns_200(client, auth_headers, monkeypatch):
     """Test DELETE /projects/<project_id>/members/<user_id> deletes member."""
     monkeypatch.setattr(
-        "app.apis.project_member_api.delete_member", lambda project_id, user_id: True
+        "app.apis.project_api.delete_member", lambda project_id, user_id: True
     )
 
     response = client.delete("/api/v1/projects/1/members/1", headers=auth_headers())
@@ -306,7 +306,7 @@ def test_project_member_delete_member_not_found_returns_404(
             f"User with id {user_id} does not exist in project with id {project_id}"
         )
 
-    monkeypatch.setattr("app.apis.project_member_api.delete_member", fake_delete_member)
+    monkeypatch.setattr("app.apis.project_api.delete_member", fake_delete_member)
 
     response = client.delete("/api/v1/projects/1/members/999", headers=auth_headers())
 
@@ -322,7 +322,7 @@ def test_project_member_delete_project_not_found_returns_404(
     def fake_delete_member(project_id, user_id):
         raise NotFoundException(f"Project with id {project_id} does not exist")
 
-    monkeypatch.setattr("app.apis.project_member_api.delete_member", fake_delete_member)
+    monkeypatch.setattr("app.apis.project_api.delete_member", fake_delete_member)
 
     response = client.delete("/api/v1/projects/999/members/1", headers=auth_headers())
 

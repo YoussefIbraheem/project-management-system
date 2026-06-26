@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
 from utils.exceptions import APIException, BadRequestException, ValidationException
 from utils.openapi.decorators import document
@@ -10,12 +10,18 @@ from app.events.project_event import (
     ProjectDeletedEvent,
     ProjectUpdatedEvent,
 )
+from app.schemas.project_member_schema import ProjectMemberResponse, ProjectMemberCreate
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.services.project_service import (
+    create_member,
     create_project,
+    delete_member,
     delete_project,
+    get_member,
+    get_members,
     get_project_by_id,
     get_projects,
+    update_member_role,
     update_project,
 )
 
@@ -42,8 +48,8 @@ project_bp = Blueprint("project", __name__, url_prefix="/api/v1/projects")
             "required": False,
             "description": "Pagination offset",
         },
-    ],
-    response_schema=ProjectResponse,
+    ], # type: ignore
+    response_schema=ProjectResponse, # type: ignore
 )
 @project_bp.route("/", methods=["GET"])
 @jwt_required()
@@ -57,7 +63,7 @@ def projects_list():
         return e.to_response()
 
 
-@document(response_schema=ProjectResponse)
+@document(response_schema=ProjectResponse) # type: ignore
 @project_bp.route("/<int:project_id>", methods=["GET"])
 @jwt_required()
 def project_details(project_id: int):
@@ -68,7 +74,7 @@ def project_details(project_id: int):
         return e.to_response()
 
 
-@document(request_schema=ProjectCreate, response_schema=ProjectResponse)
+@document(request_schema=ProjectCreate, response_schema=ProjectResponse) # type: ignore
 @project_bp.route("/", methods=["POST"])
 @jwt_required()
 def project_create():
@@ -88,7 +94,7 @@ def project_create():
     return jsonify(project.model_dump()), 201
 
 
-@document(request_schema=ProjectUpdate, response_schema=ProjectResponse)
+@document(request_schema=ProjectUpdate, response_schema=ProjectResponse) # type: ignore
 @project_bp.route("/<int:project_id>", methods=["PUT"])
 @jwt_required()
 def project_update(project_id: int):
@@ -120,3 +126,72 @@ def project_delete(project_id: int):
         return jsonify(
             {"message": f"Project with id {project_id} has been deleted"}
         ), 200
+
+
+@document(response_schema=ProjectMemberResponse) # type: ignore
+@project_bp.route("/<int:project_id>/members", methods=["GET"])
+@jwt_required()
+def project_members_list(project_id):
+    try:
+        members = get_members(project_id)
+        return jsonify(members)
+    except APIException as e:
+        return e.to_response()
+
+
+@document(response_schema=ProjectMemberResponse)# type: ignore
+@project_bp.route("/<int:project_id>/members/<int:user_id>", methods=["GET"])
+@jwt_required()
+def project_member_details(project_id, user_id):
+    try:
+        member = get_member(project_id, user_id)
+        return jsonify(member)
+    except APIException as e:
+        return e.to_response()
+
+
+@document(response_schema=ProjectMemberResponse) # type: ignore
+@project_bp.route("/<int:project_id>/members", methods=["POST"])
+@jwt_required()
+def project_member_create(project_id):
+    try:
+        data = request.get_json()
+        if not data:
+            raise BadRequestException("Request body is missing or not valid JSON")
+        project_member_data = ProjectMemberCreate(**data)
+        member = create_member(project_id, project_member_data)
+        return jsonify(member)
+    except ValidationError as e:
+        return ValidationException(
+            message="Validation Error", data=e.errors() # type: ignore
+        ).to_response()
+    except APIException as e:
+        return e.to_response()
+
+
+@document(response_schema=ProjectMemberResponse) # type: ignore
+@project_bp.route("/<int:project_id>/members/<int:user_id>", methods=["PUT"])
+@jwt_required()
+def project_member_role_update(project_id, user_id):
+    try:
+        data = request.get_json()
+        if not data:
+            raise BadRequestException("Request body is missing or not valid JSON")
+        role = data.get("role", None)
+        if not role:
+            raise BadRequestException("Role is missing in the request data")
+
+        member = update_member_role(project_id=project_id, user_id=user_id, role=role)
+        return jsonify(member)
+    except APIException as e:
+        return e.to_response()
+
+
+@project_bp.route("/<int:project_id>/members/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+def project_member_delete(project_id, user_id):
+    try:
+        delete_member(project_id, user_id)
+        return jsonify({"message": "Member deleted successfully"})
+    except APIException as e:
+        return e.to_response()

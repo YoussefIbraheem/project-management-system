@@ -16,12 +16,17 @@ from app.events.board_event import (
     BoardUpdatedEvent,
 )
 from app.schemas.board_schema import BoardCreate, BoardResponse, BoardUpdate
+from app.schemas.board_column_schema import BoardColumnCreate, BoardColumnDetailsResponse
 from app.services.board_service import (
     create_board,
     delete_board,
     get_board_by_id,
     get_board_by_project,
     update_board,
+    create_column,
+    delete_column,
+    get_column,
+    get_columns,
 )
 
 board_bp = Blueprint("board", __name__, url_prefix="/api/v1/boards/")
@@ -47,8 +52,8 @@ board_bp = Blueprint("board", __name__, url_prefix="/api/v1/boards/")
             "required": False,
             "description": "The offset for pagination",
         },
-    ],
-    response_schema=BoardResponse,
+    ], # type: ignore
+    response_schema=BoardResponse, # type: ignore
 )
 @board_bp.route("/", methods=["GET"])
 @jwt_required()
@@ -57,24 +62,24 @@ def boards_list():
         project_id = request.args.get("project_id")
         limit = request.args.get("limit")
         offset = request.args.get("offset")
-        boards = get_board_by_project(project_id=project_id, limit=limit, offset=offset)
+        boards = get_board_by_project(project_id=project_id, limit=limit, offset=offset) # type: ignore
         return jsonify([board.model_dump() for board in boards]), 200
     except APIException as e:
         return e.to_response()
 
 
-@document(response_schema=BoardResponse)
+@document(response_schema=BoardResponse) # type: ignore
 @board_bp.route("/<int:board_id>", methods=["GET"])
 @jwt_required()
 def board_get(board_id: int):
     try:
         board = get_board_by_id(board_id=board_id)
-        return jsonify(board.model_dump()), 200
+        return jsonify(board.model_dump()), 200 # type: ignore
     except APIException as e:
         return e.to_response()
 
 
-@document(request_schema=BoardCreate, response_schema=BoardResponse)
+@document(request_schema=BoardCreate, response_schema=BoardResponse) # type: ignore
 @board_bp.route("/", methods=["POST"])
 @jwt_required()
 def board_create():
@@ -86,7 +91,7 @@ def board_create():
         created_board = create_board(board_data=board_data)
     except ValidationError as e:
         return ValidationException(
-            message="Validation Error", data=e.errors()
+            message="Validation Error", data=e.errors() # type: ignore
         ).to_response()
     except APIException as e:
         return e.to_response()
@@ -97,13 +102,13 @@ def board_create():
             project_id=str(created_board.project_id),
             name=created_board.name,
             description=created_board.description,
-            columns=[col for col in created_board.columns],
+            columns=[col for col in created_board.columns], # type: ignore
         )
         publish_history_event(event.to_dict())
         return jsonify(created_board.model_dump()), 201
 
 
-@document(request_schema=BoardUpdate, response_schema=BoardResponse)
+@document(request_schema=BoardUpdate, response_schema=BoardResponse) # type: ignore
 @board_bp.route("/<int:board_id>", methods=["PUT"])
 @jwt_required()
 def board_update(board_id: int):
@@ -115,15 +120,15 @@ def board_update(board_id: int):
         updated_board = update_board(board_id=board_id, board_data=board_data)
     except ValidationError as e:
         return ValidationException(
-            message="Validation Error", data=e.errors()
+            message="Validation Error", data=e.errors() # type: ignore
         ).to_response()
     except APIException as e:
         return e.to_response()
     else:
         event = BoardUpdatedEvent(
             actor_id=get_jwt_identity(),
-            subject_id=str(updated_board.id),
-            project_id=str(updated_board.project_id),
+            subject_id=str(updated_board.id), # type: ignore
+            project_id=str(updated_board.project_id), # type: ignore
             updated_fields=[
                 {"name": field, "new_value": getattr(updated_board, field)}
                 for field in board_data.model_fields_set
@@ -131,7 +136,7 @@ def board_update(board_id: int):
             ],
         )
         publish_history_event(event.to_dict())
-        return jsonify(updated_board.model_dump()), 200
+        return jsonify(updated_board.model_dump()), 200 # type: ignore
 
 
 @board_bp.route("/<int:board_id>", methods=["DELETE"])
@@ -149,3 +154,55 @@ def board_delete(board_id: int):
         return jsonify(
             {"message": f"Board with id {board_id} deleted successfully"}
         ), 200
+
+
+@document(response_schema=BoardColumnDetailsResponse) # type: ignore
+@jwt_required()
+@board_bp.route("/<int:board_id>/columns", methods=["GET"])
+def columns_get(board_id: int):
+    try:
+        columns = get_columns(board_id)
+        return jsonify([c.model_dump() for c in columns]), 200
+    except APIException as e:
+        return e.to_response()
+
+@document(response_schema=BoardColumnDetailsResponse) # type: ignore
+@jwt_required()
+@board_bp.route("/<int:board_id>/columns/<int:column_id>", methods=["GET"])
+def column_get(board_id: int, column_id: int):
+    try:
+        column = get_column(board_id, column_id)
+        return jsonify(column.model_dump()), 200
+    except APIException as e:
+        return e.to_response()
+
+
+@document(request_schema=BoardColumnCreate,response_schema=BoardColumnDetailsResponse) # type: ignore
+@jwt_required()
+@board_bp.route("/<int:board_id>/columns", methods=["POST"])
+def column_create(board_id: int):
+    try:
+        data = request.get_json()
+        if not data:
+            raise BadRequestException("Request body is missing or not valid JSON")
+
+        column = create_column(board_id, data)
+        return jsonify(column.model_dump()), 201
+
+    except ValidationError as e:
+        return ValidationException(
+            message="Validation Error", data=e.errors() # type: ignore
+        ).to_response()
+    except APIException as e:
+        return e.to_response()
+
+
+@jwt_required()
+@board_bp.route("/<int:board_id>/columns/<int:column_id>", methods=["DELETE"])
+def column_delete(board_id: int, column_id: int):
+    try:
+        delete_column(board_id, column_id)
+        return jsonify({"message": "Column deleted successfully"}), 204
+
+    except APIException as e:
+        return e.to_response()
