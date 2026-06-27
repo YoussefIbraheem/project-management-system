@@ -3,8 +3,9 @@ import logging
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, permissions, response, status, views
+from rest_framework import generics, permissions, response, status, views , authentication
 from rest_framework_simplejwt import tokens
+
 from .events import (
     UserDeleteEvent,
     UserEmailChangeEvent,
@@ -17,6 +18,7 @@ from .events import (
 from .models import User, UserProfile
 from .publisher import publish_history_event
 from .serializers import (
+    CustomTokenObtainPairSerializer,
     UserLoginSerializer,
     UserLogoutSerializer,
     UserPasswordChangeSerializer,
@@ -71,9 +73,10 @@ class UserLoginView(views.APIView):
 
     @swagger_auto_schema(request_body=UserLoginSerializer)
     def post(self, request):
-        serializer = UserLoginSerializer(data=request.data)
+        serializer = CustomTokenObtainPairSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.validated_data
+            data = serializer.validated_data
+            user = serializer.user
 
             actor_id = request.user.id if request.user.id else user.id
 
@@ -84,23 +87,23 @@ class UserLoginView(views.APIView):
                 email=user.email,
             )
 
-            publish_history_event(event.to_dict())
+            # publish_history_event(event.to_dict())
 
-            refresh = tokens.RefreshToken.for_user(user=user)
-            refresh["sub"] = str(user.id) # required by flask-jwt-extended
-            
-            logger.warning(
-                f"REFRESH TOKEN FOR USER {user.username}: {str(refresh)}", exc_info=True
-            )
+            # refresh = tokens.RefreshToken.for_user(user=user)
+            # refresh["sub"] = str(user.id)  # required by flask-jwt-extended
+
+            # logger.warning(
+            #     f"REFRESH TOKEN FOR USER {user.username}: {str(refresh)}", exc_info=True
+            # )
 
             return response.Response(
                 {
                     "message": "User logged in successfully",
                     "user": UserSerializer(user).data,
                     "tokens": {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                    }
+                        "refresh": str(data["refresh"]),
+                        "access": str(data["access"]),
+                    },
                 },
                 status=status.HTTP_201_CREATED,
             )
@@ -232,7 +235,7 @@ class UserLogoutView(views.APIView):
 
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAdminUser,permissions.IsAuthenticated]
     serializer_class = UserSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["email", "username", "is_verified"]
@@ -244,7 +247,7 @@ class UserListView(generics.ListAPIView):
 
 class UserDetailsView(generics.RetrieveAPIView):
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAdminUser,permissions.IsAuthenticated]
     serializer_class = UserSerializer
 
     @swagger_auto_schema(serializer_class=UserSerializer)

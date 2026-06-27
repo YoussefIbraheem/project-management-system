@@ -193,8 +193,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 SIMPLE_JWT = {
+    "TOKEN_OBTAIN_SERIALIZER":"accounts.serializers.CustomTokenObtainPairSerializer",
     "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=env.int("ACCESS_TOKEN_LIFETIME", default=5)
+        minutes=env.int("ACCESS_TOKEN_LIFETIME", default=2)
     ),
     "REFRESH_TOKEN_LIFETIME": timedelta(
         days=env.int("REFRESH_TOKEN_LIFETIME", default=1)
@@ -202,6 +203,8 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ["Bearer"],
     "ALGORITHM": env("ALGORITHM"),
     "SIGNING_KEY": env("JWT_SECRET_KEY"),
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ROTATE_REFRESH_TOKENS": True,
 }
 
 # Celery Broker Configuration

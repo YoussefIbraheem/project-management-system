@@ -1,10 +1,28 @@
+import json
+from typing import Any
 from urllib import response
+
+from django.contrib.auth import authenticate, hashers, password_validation
 from psycopg import logger
 from rest_framework import serializers
-from utils.generate_unique_number import generate_verification_code
-from .models import User, UserProfile, UserVerification
-from django.contrib.auth import password_validation, hashers, authenticate
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from utils.generate_unique_number import generate_verification_code
+
+from .models import User, UserProfile, UserVerification
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token["is_superuser"] = user.is_superuser
+        token["sub"] = str(user.id)
+        # ...
+
+        return token
 
 
 class UserRegisterationSerializer(serializers.ModelSerializer):
@@ -87,10 +105,8 @@ class UserLoginSerializer(serializers.Serializer):
 
         if not user:
             raise serializers.ValidationError("Invalid Credentials.")
-        
-        
-        if not user.is_verified:
 
+        if not user.is_verified:
             code = UserVerification.objects.update_or_create(
                 user=user, defaults={"code": generate_verification_code()}
             )[0]
@@ -150,7 +166,6 @@ class UserPasswordChangeSerializer(serializers.Serializer):
 
 
 class UserLogoutSerializer(serializers.Serializer):
-
     refresh_token = serializers.CharField(required=True, write_only=True)
 
     def validate_refresh_token(self, value):
