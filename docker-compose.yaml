@@ -5,6 +5,7 @@ services:
     build:
       context: ./services/users
       dockerfile: Dockerfile
+    user: "${CURRENT_UID}:${CURRENT_GID}"
     command: python manage.py runserver 0.0.0.0:8000
     container_name: users_service
     ports:
@@ -27,6 +28,7 @@ services:
     build:
       context: ./services/tasks
       dockerfile: Dockerfile
+    user: "${CURRENT_UID}:${CURRENT_GID}"
     container_name: tasks_service
     ports:
       - "5005:5005"
@@ -42,6 +44,7 @@ services:
     build:
       context: ./services/history
       dockerfile: Dockerfile
+    user: "${CURRENT_UID}:${CURRENT_GID}"
     container_name: history_service
     ports:
       - "5006:5006"
