@@ -23,7 +23,7 @@ from app import create_app
 from app.db import database as db_module
 from app.models import Base, Board, BoardColumn, Project, ProjectMember, Task
 from app.security.roles import MemberRole
-
+from app import logger
 
 @pytest.fixture()
 def engine():
@@ -66,25 +66,29 @@ def client(app):
     return app.test_client()
 
 
-@pytest.fixture()
-def auth_headers(app):
-    def _make(identity="user-1"):
+@pytest.fixture(params=[False])
+def auth_headers(app, request):
+    def _make(identity="1"):
         with app.app_context():
-            token = create_access_token(identity=identity)
+            token = create_access_token(
+                identity=identity, additional_claims={"is_superuser": request.param}
+            )
         return {"Authorization": f"Bearer {token}"}
 
     return _make
 
 
-@pytest.fixture()
-def seeded_data(db_session):
+@pytest.fixture(params=[member.db_value for member in MemberRole])
+def seeded_data(db_session, request):
     project = Project(name="Alpha", description="Project Alpha")
     db_session.add(project)
     db_session.flush()
+    db_session.refresh(project)
 
-    member = ProjectMember(
-        project_id=project.id, user_id="user-1", role=MemberRole.MANAGER.db_value
-    )
+    logger.info(f"PROJECT_DATA:{project.id}")
+
+    member = ProjectMember(project_id=project.id, user_id="1", role=request.param)
+    logger.info(f"MEMBER DATA:{member}")
     board = Board(name="Board 1", description="Main board", project_id=project.id)
     db_session.add_all([member, board])
     db_session.flush()
@@ -104,7 +108,7 @@ def seeded_data(db_session):
         column_id=todo.id,
         priority="low",
         due_date=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        creator_id="user-1",
+        creator_id="1",
         board_id=board.id,
     )
     db_session.add(task)

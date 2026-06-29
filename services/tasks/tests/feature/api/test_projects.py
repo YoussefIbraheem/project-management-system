@@ -1,5 +1,8 @@
 import pytest
 from app.models import Project
+from app.security.roles import MemberRole
+
+from tests.conftest import logger
 
 
 def test_list_projects_returns_projects(client, auth_headers, db_session, seeded_data):
@@ -57,21 +60,66 @@ def test_create_project_rejects_missing_name(client, auth_headers):
 
 def test_update_project(client, auth_headers, seeded_data):
     project_id = seeded_data["project"].id
-
     response = client.put(
         f"/api/v1/projects/{project_id}",
         headers=auth_headers(),
         json={"name": "Renamed Project"},
     )
+    role = seeded_data["member"].role
 
-    assert response.status_code == 200
-    payload = response.get_json()
-    assert payload["id"] == project_id
-    assert payload["name"] == "Renamed Project"
+    match role:
+        case MemberRole.OWNER.db_value:
+            assert response.status_code == 200
+            payload = response.get_json()
+            assert payload["name"] == "Renamed Project"
+            logger.info(f"PAYLOAD: {payload}")
+
+        case MemberRole.MANAGER.db_value:
+            assert response.status_code == 200
+            payload = response.get_json()
+            assert payload["name"] == "Renamed Project"
+            logger.info(f"PAYLOAD: {payload}")
+        case MemberRole.MEMBER.db_value:
+            assert response.status_code == 403
+            payload = response.get_json()
+            assert payload["error"]["status"] == 403
+            logger.info(f"PAYLOAD: {payload}")
+
+        case _:
+            raise ValueError("Invalid role value")
 
 
-def test_delete_project_surfaces_integrity_issue(client, auth_headers, seeded_data):
+# def test_delete_project_surfaces_integrity_issue(client, auth_headers, seeded_data):
+#     project_id = seeded_data["project"].id
+
+#     with pytest.raises(Exception, match="Transaction Failed"):
+#         response = client.delete(
+#             f"/api/v1/projects/{project_id}", headers=auth_headers()
+#         )
+#         logger.info(f"RESPONSE DATA:{response.get_json()}")
+
+
+def test_delete_project(client, auth_headers, seeded_data):
     project_id = seeded_data["project"].id
+    response = client.delete(f"/api/v1/projects/{project_id}", headers=auth_headers())
+    role = seeded_data["member"].role
 
-    with pytest.raises(Exception, match="Transaction Failed"):
-        client.delete(f"/api/v1/projects/{project_id}", headers=auth_headers())
+    match role:
+        case MemberRole.OWNER.db_value:
+            assert response.status_code == 200
+            logger.info("Project deleted successfully")
+
+        case MemberRole.MANAGER.db_value:
+            assert response.status_code == 403
+            payload = response.get_json()
+            assert payload["error"]["status"] == 403
+            logger.info(f"PAYLOAD: {payload}")
+
+        case MemberRole.MEMBER.db_value:
+            assert response.status_code == 403
+            payload = response.get_json()
+            assert payload["error"]["status"] == 403
+            logger.info(f"PAYLOAD: {payload}")
+
+        case _:
+            raise ValueError("Invalid role value")

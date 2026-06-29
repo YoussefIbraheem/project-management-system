@@ -14,5 +14,15 @@ ROLE_POWER = {
 }
 
 
-def has_role_at_least(role: MemberRole, minimum: MemberRole) -> bool:
-    return ROLE_POWER[role] >= ROLE_POWER[minimum]
+def get_role(keyword) -> MemberRole:
+    for role in MemberRole:
+        if keyword == role.value or keyword.lower() == role.name.lower():
+            return role
+    raise ValueError(f"Invalid member role: {keyword}")
+
+
+def has_power(member_role: MemberRole, role_allowed: MemberRole):
+    return ROLE_POWER[member_role] >= ROLE_POWER[role_allowed]
+    
+        
+    

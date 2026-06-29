@@ -23,4 +23,4 @@ class Project(Base):
     boards = relationship(
         "Board", back_populates="project", cascade="all, delete-orphan"
     )
-    members = relationship("ProjectMember", back_populates="project")
+    members = relationship("ProjectMember", back_populates="project",cascade="all, delete-orphan",passive_deletes=True)

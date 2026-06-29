@@ -1,6 +1,7 @@
-from utils.exceptions import BadRequestException, NotFoundException
-from app.models import Project, ProjectMember
 from slugify import slugify
+from utils.exceptions import BadRequestException, NotFoundException
+
+from app.models import Project, ProjectMember
 
 
 def get_project_or_404(db, project_id: int) -> Project:
@@ -26,7 +27,9 @@ def get_member_or_404(db, project_id: int, user_id: str) -> ProjectMember:
     """
     member = (
         db.query(ProjectMember)
-        .filter_by(project_id=project_id, user_id=user_id)
+        .filter(
+            ProjectMember.project_id == project_id, ProjectMember.user_id == user_id
+        )
         .first()
     )
     if not member:
@@ -34,6 +37,7 @@ def get_member_or_404(db, project_id: int, user_id: str) -> ProjectMember:
             f"User with id {user_id} does not exist in project with id {project_id}"
         )
     return member
+
 
 def ensure_member_in_project(db, project_id, user_id):
     """

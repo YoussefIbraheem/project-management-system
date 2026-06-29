@@ -20,7 +20,7 @@ class ProjectMember(Base):
     __tablename__ = "project_members"
 
     id = Column(Integer, primary_key=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id",ondelete="CASCADE"), nullable=False, index=True)
     user_id = Column(String, nullable=False, index=True)
     role = Column(String, nullable=False, default=MemberRole.MEMBER.db_value)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

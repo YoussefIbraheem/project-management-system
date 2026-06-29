@@ -1,9 +1,19 @@
 from typing import List
-from app.models.project import Project
-from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
+
 from app.db.database import get_db_session
 from app.models import ProjectMember
+from app.models.project import Project
+from app.permissions.project_permission import (
+    can_create_project_member,
+    can_delete_project,
+    can_delete_project_member,
+    can_update_project,
+    can_update_project_member_role,
+)
 from app.schemas.project_member_schema import ProjectMemberCreate, ProjectMemberResponse
+from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
+from app.security.actor import Actor
+from app.security.roles import MemberRole
 from app.validators.project_validator import (
     get_member_or_404,
     get_project_or_404,
@@ -38,7 +48,7 @@ def get_project_by_id(project_id: int) -> ProjectResponse:
         return ProjectResponse.model_validate(db_project)
 
 
-def create_project(project_data: ProjectCreate) -> ProjectResponse:
+def create_project(actor: Actor, project_data: ProjectCreate) -> ProjectResponse:
     """Create Project
 
     Keyword arguments:
@@ -51,14 +61,21 @@ def create_project(project_data: ProjectCreate) -> ProjectResponse:
             description=project_data.description,
         )
 
-        db.add(db_project)
+        owner = ProjectMember(
+            project= db_project,
+            user_id=actor.user_id,
+            role=MemberRole.OWNER.db_value,
+        )
+
+        db.add_all([db_project,owner])
         db.commit()
-        db.refresh(db_project)
 
         return ProjectResponse.model_validate(db_project)
 
 
-def update_project(project_id: int, project_data: ProjectUpdate) -> ProjectResponse:
+def update_project(
+    actor: Actor, project_id: int, project_data: ProjectUpdate
+) -> ProjectResponse:
     """Update Project
 
     Keyword arguments:
@@ -68,6 +85,8 @@ def update_project(project_id: int, project_data: ProjectUpdate) -> ProjectRespo
     """
     with get_db_session() as db:
         db_project = get_project_or_404(db, project_id)
+        member = get_member_or_404(db, project_id, actor.user_id)
+        can_update_project(actor, member)
 
         if project_data.name is not None:
             db_project.name = project_data.name  # type: ignore[assignment]
@@ -81,7 +100,7 @@ def update_project(project_id: int, project_data: ProjectUpdate) -> ProjectRespo
         return ProjectResponse.model_validate(db_project)
 
 
-def delete_project(project_id: int) -> bool:
+def delete_project(actor, project_id: int) -> bool:
     """Delete Project
 
     Keyword arguments:
@@ -90,11 +109,16 @@ def delete_project(project_id: int) -> bool:
     """
     with get_db_session() as db:
         db_project = get_project_or_404(db, project_id)
+        member = get_member_or_404(db, project_id, actor.user_id)
+        can_delete_project(actor, member)
+
         db.delete(db_project)
         db.commit()
         return True
 
+
 # Project Member
+
 
 def get_members(project_id: int):
     """
@@ -122,7 +146,7 @@ def get_member(project_id: int, user_id: str):
         return ProjectMemberResponse.model_validate(member)
 
 
-def create_member(project_id: int, member_data: ProjectMemberCreate):
+def create_member(actor: Actor, project_id: int, member_data: ProjectMemberCreate):
     """
     Create a new member for a project.
     - project_id: The ID of the project.
@@ -131,6 +155,8 @@ def create_member(project_id: int, member_data: ProjectMemberCreate):
     """
     with get_db_session() as db:
         project = get_project_or_404(db, project_id)
+        action_member = get_member_or_404(db, project_id, actor.user_id)
+        can_create_project_member(actor, action_member)
         role = member_data.role
 
         member = ProjectMember(
@@ -144,7 +170,7 @@ def create_member(project_id: int, member_data: ProjectMemberCreate):
         return ProjectMemberResponse.model_validate(member)
 
 
-def update_member_role(project_id: int, role: str, user_id: str):
+def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
     """
     Update the role of a member in a project.
     - project_id: The ID of the project.
@@ -153,7 +179,7 @@ def update_member_role(project_id: int, role: str, user_id: str):
     """
     with get_db_session() as db:
         member = get_member_or_404(db, project_id, user_id)
-        
+
         member.role = role  # type: ignore[assignment]
         db.flush()
         db.refresh(member)
@@ -161,7 +187,7 @@ def update_member_role(project_id: int, role: str, user_id: str):
         return ProjectMemberResponse.model_validate(member)
 
 
-def delete_member(project_id: int, user_id: str):
+def delete_member(actor: Actor, project_id: int, user_id: str):
     """
     Delete a member from a project.
     - project_id: The ID of the project.
