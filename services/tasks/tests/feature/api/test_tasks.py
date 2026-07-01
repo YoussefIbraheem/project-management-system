@@ -91,11 +91,11 @@ def test_assign_task(client, auth_headers, seeded_data, db_session):
     response = client.post(
         f"/api/v1/tasks/{seeded_data['task'].id}/assign",
         headers=auth_headers(),
-        json={"assignees_ids": ["user-1"]},
+        json={"assignees_ids": ["1"]},
     )
 
     assert response.status_code == 200
-    assert response.get_json()["assignees"] == [{"user_id": "user-1"}]
+    assert response.get_json()["assignees"] == [{"user_id": "1"}]
 
 
 def test_unassign_task(client, auth_headers, seeded_data):
@@ -103,13 +103,13 @@ def test_unassign_task(client, auth_headers, seeded_data):
     client.post(
         f"/api/v1/tasks/{task_id}/assign",
         headers=auth_headers(),
-        json={"assignees_ids": ["user-1"]},
+        json={"assignees_ids": ["1"]},
     )
 
     response = client.post(
         f"/api/v1/tasks/{task_id}/unassign",
         headers=auth_headers(),
-        json={"assignees_ids": ["user-1"]},
+        json={"assignees_ids": ["1"]},
     )
 
     assert response.status_code == 200

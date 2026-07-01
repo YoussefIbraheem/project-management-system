@@ -1,330 +1,204 @@
-"""Test cases for project member API endpoints."""
+"""Test cases for project member service functions."""
 
-from utils.exceptions import BadRequestException, NotFoundException
-
-from . import DummyModel, app, auth_headers, client, create_access_token
-
-
-def test_project_members_list_returns_members(client, app, monkeypatch):
-    """Test GET /projects/<project_id>/members returns list of members."""
-    expected = [
-        {
-            "id": 1,
-            "project_id": 1,
-            "user_id": "user1",
-            "role": "member",
-        },
-        {
-            "id": 2,
-            "project_id": 1,
-            "user_id": "user2",
-            "role": "member"
-        },
-    ]
-
-    def fake_get_members(project_id):
-        assert project_id == 1
-        return expected
-
-    monkeypatch.setattr("app.apis.project_api.get_members", fake_get_members)
-
-    with app.app_context():
-        headers = {"Authorization": f"Bearer {create_access_token(identity='10')}"}
-
-    response = client.get("/api/v1/projects/1/members", headers=headers)
-
-    assert response.status_code == 200
-    assert response.get_json() == expected
+import pytest
+from app.db.database import get_db_session
+from app.models import Project, ProjectMember
+from app.security.actor import Actor
+from app.security.roles import MemberRole
+from app.schemas.project_member_schema import ProjectMemberCreate
+from app.services.project_service import (
+    create_member,
+    delete_member,
+    get_member,
+    get_members,
+    update_member_role,
+)
+from utils.exceptions import NotFoundException
 
 
-def test_project_members_list_empty_returns_empty_list(client, app, monkeypatch):
-    """Test GET /projects/<project_id>/members returns empty list when no members exist."""
-    monkeypatch.setattr(
-        "app.apis.project_api.get_members", lambda project_id: []
+def _seed_project_members():
+    """Seed database with test data."""
+    with get_db_session() as db:
+        project = Project(name="Test Project", description="Project for testing members")
+        db.add(project)
+        db.flush()
+
+        owner = ProjectMember(
+            project_id=project.id, user_id="owner-1", role=MemberRole.OWNER.db_value
+        )
+        member1 = ProjectMember(
+            project_id=project.id, user_id="member-1", role=MemberRole.MEMBER.db_value
+        )
+        member2 = ProjectMember(
+            project_id=project.id, user_id="member-2", role=MemberRole.MEMBER.db_value
+        )
+        db.add_all([owner, member1, member2])
+        db.commit()
+
+        return {
+            "project_id": project.id,
+            "owner_id": "owner-1",
+            "member_1_id": "member-1",
+            "member_2_id": "member-2",
+        }
+
+
+def test_get_members_returns_all_members():
+    """Test get_members returns all members in a project."""
+    seeded = _seed_project_members()
+
+    members = get_members(seeded["project_id"])
+
+    assert len(members) == 3
+    assert any(m.user_id == "owner-1" for m in members)
+    assert any(m.user_id == "member-1" for m in members)
+    assert any(m.user_id == "member-2" for m in members)
+
+
+def test_get_members_empty_returns_empty_list():
+    """Test get_members returns empty list when project has no members."""
+    with get_db_session() as db:
+        project = Project(name="Empty Project", description="No members")
+        db.add(project)
+        db.commit()
+        project_id = project.id
+
+    members = get_members(project_id)
+
+    assert len(members) == 0
+
+
+def test_get_members_project_not_found_raises_404():
+    """Test get_members raises NotFoundException when project doesn't exist."""
+    with pytest.raises(NotFoundException):
+        get_members(999)
+
+
+def test_get_member_returns_specific_member():
+    """Test get_member returns a specific member by user ID."""
+    seeded = _seed_project_members()
+
+    member = get_member(seeded["project_id"], seeded["member_1_id"])
+
+    assert member.user_id == "member-1"
+    assert member.project_id == seeded["project_id"]
+    assert member.role == MemberRole.MEMBER.db_value
+
+
+def test_get_member_user_not_in_project_raises_404():
+    """Test get_member raises NotFoundException when user is not in project."""
+    seeded = _seed_project_members()
+
+    with pytest.raises(NotFoundException):
+        get_member(seeded["project_id"], "nonexistent-user")
+
+
+def test_get_member_project_not_found_raises_404():
+    """Test get_member raises NotFoundException when project doesn't exist."""
+    with pytest.raises(NotFoundException):
+        get_member(999, "some-user")
+
+
+def test_create_member_adds_new_member():
+    """Test create_member adds a new member to project."""
+    seeded = _seed_project_members()
+    actor = Actor(user_id="owner-1")
+
+    new_member = create_member(
+        actor,
+        seeded["project_id"],
+        ProjectMemberCreate(user_id="new-member", role=MemberRole.MEMBER.db_value),
     )
 
-    with app.app_context():
-        headers = {"Authorization": f"Bearer {create_access_token(identity='10')}"}
-        response = client.get("/api/v1/projects/1/members", headers=headers)
+    assert new_member.user_id == "new-member"
+    assert new_member.project_id == seeded["project_id"]
+    assert new_member.role == MemberRole.MEMBER.db_value
 
-    assert response.status_code == 200
-    assert response.get_json() == []
-
-
-def test_project_members_list_project_not_found_returns_404(
-    client, auth_headers, monkeypatch
-):
-    """Test GET /projects/<project_id>/members returns 404 when project doesn't exist."""
-
-    def fake_get_members(project_id):
-        raise NotFoundException(f"Project with id {project_id} does not exist")
-
-    monkeypatch.setattr("app.apis.project_api.get_members", fake_get_members)
-
-    response = client.get("/api/v1/projects/999/members", headers=auth_headers())
-
-    assert response.status_code == 404
-    assert "error" in response.get_json()
+    members = get_members(seeded["project_id"])
+    assert len(members) == 4
 
 
-def test_project_member_details_returns_member(client, app, monkeypatch):
-    """Test GET /projects/<project_id>/members/<user_id> returns member details."""
-    expected = {
-        "id": 1,
-        "project_id": 1,
-        "user_id": 1,
-        "role": "member",
-    }
+def test_create_member_project_not_found_raises_404():
+    """Test create_member raises NotFoundException when project doesn't exist."""
+    actor = Actor(user_id="owner-1")
 
-    def fake_get_member(project_id, user_id):
-        assert project_id == 1
-        assert user_id == 1
-        return expected
-
-    monkeypatch.setattr("app.apis.project_api.get_member", fake_get_member)
-
-    with app.app_context():
-        headers = {"Authorization": f"Bearer {create_access_token(identity='10')}"}
-        response = client.get("/api/v1/projects/1/members/1", headers=headers)
-
-    assert response.status_code == 200
-    assert response.get_json() == expected
-
-
-def test_project_member_details_user_not_in_project_returns_404(
-    client, auth_headers, monkeypatch
-):
-    """Test GET /projects/<project_id>/members/<user_id> returns 404 when user not in project."""
-
-    def fake_get_member(project_id, user_id):
-        raise NotFoundException(
-            f"User with id {user_id} does not exist in project with id {project_id}"
+    with pytest.raises(NotFoundException):
+        create_member(
+            actor,
+            999,
+            ProjectMemberCreate(user_id="new-member", role=MemberRole.MEMBER.db_value),
         )
 
-    monkeypatch.setattr("app.apis.project_api.get_member", fake_get_member)
 
-    response = client.get("/api/v1/projects/1/members/999", headers=auth_headers())
+def test_update_member_role_changes_role():
+    """Test update_member_role changes a member's role."""
+    seeded = _seed_project_members()
+    actor = Actor(user_id="owner-1")
 
-    assert response.status_code == 404
-    assert "error" in response.get_json()
+    updated_member = update_member_role(
+        actor,
+        seeded["project_id"],
+        MemberRole.MANAGER.db_value,
+        seeded["member_1_id"],
+    )
+
+    assert updated_member.role == MemberRole.MANAGER.db_value
+    assert updated_member.user_id == seeded["member_1_id"]
 
 
-def test_project_member_create_returns_201(client, app, monkeypatch):
-    """Test POST /projects/<project_id>/members creates new member."""
-    payload = {
-        "user_id": "newuser",
-        "role": "member",
-    }
-    expected = {
-        "id": 3,
-        "project_id": 1,
-        "user_id": "newuser",
-        "role": "member",
-    }
+def test_update_member_role_member_not_found_raises_404():
+    """Test update_member_role raises NotFoundException when member doesn't exist."""
+    seeded = _seed_project_members()
+    actor = Actor(user_id="owner-1")
 
-    def fake_create_member(project_id, member_data):
-        assert project_id == 1
-        assert member_data.user_id == "newuser"
-        assert member_data.role == "member"
-        return expected
-
-    monkeypatch.setattr("app.apis.project_api.create_member", fake_create_member)
-
-    with app.app_context():
-        headers = {"Authorization": f"Bearer {create_access_token(identity='10')}"}
-        response = client.post(
-            "/api/v1/projects/1/members", json=payload, headers=headers
+    with pytest.raises(NotFoundException):
+        update_member_role(
+            actor,
+            seeded["project_id"],
+            MemberRole.MANAGER.db_value,
+            "nonexistent-user",
         )
 
-    assert response.status_code == 200
-    assert response.get_json() == expected
 
+def test_update_member_role_project_not_found_raises_404():
+    """Test update_member_role raises NotFoundException when project doesn't exist."""
+    actor = Actor(user_id="owner-1")
 
-def test_project_member_create_missing_body_returns_400(
-    client, auth_headers, monkeypatch
-):
-    """Test POST /projects/<project_id>/members returns error when body is missing."""
-    response = client.post("/api/v1/projects/1/members", headers=auth_headers())
-
-    assert response.status_code == 415  # Unsupported Media Type
-
-
-def test_project_member_create_invalid_json_returns_400(client, auth_headers):
-    """Test POST /projects/<project_id>/members returns error when JSON is invalid."""
-    response = client.post(
-        "/api/v1/projects/1/members",
-        data="invalid json",
-        content_type="application/json",
-        headers=auth_headers(),
-    )
-
-    assert response.status_code == 400
-
-
-def test_project_member_create_project_not_found_returns_404(
-    client, auth_headers, monkeypatch
-):
-    """Test POST /projects/<project_id>/members returns 404 when project doesn't exist."""
-    payload = {
-        "user_id": "newuser",
-        "role": "member",
-    }
-
-    def fake_create_member(project_id, member_data):
-        raise NotFoundException(f"Project with id {project_id} does not exist")
-
-    monkeypatch.setattr("app.apis.project_api.create_member", fake_create_member)
-
-    response = client.post(
-        "/api/v1/projects/999/members", json=payload, headers=auth_headers()
-    )
-
-    assert response.status_code == 404
-    assert "error" in response.get_json()
-
-
-def test_project_member_update_role_returns_200(client, app, monkeypatch):
-    """Test PUT /projects/<project_id>/members/<user_id> updates member role."""
-    payload = {
-        "role": "member",
-    }
-    expected = {
-        "id": 1,
-        "project_id": 1,
-        "user_id": "user1",
-        "role": "member",
-    }
-
-    def fake_update_member_role(project_id, user_id, role):
-        assert project_id == 1
-        assert user_id == 1
-        assert role == "member"
-        return expected
-
-    monkeypatch.setattr(
-        "app.apis.project_api.update_member_role",
-        fake_update_member_role,
-    )
-
-    with app.app_context():
-        headers = {"Authorization": f"Bearer {create_access_token(identity='10')}"}
-        response = client.put(
-            "/api/v1/projects/1/members/1", json=payload, headers=headers
+    with pytest.raises(NotFoundException):
+        update_member_role(
+            actor,
+            999,
+            MemberRole.MANAGER.db_value,
+            "some-user",
         )
 
-    assert response.status_code == 200
-    assert response.get_json() == expected
+
+def test_delete_member_removes_member():
+    """Test delete_member removes a member from project."""
+    seeded = _seed_project_members()
+    actor = Actor(user_id="owner-1")
+
+    result = delete_member(actor, seeded["project_id"], seeded["member_1_id"])
+
+    assert result is True
+
+    members = get_members(seeded["project_id"])
+    assert len(members) == 2
+    assert not any(m.user_id == "member-1" for m in members)
 
 
-def test_project_member_update_role_missing_role_returns_400(client, auth_headers):
-    """Test PUT /projects/<project_id>/members/<user_id> returns error when role is missing."""
-    payload = {}
-    response = client.put(
-        "/api/v1/projects/1/members/1", json=payload, headers=auth_headers()
-    )
+def test_delete_member_member_not_found_raises_404():
+    """Test delete_member raises NotFoundException when member doesn't exist."""
+    seeded = _seed_project_members()
+    actor = Actor(user_id="owner-1")
 
-    assert response.status_code == 400
-    assert "error" in response.get_json()
+    with pytest.raises(NotFoundException):
+        delete_member(actor, seeded["project_id"], "nonexistent-user")
 
 
-def test_project_member_update_role_missing_body_returns_400(client, auth_headers):
-    """Test PUT /projects/<project_id>/members/<user_id> returns error when body is missing."""
-    response = client.put("/api/v1/projects/1/members/1", headers=auth_headers())
+def test_delete_member_project_not_found_raises_404():
+    """Test delete_member raises NotFoundException when project doesn't exist."""
+    actor = Actor(user_id="owner-1")
 
-    assert response.status_code == 415  # Unsupported Media Type
-
-
-def test_project_member_update_role_member_not_found_returns_404(
-    client, auth_headers, monkeypatch
-):
-    """Test PUT /projects/<project_id>/members/<user_id> returns 404 when member doesn't exist."""
-    payload = {
-        "role": "member",
-    }
-
-    def fake_update_member_role(project_id, user_id, role       ):
-        raise NotFoundException(
-            f"User with id {user_id} does not exist in project with id {project_id}"
-        )
-
-    monkeypatch.setattr(
-        "app.apis.project_api.update_member_role",
-        fake_update_member_role,
-    )
-
-    response = client.put(
-        "/api/v1/projects/1/members/999", json=payload, headers=auth_headers()
-    )
-
-    assert response.status_code == 404
-    assert "error" in response.get_json()
-
-
-def test_project_member_update_role_invalid_role_returns_404(
-    client, auth_headers, monkeypatch
-):
-    """Test PUT /projects/<project_id>/members/<user_id> returns 404 when role doesn't exist."""
-    payload = {
-        "role":"member"
-    }
-
-    def fake_update_member_role(project_id, user_id, role):
-        raise NotFoundException(f"Role with id {role} does not exist")
-
-    monkeypatch.setattr(
-        "app.apis.project_api.update_member_role",
-        fake_update_member_role,
-    )
-
-    response = client.put(
-        "/api/v1/projects/1/members/1", json=payload, headers=auth_headers()
-    )
-
-    assert response.status_code == 404
-    assert "error" in response.get_json()
-
-
-def test_project_member_delete_returns_200(client, auth_headers, monkeypatch):
-    """Test DELETE /projects/<project_id>/members/<user_id> deletes member."""
-    monkeypatch.setattr(
-        "app.apis.project_api.delete_member", lambda project_id, user_id: True
-    )
-
-    response = client.delete("/api/v1/projects/1/members/1", headers=auth_headers())
-
-    assert response.status_code == 200
-    assert response.get_json() == {"message": "Member deleted successfully"}
-
-
-def test_project_member_delete_member_not_found_returns_404(
-    client, auth_headers, monkeypatch
-):
-    """Test DELETE /projects/<project_id>/members/<user_id> returns 404 when member doesn't exist."""
-
-    def fake_delete_member(project_id, user_id):
-        raise NotFoundException(
-            f"User with id {user_id} does not exist in project with id {project_id}"
-        )
-
-    monkeypatch.setattr("app.apis.project_api.delete_member", fake_delete_member)
-
-    response = client.delete("/api/v1/projects/1/members/999", headers=auth_headers())
-
-    assert response.status_code == 404
-    assert "error" in response.get_json()
-
-
-def test_project_member_delete_project_not_found_returns_404(
-    client, auth_headers, monkeypatch
-):
-    """Test DELETE /projects/<project_id>/members/<user_id> returns 404 when project doesn't exist."""
-
-    def fake_delete_member(project_id, user_id):
-        raise NotFoundException(f"Project with id {project_id} does not exist")
-
-    monkeypatch.setattr("app.apis.project_api.delete_member", fake_delete_member)
-
-    response = client.delete("/api/v1/projects/999/members/1", headers=auth_headers())
-
-    assert response.status_code == 404
-    assert "error" in response.get_json()
+    with pytest.raises(NotFoundException):
+        delete_member(actor, 999, "some-user")

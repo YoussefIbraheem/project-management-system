@@ -2,6 +2,7 @@ import pytest
 from app.db.database import get_db_session
 from app.models import Project
 from app.schemas.project_schema import ProjectCreate, ProjectUpdate
+from app.security.actor import Actor
 from app.services.project_service import (
     create_project,
     delete_project,
@@ -11,19 +12,21 @@ from app.services.project_service import (
 )
 from utils.exceptions import NotFoundException
 
+from app.models.project_member import ProjectMember
 
-def _seed_project(name="Alpha", description="Project Alpha"):
+
+def _seed_project(user_id:str, name="Alpha", description="Project Alpha"):
     with get_db_session() as db:
         project = Project(name=name, description=description)
-        db.add(project)
-        db.flush()
-        db.refresh(project)
+        owner = ProjectMember(project=project, user_id=user_id, role="owner")
+        db.add_all([project, owner])
+        db.commit()
         return project.id
 
 
 def test_get_projects_returns_projects():
-    first_id = _seed_project()
-    second_id = _seed_project("Beta", "Second project")
+    first_id = _seed_project(user_id="1")
+    second_id = _seed_project(user_id="2", name="Beta", description="Second project")
 
     projects = get_projects(limit=10, offset=0)
 
@@ -31,16 +34,19 @@ def test_get_projects_returns_projects():
 
 
 def test_get_project_by_id_returns_project():
-    project_id = _seed_project()
+    project_id = _seed_project(user_id="1")
 
-    project = get_project_by_id(project_id) #type: ignore
+    project = get_project_by_id(project_id)  # type: ignore
 
     assert project.id == project_id
     assert project.name == "Alpha"
 
 
 def test_create_project_persists_project():
-    project = create_project(ProjectCreate(name="Created Project", description="Desc"))
+    actor = Actor(user_id="1", is_superuser=True)
+    project = create_project(
+        actor, ProjectCreate(name="Created Project", description="Desc")
+    )
 
     assert project.id is not None
     assert project.name == "Created Project"
@@ -48,10 +54,11 @@ def test_create_project_persists_project():
 
 
 def test_update_project_updates_fields():
-    project_id = _seed_project()
-
+    project_id = _seed_project(user_id="1")
+    actor = Actor(user_id="1", is_superuser=True)
     project = update_project(
-        project_id, #type: ignore
+        actor,
+        project_id,  # type: ignore
         ProjectUpdate(name="Renamed Project", description="Updated desc"),
     )
 
@@ -60,9 +67,10 @@ def test_update_project_updates_fields():
 
 
 def test_delete_project_returns_true():
-    project_id = _seed_project()
+    project_id = _seed_project(user_id="1")
+    actor = Actor(user_id="1", is_superuser=True)
 
-    assert delete_project(project_id) is True #type: ignore
+    assert delete_project(actor, project_id) is True  # type: ignore
 
 
 def test_get_project_by_id_raises_not_found():

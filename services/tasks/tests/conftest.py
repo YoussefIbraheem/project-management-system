@@ -34,7 +34,8 @@ def engine():
         poolclass=StaticPool,
     )
     Base.metadata.create_all(engine)
-    return engine
+    yield engine
+    Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture()
@@ -49,6 +50,13 @@ def db_session(session_factory):
         yield session
     finally:
         session.close()
+
+
+@pytest.fixture(autouse=True)
+def patch_db(session_factory, monkeypatch):
+    """Automatically patch database for all tests to ensure isolation."""
+    monkeypatch.setattr(db_module, "SessionLocal", session_factory)
+    yield
 
 
 @pytest.fixture()
@@ -66,12 +74,12 @@ def client(app):
     return app.test_client()
 
 
-@pytest.fixture(params=[False])
-def auth_headers(app, request):
-    def _make(identity="1"):
+@pytest.fixture(params=[False,True])
+def auth_headers(app):
+    def _make(identity="1",is_superuser=False):
         with app.app_context():
             token = create_access_token(
-                identity=identity, additional_claims={"is_superuser": request.param}
+                identity=identity, additional_claims={"is_superuser": is_superuser}
             )
         return {"Authorization": f"Bearer {token}"}
 
@@ -85,10 +93,7 @@ def seeded_data(db_session, request):
     db_session.flush()
     db_session.refresh(project)
 
-    logger.info(f"PROJECT_DATA:{project.id}")
-
     member = ProjectMember(project_id=project.id, user_id="1", role=request.param)
-    logger.info(f"MEMBER DATA:{member}")
     board = Board(name="Board 1", description="Main board", project_id=project.id)
     db_session.add_all([member, board])
     db_session.flush()
