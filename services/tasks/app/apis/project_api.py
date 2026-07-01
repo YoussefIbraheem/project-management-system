@@ -157,7 +157,7 @@ def project_delete(project_id: int):
 def project_members_list(project_id):
     try:
         members = get_members(project_id)
-        return [member.model_dump() for member in members]
+        return jsonify([member.model_dump() for member in members]), 200
     except APIException as e:
         return e.to_response()
 
@@ -168,7 +168,7 @@ def project_members_list(project_id):
 def project_member_details(project_id, user_id):
     try:
         member = get_member(project_id, str(user_id))
-        return member.model_dump()
+        return jsonify(member.model_dump()), 200
     except APIException as e:
         return e.to_response()
 
@@ -191,7 +191,7 @@ def project_member_create(project_id):
         member = create_member(
             actor=actor, project_id=project_id, member_data=member_data
         )
-        return member.model_dump()
+        return jsonify(member.model_dump()), 201
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
@@ -221,7 +221,7 @@ def project_member_role_update(project_id, user_id):
         member = update_member_role(
             actor=actor, project_id=project_id, user_id=user_id, role=role
         )
-        return member.model_dump()
+        return jsonify(member.model_dump()), 200
     except APIException as e:
         return e.to_response()
 
