@@ -24,22 +24,22 @@ def _seed_project_members():
         db.flush()
 
         owner = ProjectMember(
-            project_id=project.id, user_id="owner-1", role=MemberRole.OWNER.db_value
+            project_id=project.id, user_id="1", role=MemberRole.OWNER.db_value
         )
         member1 = ProjectMember(
-            project_id=project.id, user_id="member-1", role=MemberRole.MEMBER.db_value
+            project_id=project.id, user_id="2", role=MemberRole.MEMBER.db_value
         )
         member2 = ProjectMember(
-            project_id=project.id, user_id="member-2", role=MemberRole.MEMBER.db_value
+            project_id=project.id, user_id="3", role=MemberRole.MEMBER.db_value
         )
         db.add_all([owner, member1, member2])
         db.commit()
 
         return {
             "project_id": project.id,
-            "owner_id": "owner-1",
-            "member_1_id": "member-1",
-            "member_2_id": "member-2",
+            "owner_id": "1",
+            "member_1_id": "2",
+            "member_2_id": "3",
         }
 
 
@@ -50,9 +50,9 @@ def test_get_members_returns_all_members():
     members = get_members(seeded["project_id"])
 
     assert len(members) == 3
-    assert any(m.user_id == "owner-1" for m in members)
-    assert any(m.user_id == "member-1" for m in members)
-    assert any(m.user_id == "member-2" for m in members)
+    assert any(m.user_id == "1" for m in members)
+    assert any(m.user_id == "2" for m in members)
+    assert any(m.user_id == "3" for m in members)
 
 
 def test_get_members_empty_returns_empty_list():
@@ -80,7 +80,7 @@ def test_get_member_returns_specific_member():
 
     member = get_member(seeded["project_id"], seeded["member_1_id"])
 
-    assert member.user_id == "member-1"
+    assert member.user_id == "2"
     assert member.project_id == seeded["project_id"]
     assert member.role == MemberRole.MEMBER.db_value
 
@@ -102,15 +102,15 @@ def test_get_member_project_not_found_raises_404():
 def test_create_member_adds_new_member():
     """Test create_member adds a new member to project."""
     seeded = _seed_project_members()
-    actor = Actor(user_id="owner-1")
+    actor = Actor(user_id="1")
 
     new_member = create_member(
         actor,
         seeded["project_id"],
-        ProjectMemberCreate(user_id="new-member", role=MemberRole.MEMBER.db_value),
+        ProjectMemberCreate(user_id="4", role=MemberRole.MEMBER.db_value),
     )
 
-    assert new_member.user_id == "new-member"
+    assert new_member.user_id == "4"
     assert new_member.project_id == seeded["project_id"]
     assert new_member.role == MemberRole.MEMBER.db_value
 
@@ -120,7 +120,7 @@ def test_create_member_adds_new_member():
 
 def test_create_member_project_not_found_raises_404():
     """Test create_member raises NotFoundException when project doesn't exist."""
-    actor = Actor(user_id="owner-1")
+    actor = Actor(user_id="1")
 
     with pytest.raises(NotFoundException):
         create_member(
@@ -133,7 +133,7 @@ def test_create_member_project_not_found_raises_404():
 def test_update_member_role_changes_role():
     """Test update_member_role changes a member's role."""
     seeded = _seed_project_members()
-    actor = Actor(user_id="owner-1")
+    actor = Actor(user_id="1")
 
     updated_member = update_member_role(
         actor,
@@ -149,7 +149,7 @@ def test_update_member_role_changes_role():
 def test_update_member_role_member_not_found_raises_404():
     """Test update_member_role raises NotFoundException when member doesn't exist."""
     seeded = _seed_project_members()
-    actor = Actor(user_id="owner-1")
+    actor = Actor(user_id="1")
 
     with pytest.raises(NotFoundException):
         update_member_role(
@@ -162,7 +162,7 @@ def test_update_member_role_member_not_found_raises_404():
 
 def test_update_member_role_project_not_found_raises_404():
     """Test update_member_role raises NotFoundException when project doesn't exist."""
-    actor = Actor(user_id="owner-1")
+    actor = Actor(user_id="1")
 
     with pytest.raises(NotFoundException):
         update_member_role(
@@ -176,7 +176,7 @@ def test_update_member_role_project_not_found_raises_404():
 def test_delete_member_removes_member():
     """Test delete_member removes a member from project."""
     seeded = _seed_project_members()
-    actor = Actor(user_id="owner-1")
+    actor = Actor(user_id="1")
 
     result = delete_member(actor, seeded["project_id"], seeded["member_1_id"])
 
@@ -184,13 +184,13 @@ def test_delete_member_removes_member():
 
     members = get_members(seeded["project_id"])
     assert len(members) == 2
-    assert not any(m.user_id == "member-1" for m in members)
+    assert not any(m.user_id == "2" for m in members)
 
 
 def test_delete_member_member_not_found_raises_404():
     """Test delete_member raises NotFoundException when member doesn't exist."""
     seeded = _seed_project_members()
-    actor = Actor(user_id="owner-1")
+    actor = Actor(user_id="1")
 
     with pytest.raises(NotFoundException):
         delete_member(actor, seeded["project_id"], "nonexistent-user")
@@ -198,7 +198,7 @@ def test_delete_member_member_not_found_raises_404():
 
 def test_delete_member_project_not_found_raises_404():
     """Test delete_member raises NotFoundException when project doesn't exist."""
-    actor = Actor(user_id="owner-1")
+    actor = Actor(user_id="1")
 
     with pytest.raises(NotFoundException):
         delete_member(actor, 999, "some-user")
