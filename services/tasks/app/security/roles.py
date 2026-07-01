@@ -14,7 +14,7 @@ ROLE_POWER = {
 }
 
 
-def get_role(keyword) -> MemberRole:
+def get_role_object(keyword) -> MemberRole:
     for role in MemberRole:
         if keyword == role.value or keyword.lower() == role.name.lower():
             return role

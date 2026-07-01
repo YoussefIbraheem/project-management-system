@@ -13,7 +13,8 @@ from app.permissions.project_permission import (
 from app.schemas.project_member_schema import ProjectMemberCreate, ProjectMemberResponse
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.security.actor import Actor
-from app.security.roles import MemberRole
+from app.security.context import ProjectMemberPermissionContext
+from app.security.roles import MemberRole, get_role_object
 from app.validators.project_validator import (
     get_member_or_404,
     get_project_or_404,
@@ -62,12 +63,12 @@ def create_project(actor: Actor, project_data: ProjectCreate) -> ProjectResponse
         )
 
         owner = ProjectMember(
-            project= db_project,
+            project=db_project,
             user_id=actor.user_id,
             role=MemberRole.OWNER.db_value,
         )
 
-        db.add_all([db_project,owner])
+        db.add_all([db_project, owner])
         db.commit()
 
         return ProjectResponse.model_validate(db_project)
@@ -128,9 +129,8 @@ def get_members(project_id: int):
     """
     with get_db_session() as db:
         project = get_project_or_404(db, project_id)
-        members = (
-            db.query(ProjectMember).filter(ProjectMember.project_id == project.id).all()
-        )
+        members = db.query(ProjectMember).filter(ProjectMember.project_id == project.id).all()
+    
         return [ProjectMemberResponse.model_validate(member) for member in members]
 
 
@@ -154,15 +154,19 @@ def create_member(actor: Actor, project_id: int, member_data: ProjectMemberCreat
     - return: A ProjectMemberResponse object representing the newly created member.
     """
     with get_db_session() as db:
-        project = get_project_or_404(db, project_id)
         action_member = get_member_or_404(db, project_id, actor.user_id)
-        can_create_project_member(actor, action_member)
-        role = member_data.role
+        target_role = get_role_object(member_data.role)
+        ctx = ProjectMemberPermissionContext(
+            actor=actor,
+            action_member=action_member,
+            target_role=target_role,
+        )
+        can_create_project_member(ctx)
 
         member = ProjectMember(
-            project_id=project.id,
+            project_id=project_id,
             user_id=member_data.user_id,
-            role=role,
+            role=member_data.role,
         )
         db.add(member)
         db.flush()
@@ -178,13 +182,22 @@ def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
     - user_id: The ID of the member to update.
     """
     with get_db_session() as db:
-        member = get_member_or_404(db, project_id, user_id)
+        action_member = get_member_or_404(db, project_id, actor.user_id)
+        target_member = get_member_or_404(db, project_id, user_id)
+        target_role = get_role_object(role)
+        ctx = ProjectMemberPermissionContext(
+            actor=actor,
+            action_member=action_member,
+            target_member=target_member,
+            target_role=target_role,
+        )
+        can_create_project_member(ctx)
 
-        member.role = role  # type: ignore[assignment]
+        target_member.role = target_role.db_value  # type: ignore[assignment]
         db.flush()
-        db.refresh(member)
+        db.refresh(target_member)
 
-        return ProjectMemberResponse.model_validate(member)
+        return ProjectMemberResponse.model_validate(target_member)
 
 
 def delete_member(actor: Actor, project_id: int, user_id: str):
