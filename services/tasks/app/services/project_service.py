@@ -1,5 +1,8 @@
 from typing import List
 
+from shared.event import Event, SubjectType
+from shared.publisher import publish_history_event
+from app import logger
 from app.db.database import get_db_session
 from app.models import ProjectMember
 from app.models.project import Project
@@ -70,6 +73,14 @@ def create_project(actor: Actor, project_data: ProjectCreate) -> ProjectResponse
 
         db.add_all([db_project, owner])
         db.commit()
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(db_project.id),
+            subject_type=SubjectType.PROJECT,
+            action="CREATED",
+        )
+
+        publish_history_event(event)
 
         return ProjectResponse.model_validate(db_project)
 
@@ -98,6 +109,20 @@ def update_project(
         db.commit()
         db.refresh(db_project)
 
+        updated_fields = {
+            k: v for k, v in project_data.model_dump().items() if v is not None
+        }
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(db_project.id),
+            subject_type=SubjectType.PROJECT,
+            action="UPDATED",
+            metadata=updated_fields,
+        )
+
+        publish_history_event(event)
+
         return ProjectResponse.model_validate(db_project)
 
 
@@ -112,9 +137,18 @@ def delete_project(actor, project_id: int) -> bool:
         db_project = get_project_or_404(db, project_id)
         member = get_member_or_404(db, project_id, actor.user_id)
         can_delete_project(actor, member)
-
         db.delete(db_project)
         db.commit()
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(db_project.id),
+            subject_type=SubjectType.PROJECT,
+            action="DELETED",
+        )
+
+        publish_history_event(event)
+
         return True
 
 
@@ -129,8 +163,10 @@ def get_members(project_id: int):
     """
     with get_db_session() as db:
         project = get_project_or_404(db, project_id)
-        members = db.query(ProjectMember).filter(ProjectMember.project_id == project.id).all()
-    
+        members = (
+            db.query(ProjectMember).filter(ProjectMember.project_id == project.id).all()
+        )
+
         return [ProjectMemberResponse.model_validate(member) for member in members]
 
 
@@ -171,6 +207,17 @@ def create_member(actor: Actor, project_id: int, member_data: ProjectMemberCreat
         db.add(member)
         db.flush()
         db.refresh(member)
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(member.id),
+            subject_type=SubjectType.PROJECT,
+            action="MEMBER_ASSIGNED",
+            metadata=member_data.model_dump(exclude_unset=True),
+        )
+
+        publish_history_event(event)
+
         return ProjectMemberResponse.model_validate(member)
 
 
@@ -197,6 +244,19 @@ def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
         db.flush()
         db.refresh(target_member)
 
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(target_member.id),
+            subject_type=SubjectType.PROJECT,
+            action="MEMBER_ROLE_UPDATED",
+            metadata={
+                "project_id": str(project_id),
+                "role": target_role.name,
+                "user_id": str(user_id),
+            },
+        )
+        publish_history_event(event)
+
         return ProjectMemberResponse.model_validate(target_member)
 
 
@@ -212,4 +272,17 @@ def delete_member(actor: Actor, project_id: int, user_id: str):
 
         db.delete(member)
         db.flush()
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(member.id),
+            subject_type=SubjectType.PROJECT,
+            action="MEMBER_UNASSIGNED",
+            metadata={
+                "project_id": str(project_id),
+                "user_id": user_id,
+            },
+        )
+        publish_history_event(event)
+        
         return True
