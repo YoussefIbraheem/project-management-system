@@ -63,7 +63,7 @@ def test_get_members_empty_returns_empty_list():
         db.commit()
         project_id = project.id
 
-    members = get_members(project_id)
+    members = get_members(project_id) #type: ignore
 
     assert len(members) == 0
 
