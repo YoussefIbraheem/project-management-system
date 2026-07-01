@@ -87,7 +87,7 @@ def register_error_handlers(app):
     """
     Call this inside your create_app() factory:
 
-        from utils.exceptions import register_error_handlers
+        from shared.exceptions import register_error_handlers
         register_error_handlers(app)
     """
     app.register_error_handler(APIException, handle_api_exception)
