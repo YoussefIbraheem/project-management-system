@@ -49,7 +49,7 @@ def get_tasks(
         return [TaskResponse.model_validate(task) for task in data]
 
 
-def get_task_by_id(task_id: int) -> Optional[TaskResponse]:
+def get_task_by_id(task_id: int) -> TaskResponse:
     with get_db_session() as db:
         task = get_task_or_404(db, task_id)
         return TaskResponse.model_validate(task)

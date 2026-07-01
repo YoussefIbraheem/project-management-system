@@ -1,5 +1,5 @@
 from slugify import slugify
-from utils.exceptions import BadRequestException, NotFoundException
+from shared.exceptions import BadRequestException, NotFoundException
 
 from app.models import Project, ProjectMember
 

@@ -1,4 +1,4 @@
-from utils.exceptions import InternalServerException, NotFoundException
+from shared.exceptions import InternalServerException, NotFoundException
 
 from app.models import Board, BoardColumn
 from app.models.board_column import StatusGroup

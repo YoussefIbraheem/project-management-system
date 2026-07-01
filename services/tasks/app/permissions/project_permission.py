@@ -1,4 +1,4 @@
-from utils.exceptions import ForbiddenException
+from shared.exceptions import ForbiddenException
 
 from app.models import ProjectMember
 from app.security.actor import Actor

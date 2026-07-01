@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from utils.exceptions import ConflictException, NotFoundException, ValidationException
+from shared.exceptions import ConflictException, NotFoundException, ValidationException
 
 from app.models import Board, BoardColumn, Task
 from app.models.project_member import ProjectMember

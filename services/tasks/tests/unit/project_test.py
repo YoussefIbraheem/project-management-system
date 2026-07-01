@@ -12,12 +12,12 @@ from app.services.project_service import (
     get_projects,
     update_project,
     get_members,
-    get_member,
+    get_member_by_id,
     create_member,
     update_member_role,
     delete_member
 )
-from utils.exceptions import NotFoundException
+from shared.exceptions import NotFoundException
 
 from app.models.project_member import ProjectMember
 
@@ -144,10 +144,10 @@ def test_get_members_project_not_found_raises_404():
 
 
 def test_get_member_returns_specific_member():
-    """Test get_member returns a specific member by user ID."""
+    """Test get_member_by_id returns a specific member by user ID."""
     seeded = _seed_project_members()
 
-    member = get_member(seeded["project_id"], seeded["member_1_id"])
+    member = get_member_by_id(seeded["project_id"], seeded["member_1_id"])
 
     assert member.user_id == "2"
     assert member.project_id == seeded["project_id"]
@@ -155,17 +155,17 @@ def test_get_member_returns_specific_member():
 
 
 def test_get_member_user_not_in_project_raises_404():
-    """Test get_member raises NotFoundException when user is not in project."""
+    """Test get_member_by_id raises NotFoundException when user is not in project."""
     seeded = _seed_project_members()
 
     with pytest.raises(NotFoundException):
-        get_member(seeded["project_id"], "nonexistent-user")
+        get_member_by_id(seeded["project_id"], "nonexistent-user")
 
 
 def test_get_member_project_not_found_raises_404():
-    """Test get_member raises NotFoundException when project doesn't exist."""
+    """Test get_member_by_id raises NotFoundException when project doesn't exist."""
     with pytest.raises(NotFoundException):
-        get_member(999, "some-user")
+        get_member_by_id(999, "some-user")
 
 
 def test_create_member_adds_new_member():

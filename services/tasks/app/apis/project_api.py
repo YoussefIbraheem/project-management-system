@@ -1,16 +1,9 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from pydantic import ValidationError
-from utils.exceptions import APIException, BadRequestException, ValidationException
-from utils.openapi.decorators import document
-from utils.publisher import publish_history_event
+from shared.exceptions import APIException, BadRequestException, ValidationException
+from shared.openapi.decorators import document
 
-from app import logger
-from app.events.project_event import (
-    ProjectCreatedEvent,
-    ProjectDeletedEvent,
-    ProjectUpdatedEvent,
-)
 from app.schemas.project_member_schema import ProjectMemberCreate, ProjectMemberResponse
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.security.actor import Actor
@@ -19,7 +12,7 @@ from app.services.project_service import (
     create_project,
     delete_member,
     delete_project,
-    get_member,
+    get_member_by_id,
     get_members,
     get_project_by_id,
     get_projects,
@@ -167,7 +160,7 @@ def project_members_list(project_id):
 @jwt_required()
 def project_member_details(project_id, user_id):
     try:
-        member = get_member(project_id, str(user_id))
+        member = get_member_by_id(project_id, str(user_id))
         return jsonify(member.model_dump()), 200
     except APIException as e:
         return e.to_response()

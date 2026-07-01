@@ -15,7 +15,7 @@ from app.services.task_service import (
     unassign_task,
     update_task,
 )
-from utils.exceptions import NotFoundException
+from shared.exceptions import NotFoundException
 
 
 def _seed_task():

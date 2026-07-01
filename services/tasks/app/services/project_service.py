@@ -134,7 +134,7 @@ def get_members(project_id: int):
         return [ProjectMemberResponse.model_validate(member) for member in members]
 
 
-def get_member(project_id: int, user_id: str):
+def get_member_by_id(project_id: int, user_id: str):
     """
     Retrieve a specific member of a project by their user ID.
     - project_id: The ID of the project.

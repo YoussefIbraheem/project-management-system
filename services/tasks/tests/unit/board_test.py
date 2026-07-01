@@ -1,9 +1,9 @@
-from utils.exceptions import NotFoundException
+from shared.exceptions import NotFoundException
 
 from . import DummyModel, app, auth_headers, client, create_access_token
 
 
-def test_boards_list_returns_boards(client, app, monkeypatch):
+def test_boards_get_returns_boards(client, app, monkeypatch):
 
     expected = [
         {

@@ -5,7 +5,7 @@ from app import settings
 from app.models import Base
 from typing import Iterator
 
-from utils.exceptions import APIException
+from shared.exceptions import APIException
 
 engine = create_engine(settings.DB_URL, pool_pre_ping=True, echo=True)
 
