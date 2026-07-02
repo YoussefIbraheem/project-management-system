@@ -2,6 +2,7 @@ from typing import List
 
 from shared.event import Event, SubjectType
 from shared.publisher import publish_history_event
+
 from app import logger
 from app.db.database import get_db_session
 from app.models import ProjectMember
@@ -98,7 +99,8 @@ def update_project(
     with get_db_session() as db:
         db_project = get_project_or_404(db, project_id)
         member = get_member_or_404(db, project_id, actor.user_id)
-        can_update_project(actor, member)
+        context = ProjectPermissionContext(actor=actor, action_member=member)
+        can_update_project(context)
 
         if project_data.name is not None:
             db_project.name = project_data.name  # type: ignore[assignment]
@@ -136,7 +138,8 @@ def delete_project(actor, project_id: int) -> bool:
     with get_db_session() as db:
         db_project = get_project_or_404(db, project_id)
         member = get_member_or_404(db, project_id, actor.user_id)
-        can_delete_project(actor, member)
+        context = ProjectPermissionContext(actor=actor, action_member=member)
+        can_delete_project(context)
         db.delete(db_project)
         db.commit()
 
@@ -284,5 +287,5 @@ def delete_member(actor: Actor, project_id: int, user_id: str):
             },
         )
         publish_history_event(event)
-        
+
         return True
