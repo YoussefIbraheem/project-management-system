@@ -16,7 +16,7 @@ from app.permissions.project_permission import (
 from app.schemas.project_member_schema import ProjectMemberCreate, ProjectMemberResponse
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.security.actor import Actor
-from app.security.context import ProjectMemberPermissionContext
+from app.security.context import ProjectPermissionContext
 from app.security.roles import MemberRole, get_role_object
 from app.validators.project_validator import (
     get_member_or_404,
@@ -192,7 +192,7 @@ def create_member(actor: Actor, project_id: int, member_data: ProjectMemberCreat
     with get_db_session() as db:
         action_member = get_member_or_404(db, project_id, actor.user_id)
         target_role = get_role_object(member_data.role)
-        ctx = ProjectMemberPermissionContext(
+        ctx = ProjectPermissionContext(
             actor=actor,
             action_member=action_member,
             target_role=target_role,
@@ -232,7 +232,7 @@ def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
         action_member = get_member_or_404(db, project_id, actor.user_id)
         target_member = get_member_or_404(db, project_id, user_id)
         target_role = get_role_object(role)
-        ctx = ProjectMemberPermissionContext(
+        ctx = ProjectPermissionContext(
             actor=actor,
             action_member=action_member,
             target_member=target_member,

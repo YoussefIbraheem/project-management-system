@@ -3,7 +3,7 @@ from shared.exceptions import ForbiddenException
 from app.models import ProjectMember
 from app.security.actor import Actor
 from app.security.roles import MemberRole, get_role_object, has_power
-from app.security.context import ProjectMemberPermissionContext
+from app.security.context import ProjectPermissionContext
 
 def can_update_project(actor: Actor, member: ProjectMember):
     if actor.can_override():
@@ -26,7 +26,7 @@ def can_delete_project(actor: Actor, member: ProjectMember):
 
 
 def can_create_project_member(
-    ctx:ProjectMemberPermissionContext
+    ctx:ProjectPermissionContext
 ):
     if ctx.actor.can_override():
         return
@@ -38,7 +38,7 @@ def can_create_project_member(
 
 
 def can_update_project_member_role(
-    ctx:ProjectMemberPermissionContext
+    ctx:ProjectPermissionContext
 ):
     if actor.can_override():
         return
@@ -50,7 +50,7 @@ def can_update_project_member_role(
 
 
 def can_delete_project_member(
-    ctx:ProjectMemberPermissionContext
+    ctx:ProjectPermissionContext
 ):
     if actor.can_override():
         return
