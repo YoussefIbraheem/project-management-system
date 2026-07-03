@@ -1,19 +1,41 @@
+from cProfile import label
 from typing import List, Optional
+
+from slugify import slugify
+
+from app import logger
 from app.db.database import get_db_session
-from app.models import Board , BoardColumn
+from app.models import Board, BoardColumn
+from app.permissions.board_permission import (
+    can_create_board,
+    can_create_board_column,
+    can_delete_board,
+    can_delete_board_column,
+    can_update_board,
+    can_update_board_column,
+    can_view_board,
+    can_view_board_column,
+    can_view_board_columns,
+    can_view_boards,
+)
+from app.schemas.board_column_schema import (
+    BoardColumnCreate,
+    BoardColumnDetailsResponse,
+)
 from app.schemas.board_schema import BoardCreate, BoardResponse, BoardUpdate
-from app.schemas.board_column_schema import BoardColumnDetailsResponse
-from app.validators.board_validator import create_default_columns
-from app.validators.project_validator import get_project_or_404
+from app.security.actor import Actor
+from app.security.context import BoardPermissionContext
 from app.validators.board_validator import (
+    create_default_columns,
     ensure_column_not_duplicate,
     get_board_or_404,
     get_column_or_404,
 )
+from app.validators.project_validator import get_member_or_404, get_project_or_404
 
 
 def get_board_by_project(
-    project_id: int, limit: int = 50, offset: int = 0
+    actor: Actor, project_id: int, limit: int = 50, offset: int = 0
 ) -> List[BoardResponse]:
     """
     Retrieve a paginated list of boards associated with a specific project.
@@ -27,6 +49,15 @@ def get_board_by_project(
         ValueError: If the project with the specified ID does not exist.
     """
     with get_db_session() as db:
+        member = get_member_or_404(db=db, project_id=project_id, user_id=actor.user_id)
+        context = BoardPermissionContext(
+            actor=actor,
+            action_member=member,
+            target_project_id=project_id,
+        )
+
+        can_view_boards(context)
+
         db_boards = (
             db.query(Board)
             .filter(Board.project_id == project_id)
@@ -38,7 +69,7 @@ def get_board_by_project(
         return [BoardResponse.model_validate(board) for board in db_boards]
 
 
-def get_board_by_id(board_id: int) -> Optional[BoardResponse]:
+def get_board_by_id(actor: Actor, board_id: int) -> Optional[BoardResponse]:
     """
     Get Board Details
 
@@ -53,10 +84,19 @@ def get_board_by_id(board_id: int) -> Optional[BoardResponse]:
     """
     with get_db_session() as db:
         db_board = get_board_or_404(db, board_id)
+        member = get_member_or_404(
+            db=db, project_id=db_board.project_id, user_id=actor.user_id
+        )
+        context = BoardPermissionContext(
+            actor=actor,
+            action_member=member,
+            target_project_id=db_board.project_id,
+        )
+        can_view_board(context)
         return BoardResponse.model_validate(db_board)
 
 
-def create_board(board_data: BoardCreate) -> BoardResponse:
+def create_board(actor: Actor, board_data: BoardCreate) -> BoardResponse:
     """
     Create Board
 
@@ -68,6 +108,16 @@ def create_board(board_data: BoardCreate) -> BoardResponse:
     """
     with get_db_session() as db:
         project = get_project_or_404(db, board_data.project_id)
+        member = get_member_or_404(
+            db=db, project_id=board_data.project_id, user_id=actor.user_id
+        )
+        context = BoardPermissionContext(
+            actor=actor,
+            action_member=member,
+            target_project_id=board_data.project_id,
+        )
+
+        can_create_board(context)
 
         db_board = Board(
             name=board_data.name,
@@ -85,7 +135,9 @@ def create_board(board_data: BoardCreate) -> BoardResponse:
         return BoardResponse.model_validate(db_board)
 
 
-def update_board(board_id: int, board_data: BoardUpdate) -> Optional[BoardResponse]:
+def update_board(
+    actor: Actor, board_id: int, board_data: BoardUpdate
+) -> Optional[BoardResponse]:
     """
     Update an existing board.
     Args:
@@ -99,6 +151,16 @@ def update_board(board_id: int, board_data: BoardUpdate) -> Optional[BoardRespon
     """
     with get_db_session() as db:
         db_board = get_board_or_404(db, board_id)
+        member = get_member_or_404(
+            db=db, project_id=db_board.project_id, user_id=actor.user_id
+        )
+        context = BoardPermissionContext(
+            actor=actor,
+            action_member=member,
+            target_project_id=db_board.project_id,
+        )
+
+        can_update_board(context)
 
         if board_data.name is not None:
             db_board.name = board_data.name  # type: ignore[assignment]
@@ -112,7 +174,7 @@ def update_board(board_id: int, board_data: BoardUpdate) -> Optional[BoardRespon
         return BoardResponse.model_validate(db_board)
 
 
-def delete_board(board_id: int) -> bool:
+def delete_board(actor: Actor, board_id: int) -> bool:
     """
     Delete Board
 
@@ -127,16 +189,27 @@ def delete_board(board_id: int) -> bool:
     """
     with get_db_session() as db:
         db_board = get_board_or_404(db, board_id)
+        member = get_member_or_404(
+            db=db, project_id=db_board.project_id, user_id=actor.user_id
+        )
+        context = BoardPermissionContext(
+            actor=actor,
+            action_member=member,
+            target_project_id=db_board.project_id,
+        )
+
+        can_delete_board(context)
 
         db.delete(db_board)
         db.flush()
 
         return True
 
+
 # Board Member
 
 
-def get_columns(board_id: int):
+def get_columns(actor: Actor, board_id: int):
     """
     Retrieve all columns for a given board.
 
@@ -147,11 +220,24 @@ def get_columns(board_id: int):
         list[BoardColumnDetailsResponse]: A list of column details.
     """
     with get_db_session() as db:
-        columns = db.query(BoardColumn).filter(BoardColumn.board_id == board_id).all()
+        board = get_board_or_404(db, board_id)
+        member = get_member_or_404(
+            db=db, project_id=board.project_id, user_id=actor.user_id
+        )
+
+        context = BoardPermissionContext(
+            actor=actor,
+            action_member=member,
+            target_project_id=board.project_id,
+        )
+
+        can_view_board_columns(context)
+
+        columns = db.query(BoardColumn).filter(BoardColumn.board_id == board.id).all()
         return [BoardColumnDetailsResponse.model_validate(column) for column in columns]
 
 
-def get_column(board_id: int, column_id: int):
+def get_column(actor: Actor, board_id: int, column_id: int):
     """
     Retrieve a specific column for a given board.
 
@@ -163,11 +249,23 @@ def get_column(board_id: int, column_id: int):
         BoardColumnDetailsResponse: The details of the column.
     """
     with get_db_session() as db:
+        board = get_board_or_404(db, board_id)
+        member = get_member_or_404(
+            db=db, project_id=board.project_id, user_id=actor.user_id
+        )
+
+        context = BoardPermissionContext(
+            actor=actor,
+            action_member=member,
+            target_project_id=board.project_id,
+        )
+
+        can_view_board_column(context)
         column = get_column_or_404(db, board_id, column_id)
         return BoardColumnDetailsResponse.model_validate(column)
 
 
-def create_column(board_id: int, data: dict):
+def create_column(actor: Actor, board_id: int, board_column_data: BoardColumnCreate):
     """
     Create a new column for a given board.
 
@@ -180,15 +278,28 @@ def create_column(board_id: int, data: dict):
     """
     with get_db_session() as db:
         board = get_board_or_404(db, board_id)
-        ensure_column_not_duplicate(db, board.id, data["name"])  # type: ignore[assignment]
-        new_column = BoardColumn(**data, board_id=board.id)
+        member = get_member_or_404(db=db, project_id=board_id, user_id=actor.user_id)
+
+        context = BoardPermissionContext(
+            actor=actor,
+            action_member=member,
+            target_project_id=board_id,
+        )
+        can_create_board_column(context)
+        ensure_column_not_duplicate(db, board.id, board_column_data.label)  # type: ignore[assignment]
+        new_column = BoardColumn(
+            label=board_column_data.label,
+            slug=slugify(board_column_data.label),
+            status_group=board_column_data.status_group,
+        )
+
         db.add(new_column)
         db.commit()
         db.refresh(new_column)
         return BoardColumnDetailsResponse.model_validate(new_column)
 
 
-def delete_column(board_id: int, column_id: int):
+def delete_column(actor: Actor, board_id: int, column_id: int):
     """
     Delete a specific column for a given board.
 
@@ -202,6 +313,17 @@ def delete_column(board_id: int, column_id: int):
     with get_db_session() as db:
         board = get_board_or_404(db, board_id)
         column = get_column_or_404(db, board.id, column_id)  # type: ignore[assignment]
+        member = get_member_or_404(
+            db=db, project_id=board.project_id, user_id=actor.user_id
+        )
+
+        context = BoardPermissionContext(
+            actor=actor,
+            action_member=member,
+            target_project_id=board.project_id,
+            target_column=column,
+        )
+        can_create_board_column(context)
         db.delete(column)
         db.commit()
 

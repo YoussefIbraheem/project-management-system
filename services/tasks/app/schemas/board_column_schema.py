@@ -1,6 +1,8 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.models.board_column import StatusGroup
 
 
 class BoardColumnBase(BaseModel):
@@ -8,33 +10,29 @@ class BoardColumnBase(BaseModel):
     board_id: int = Field(..., description="Parent Board ID")
     slug: str = Field(..., min_length=1, max_length=50, description="Column Slug")
     label: str = Field(..., min_length=1, max_length=100, description="Column Label")
-    status_group: str = Field(
-        ...,
-        description="Status Group (pending, in_progress, done, cancelled)",
-    )
+    status_group: str = Field(..., description="Status Group")
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class BoardColumnDetailsResponse(BoardColumnBase):
     """Class for responding with board column information. Inherits from BoardColumnBase and adds ID field."""
+
     pass
 
 
 class BoardColumnResponse(BaseModel):
-     id: int = Field(..., description="Board Column ID")
-     label: str = Field(..., min_length=1, max_length=100, description="Column Label")
+    id: int = Field(..., description="Board Column ID")
+    label: str = Field(..., min_length=1, max_length=100, description="Column Label")
 
-     model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BoardColumnCreate(BaseModel):
     """Class for creating a new board column."""
-
-    slug: str = Field(..., min_length=1, max_length=50, description="Column Slug")
     label: str = Field(..., min_length=1, max_length=100, description="Column Label")
-    status_group: str = Field(
-        ...,
+    status_group: Literal["pending", "in_progress", "done", "cancelled"] = Field(
+        default="pending",
         description="Status Group (pending, in_progress, done, cancelled)",
     )
 

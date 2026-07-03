@@ -1,8 +1,7 @@
 from shared.exceptions import InternalServerException, NotFoundException
-
 from app.models import Board, BoardColumn
 from app.models.board_column import StatusGroup
-
+from slugify import slugify
 
 def get_board_or_404(db, board_id: int) -> Board:
     """
@@ -54,7 +53,7 @@ def get_column_or_404(db, board_id: int, column_id: int)-> BoardColumn:
     return column
 
 
-def ensure_column_not_duplicate(db, board_id: int, slug: str):
+def ensure_column_not_duplicate(db, board_id: int, label: str):
     """
     Ensure that a column does not have a duplicate slug within the same board.
 
@@ -62,6 +61,7 @@ def ensure_column_not_duplicate(db, board_id: int, slug: str):
     board_id: The ID of the board to check columns for
     slug: The slug of the column to ensure uniqueness
     """
+    slug = slugify(label)
     existing_column = (
         db.query(BoardColumn).filter_by(board_id=board_id, slug=slug).first()
     )

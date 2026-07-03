@@ -17,6 +17,7 @@ class StatusGroup(FlaskEnum):
     IN_PROGRESS = "in_progress", "In Progress"
     DONE = "done", "Done"
     CANCELLED = "cancelled", "Cancelled"
+        
 
 
 

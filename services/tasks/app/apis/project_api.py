@@ -19,6 +19,7 @@ from app.services.project_service import (
     update_member_role,
     update_project,
 )
+from . import get_actor
 
 project_bp = Blueprint("project", __name__, url_prefix="/api/v1/projects")
 
@@ -105,12 +106,7 @@ def project_update(project_id: int):
         if not data:
             raise BadRequestException("Request body is missing or not valid JSON")
         project_data = ProjectUpdate(**data)
-        claims = get_jwt()
-        user_id = get_jwt_identity()
-        actor = Actor(
-            user_id=user_id,
-            is_superuser=claims.get("is_superuser", False),
-        )
+        actor = get_actor()
         project = update_project(
             actor=actor, project_id=project_id, project_data=project_data
         )
@@ -129,12 +125,7 @@ def project_update(project_id: int):
 @jwt_required()
 def project_delete(project_id: int):
     try:
-        claims = get_jwt()
-        user_id = get_jwt_identity()
-        actor = Actor(
-            user_id=user_id,
-            is_superuser=claims.get("is_superuser", False),
-        )
+        actor = get_actor()
         delete_project(actor=actor, project_id=project_id)
     except APIException as e:
         return e.to_response()
@@ -175,12 +166,7 @@ def project_member_create(project_id):
         if not data:
             raise BadRequestException("Request body is missing or not valid JSON")
         member_data = ProjectMemberCreate(**data)
-        claims = get_jwt()
-        user_id = get_jwt_identity()
-        actor = Actor(
-            user_id=user_id,
-            is_superuser=claims.get("is_superuser", False),
-        )
+        actor = get_actor()
         member = create_member(
             actor=actor, project_id=project_id, member_data=member_data
         )
@@ -205,12 +191,7 @@ def project_member_role_update(project_id, user_id):
         role = data.get("role", None)
         if not role:
             raise BadRequestException("Role is missing in the request data")
-        claims = get_jwt()
-        user_id = get_jwt_identity()
-        actor = Actor(
-            user_id=user_id,
-            is_superuser=claims.get("is_superuser", False),
-        )
+        actor = get_actor()
         member = update_member_role(
             actor=actor, project_id=project_id, user_id=user_id, role=role
         )
@@ -223,12 +204,7 @@ def project_member_role_update(project_id, user_id):
 @jwt_required()
 def project_member_delete(project_id, user_id):
     try:
-        claims = get_jwt()
-        user_id = get_jwt_identity()
-        actor = Actor(
-            user_id=user_id,
-            is_superuser=claims.get("is_superuser", False),
-        )
+        actor = get_actor()
         delete_member(actor=actor, project_id=project_id, user_id=user_id)
         return jsonify({"message": "Member deleted successfully"})
     except APIException as e:
