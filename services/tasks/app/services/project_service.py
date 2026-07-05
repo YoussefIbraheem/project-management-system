@@ -2,8 +2,6 @@ from typing import List
 
 from shared.event import Event, SubjectType
 from shared.publisher import publish_history_event
-
-from app import logger
 from app.db.database import get_db_session
 from app.models import ProjectMember
 from app.models.project import Project
@@ -13,12 +11,13 @@ from app.permissions.project_permission import (
     can_delete_project_member,
     can_update_project,
     can_update_project_member_role,
+    can_view_project_member,
+    can_view_project_members,
 )
 from app.schemas.project_member_schema import ProjectMemberCreate, ProjectMemberResponse
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.security.actor import Actor
-from app.security.context import ProjectPermissionContext
-from app.security.roles import MemberRole, get_role_object
+from app.security.roles import MemberRole
 from app.validators.project_validator import (
     get_member_or_404,
     get_project_or_404,
@@ -98,9 +97,7 @@ def update_project(
     """
     with get_db_session() as db:
         db_project = get_project_or_404(db, project_id)
-        member = get_member_or_404(db, project_id, actor.user_id)
-        context = ProjectPermissionContext(actor=actor, action_member=member)
-        can_update_project(context)
+        can_update_project(db=db, actor=actor, project=db_project)
 
         if project_data.name is not None:
             db_project.name = project_data.name  # type: ignore[assignment]
@@ -128,7 +125,7 @@ def update_project(
         return ProjectResponse.model_validate(db_project)
 
 
-def delete_project(actor, project_id: int) -> bool:
+def delete_project(actor: Actor, project_id: int) -> bool:
     """Delete Project
 
     Keyword arguments:
@@ -137,9 +134,7 @@ def delete_project(actor, project_id: int) -> bool:
     """
     with get_db_session() as db:
         db_project = get_project_or_404(db, project_id)
-        member = get_member_or_404(db, project_id, actor.user_id)
-        context = ProjectPermissionContext(actor=actor, action_member=member)
-        can_delete_project(context)
+        can_delete_project(db, actor, db_project)
         db.delete(db_project)
         db.commit()
 
@@ -158,7 +153,7 @@ def delete_project(actor, project_id: int) -> bool:
 # Project Member
 
 
-def get_members(project_id: int):
+def get_members(actor: Actor, project_id: int):
     """
     Retrieve all members of a project.
     - project_id: The ID of the project.
@@ -166,6 +161,7 @@ def get_members(project_id: int):
     """
     with get_db_session() as db:
         project = get_project_or_404(db, project_id)
+        can_view_project_members(db, actor, project)
         members = (
             db.query(ProjectMember).filter(ProjectMember.project_id == project.id).all()
         )
@@ -173,7 +169,7 @@ def get_members(project_id: int):
         return [ProjectMemberResponse.model_validate(member) for member in members]
 
 
-def get_member_by_id(project_id: int, user_id: str):
+def get_member_by_id(actor: Actor, project_id: int, user_id: str):
     """
     Retrieve a specific member of a project by their user ID.
     - project_id: The ID of the project.
@@ -181,6 +177,8 @@ def get_member_by_id(project_id: int, user_id: str):
     - return: A ProjectMemberResponse object representing the member.
     """
     with get_db_session() as db:
+        project = get_project_or_404(db, project_id)
+        can_view_project_member(db, actor, project)
         member = get_member_or_404(db, project_id, user_id)
         return ProjectMemberResponse.model_validate(member)
 
@@ -193,14 +191,9 @@ def create_member(actor: Actor, project_id: int, member_data: ProjectMemberCreat
     - return: A ProjectMemberResponse object representing the newly created member.
     """
     with get_db_session() as db:
-        action_member = get_member_or_404(db, project_id, actor.user_id)
-        target_role = get_role_object(member_data.role)
-        ctx = ProjectPermissionContext(
-            actor=actor,
-            action_member=action_member,
-            target_role=target_role,
-        )
-        can_create_project_member(ctx)
+        project = get_project_or_404(db, project_id)
+
+        can_create_project_member(db, actor, project)
 
         member = ProjectMember(
             project_id=project_id,
@@ -232,18 +225,10 @@ def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
     - user_id: The ID of the member to update.
     """
     with get_db_session() as db:
-        action_member = get_member_or_404(db, project_id, actor.user_id)
+        project = get_project_or_404(db, project_id)
+        can_update_project_member_role(db, actor, project, user_id)
         target_member = get_member_or_404(db, project_id, user_id)
-        target_role = get_role_object(role)
-        ctx = ProjectPermissionContext(
-            actor=actor,
-            action_member=action_member,
-            target_member=target_member,
-            target_role=target_role,
-        )
-        can_create_project_member(ctx)
-
-        target_member.role = target_role.db_value  # type: ignore[assignment]
+        target_member.role = role  # type: ignore[assignment]
         db.flush()
         db.refresh(target_member)
 
@@ -254,7 +239,7 @@ def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
             action="MEMBER_ROLE_UPDATED",
             metadata={
                 "project_id": str(project_id),
-                "role": target_role.name,
+                "role": role,
                 "user_id": str(user_id),
             },
         )
@@ -271,8 +256,9 @@ def delete_member(actor: Actor, project_id: int, user_id: str):
     - return: A boolean indicating whether the deletion was successful.
     """
     with get_db_session() as db:
+        project = get_project_or_404(db, project_id)
+        can_delete_project_member(db, actor, project, user_id)
         member = get_member_or_404(db, project_id, user_id)
-
         db.delete(member)
         db.flush()
 

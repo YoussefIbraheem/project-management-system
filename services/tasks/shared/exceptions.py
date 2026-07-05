@@ -62,7 +62,7 @@ class UnauthorizedException(APIException):
 class ForbiddenException(APIException):
     """Authenticated user lacks permission for this action (403)."""
     status_code = 403
-    default_message = "Forbidden"
+    default_message = "You do not have permission to perform this action."
 
 
 class ConflictException(APIException):

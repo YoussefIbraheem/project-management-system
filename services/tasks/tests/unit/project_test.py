@@ -1,28 +1,27 @@
 import pytest
 from app.db.database import get_db_session
 from app.models import Project
-from app.schemas.project_schema import ProjectCreate, ProjectUpdate
+from app.models.project_member import ProjectMember
 from app.schemas.project_member_schema import ProjectMemberCreate
+from app.schemas.project_schema import ProjectCreate, ProjectUpdate
 from app.security.actor import Actor
 from app.security.roles import MemberRole
 from app.services.project_service import (
+    create_member,
     create_project,
+    delete_member,
     delete_project,
+    get_member_by_id,
+    get_members,
     get_project_by_id,
     get_projects,
-    update_project,
-    get_members,
-    get_member_by_id,
-    create_member,
     update_member_role,
-    delete_member
+    update_project,
 )
 from shared.exceptions import NotFoundException
 
-from app.models.project_member import ProjectMember
 
-
-def _seed_project(user_id:str, name="Alpha", description="Project Alpha"):
+def _seed_project(user_id: str, name="Alpha", description="Project Alpha"):
     with get_db_session() as db:
         project = Project(name=name, description=description)
         owner = ProjectMember(project=project, user_id=user_id, role="owner")
@@ -30,10 +29,13 @@ def _seed_project(user_id:str, name="Alpha", description="Project Alpha"):
         db.commit()
         return project.id
 
+
 def _seed_project_members():
     """Seed database with test data."""
     with get_db_session() as db:
-        project = Project(name="Test Project", description="Project for testing members")
+        project = Project(
+            name="Test Project", description="Project for testing members"
+        )
         db.add(project)
         db.flush()
 
@@ -60,14 +62,13 @@ def _seed_project_members():
 def test_get_members_returns_all_members():
     """Test get_members returns all members in a project."""
     seeded = _seed_project_members()
-
-    members = get_members(seeded["project_id"])
+    actor = Actor(user_id="1", is_superuser=True)
+    members = get_members(actor, seeded["project_id"])
 
     assert len(members) == 3
     assert any(m.user_id == "1" for m in members)
     assert any(m.user_id == "2" for m in members)
     assert any(m.user_id == "3" for m in members)
-
 
 
 def test_get_projects_returns_projects():
@@ -132,7 +133,9 @@ def test_get_members_empty_returns_empty_list():
         db.commit()
         project_id = project.id
 
-    members = get_members(project_id) #type: ignore
+        actor = Actor(user_id="1", is_superuser=True)
+
+        members = get_members(actor, project_id)  # type: ignore
 
     assert len(members) == 0
 
@@ -140,14 +143,16 @@ def test_get_members_empty_returns_empty_list():
 def test_get_members_project_not_found_raises_404():
     """Test get_members raises NotFoundException when project doesn't exist."""
     with pytest.raises(NotFoundException):
-        get_members(999)
+        actor = Actor(user_id="1", is_superuser=True)
+        get_members(actor, 999)
 
 
 def test_get_member_returns_specific_member():
     """Test get_member_by_id returns a specific member by user ID."""
     seeded = _seed_project_members()
+    actor = Actor(user_id="1", is_superuser=True)
 
-    member = get_member_by_id(seeded["project_id"], seeded["member_1_id"])
+    member = get_member_by_id(actor, seeded["project_id"], seeded["member_1_id"])
 
     assert member.user_id == "2"
     assert member.project_id == seeded["project_id"]
@@ -159,13 +164,15 @@ def test_get_member_user_not_in_project_raises_404():
     seeded = _seed_project_members()
 
     with pytest.raises(NotFoundException):
-        get_member_by_id(seeded["project_id"], "nonexistent-user")
+        actor = Actor(user_id="1", is_superuser=True)
+        get_member_by_id(actor, seeded["project_id"], "nonexistent-user")
 
 
 def test_get_member_project_not_found_raises_404():
     """Test get_member_by_id raises NotFoundException when project doesn't exist."""
     with pytest.raises(NotFoundException):
-        get_member_by_id(999, "some-user")
+        actor = Actor(user_id="1", is_superuser=True)
+        get_member_by_id(actor, 999, "some-user")
 
 
 def test_create_member_adds_new_member():
@@ -176,14 +183,14 @@ def test_create_member_adds_new_member():
     new_member = create_member(
         actor,
         seeded["project_id"],
-        ProjectMemberCreate(user_id="4", role=MemberRole.MEMBER.db_value),
+        ProjectMemberCreate(user_id="4", role=MemberRole.MEMBER.db_value), #type: ignore
     )
 
     assert new_member.user_id == "4"
     assert new_member.project_id == seeded["project_id"]
     assert new_member.role == MemberRole.MEMBER.db_value
 
-    members = get_members(seeded["project_id"])
+    members = get_members(actor, seeded["project_id"])
     assert len(members) == 4
 
 
@@ -195,7 +202,7 @@ def test_create_member_project_not_found_raises_404():
         create_member(
             actor,
             999,
-            ProjectMemberCreate(user_id="new-member", role=MemberRole.MEMBER.db_value),
+            ProjectMemberCreate(user_id="new-member", role=MemberRole.MEMBER.db_value), #type: ignore
         )
 
 
@@ -251,7 +258,7 @@ def test_delete_member_removes_member():
 
     assert result is True
 
-    members = get_members(seeded["project_id"])
+    members = get_members(actor, seeded["project_id"])
     assert len(members) == 2
     assert not any(m.user_id == "2" for m in members)
 

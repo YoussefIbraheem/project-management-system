@@ -1,4 +1,3 @@
-import pytest
 from app.models import Project
 from app.security.roles import MemberRole
 

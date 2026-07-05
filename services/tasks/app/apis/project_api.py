@@ -19,6 +19,7 @@ from app.services.project_service import (
     update_member_role,
     update_project,
 )
+
 from . import get_actor
 
 project_bp = Blueprint("project", __name__, url_prefix="/api/v1/projects")
@@ -140,7 +141,8 @@ def project_delete(project_id: int):
 @jwt_required()
 def project_members_list(project_id):
     try:
-        members = get_members(project_id)
+        actor = get_actor()
+        members = get_members(actor, project_id)
         return jsonify([member.model_dump() for member in members]), 200
     except APIException as e:
         return e.to_response()
@@ -151,7 +153,8 @@ def project_members_list(project_id):
 @jwt_required()
 def project_member_details(project_id, user_id):
     try:
-        member = get_member_by_id(project_id, str(user_id))
+        actor = get_actor()
+        member = get_member_by_id(actor, project_id, str(user_id))
         return jsonify(member.model_dump()), 200
     except APIException as e:
         return e.to_response()
