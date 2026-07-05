@@ -4,15 +4,6 @@ from app.models import Board, BoardColumn, ProjectMember, Task, TaskAssignee
 from app.security.actor import Actor
 
 @dataclass
-class BoardPermissionContext:
-    actor: Actor
-    action_member: ProjectMember
-    target_project_id: int
-    target_board: Board | None = None
-    target_column: BoardColumn | None = None
-
-
-@dataclass
 class TaskPermissionContext:
     actor: Actor
     action_member: ProjectMember

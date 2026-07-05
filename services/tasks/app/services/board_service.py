@@ -24,7 +24,6 @@ from app.schemas.board_column_schema import (
 )
 from app.schemas.board_schema import BoardCreate, BoardResponse, BoardUpdate
 from app.security.actor import Actor
-from app.security.context import BoardPermissionContext
 from app.validators.board_validator import (
     create_default_columns,
     ensure_column_not_duplicate,
