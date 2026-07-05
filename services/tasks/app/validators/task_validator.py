@@ -20,6 +20,19 @@ def get_task_or_404(db, task_id: int) -> Task:
     return task
 
 
+def get_task_or_none(db, task_id: int) -> Task | None:
+    """
+    Retrieve a task by its ID or raise a 404 error if not found.
+    - db: SQLAlchemy database session
+    - task_id: ID of the task to retrieve
+    - return: The retrieved task object
+    """
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        return None
+    return task
+
+
 def normalize_assignee_ids(assignees_ids: list[str]) -> list[str]:
     """
     Normalize and validate a list of assignee IDs.
@@ -59,7 +72,7 @@ def validate_project_membership(db, task: Task, assignees_ids: list[str]) -> lis
     - task: The task to validate.
     - assignees_ids: List of assignee IDs to validate.
 
-    """    
+    """
     project_member_ids = {
         user_id
         for (user_id,) in db.query(ProjectMember.user_id)
@@ -127,10 +140,13 @@ def validate_task_unassignment_state(db, task: Task, assignees_ids: list[str]) -
             data={"missing_assignees": missing_assignees},
         )
 
-def get_task_assignees_by_ids(db, task: Task, assignees_ids: list[str]) -> list[TaskAssignee]:
+
+def get_task_assignees_by_ids(
+    db, task: Task, assignees_ids: list[str]
+) -> list[TaskAssignee]:
     """
     Retrieve a list of TaskAssignee objects for the given task and assignee IDs.
-    
+
     - db: Database session.
     - task: Task object.
     - assignee_ids: List of assignee IDs to retrieve.

@@ -1,7 +1,9 @@
 from shared.exceptions import InternalServerException, NotFoundException
+from slugify import slugify
+
 from app.models import Board, BoardColumn
 from app.models.board_column import StatusGroup
-from slugify import slugify
+
 
 def get_board_or_404(db, board_id: int) -> Board:
     """
@@ -15,6 +17,21 @@ def get_board_or_404(db, board_id: int) -> Board:
     if not board:
         raise NotFoundException(f"Board with id {board_id} does not exist")
     return board
+
+
+def get_board_or_none(db, board_id: int) -> Board | None:
+    """
+    Retrieve a board by its ID or raise a 404 error if it doesn't exist.
+
+    - db: SQLAlchemy database session
+    - board_id: The ID of the board to retrieve
+    - return: The Board object
+    """
+    board = db.query(Board).filter(Board.id == board_id).first()
+    if not board:
+        return None
+    return board
+
 
 def create_default_columns(db, board_id) -> None:
     """
@@ -39,7 +56,8 @@ def create_default_columns(db, board_id) -> None:
             f"Failed to create default columns for board {board_id}: {e}"
         )
 
-def get_column_or_404(db, board_id: int, column_id: int)-> BoardColumn:
+
+def get_column_or_404(db, board_id: int, column_id: int) -> BoardColumn:
     """
     Retrieve a column by its ID or raise a 404 error if it does not exist.
 
@@ -50,6 +68,20 @@ def get_column_or_404(db, board_id: int, column_id: int)-> BoardColumn:
     column = db.query(BoardColumn).filter_by(board_id=board_id, id=column_id).first()
     if not column:
         raise NotFoundException("Column not found")
+    return column
+
+
+def get_column_or_none(db, board_id: int, column_id: int) -> BoardColumn | None:
+    """
+    Retrieve a column by its ID or raise a 404 error if it does not exist.
+
+    - db: SQLAlchemy database session
+    - board_id: The ID of the board to check columns for
+    - column_id: The ID of the column to retrieve
+    """
+    column = db.query(BoardColumn).filter_by(board_id=board_id, id=column_id).first()
+    if not column:
+        return None
     return column
 
 
