@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
+
 from app.schemas.event_schema import EventResponse
 from app.services.event_service import get_event_by_id, get_events
 
