@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
+
 from bson import ObjectId as _ObjectId
+from app.models.event import DateTimeUTC, utc_now
+from pydantic import BaseModel, Field
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 
@@ -25,7 +27,8 @@ class EventResponse(BaseModel):
     action: str = Field(...)
     subject_id: str = Field(...)
     subject_type: str = Field(...)
-    metadata: datetime = Field(...)
+    metadata: dict = Field(...)
+    timestamp: DateTimeUTC = Field(default_factory=utc_now)
 
 
 class EventsStats(BaseModel):

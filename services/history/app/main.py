@@ -1,12 +1,12 @@
 import logging
 
-from fastapi import FastAPI, Request, responses
+from fastapi import Depends, FastAPI, Request, responses
 from app.core.config import settings
 from contextlib import asynccontextmanager
 from app.db.database import connect_db, close_db
 from app.apis.event_api import router as event_router
 from typing import AsyncGenerator
-
+from app.auth.auth_bearer import JWTBearer
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(lifespan=lifespan)
 
 
-@app.get("/")
+@app.get("/",dependencies=[Depends(JWTBearer())])
 def read_root():
     return {"project_name": settings.PROJECT_NAME}
 

@@ -1,8 +1,10 @@
-from app.services.event_service import get_event_by_id, get_events
-from fastapi import APIRouter, HTTPException, Query
-from typing import Optional ,List
-from app.schemas.event_schema import EventResponse
+from typing import Annotated, List, Optional
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from app.auth.auth_bearer import JWTBearer
+from app.schemas.event_schema import EventResponse
+from app.services.event_service import get_event_by_id, get_events
 
 router = APIRouter(prefix="/events")
 
@@ -22,6 +24,7 @@ async def events_get(
     ),
 ):
     try:
+
         events = await get_events(
             service=service, user_id=user_id, limit=limit, offset=offset
         )
@@ -33,12 +36,11 @@ async def events_get(
 
 
 @router.get("/{event_id}", response_model=EventResponse)
-async def events_get_by_id(event_id:str):
+async def events_get_by_id(event_id: str):
 
     try:
-        
         event = await get_event_by_id(event_id)
-        
+
         if not event:
             raise HTTPException(status_code=404, detail="Event not found")
 
