@@ -208,7 +208,7 @@ def create_member(actor: Actor, project_id: int, member_data: ProjectMemberCreat
             actor_id=actor.user_id,
             subject_id=str(member.id),
             subject_type=SubjectType.PROJECT,
-            action="MEMBER_ASSIGNED",
+            action="MEMBER_ADDED",
             metadata=member_data.model_dump(exclude_unset=True),
         )
 
@@ -266,7 +266,7 @@ def delete_member(actor: Actor, project_id: int, user_id: str):
             actor_id=actor.user_id,
             subject_id=str(member.id),
             subject_type=SubjectType.PROJECT,
-            action="MEMBER_UNASSIGNED",
+            action="MEMBER_REMOVED",
             metadata={
                 "project_id": str(project_id),
                 "user_id": user_id,

@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 
+from shared.event import Event, SubjectType
+from shared.publisher import publish_history_event
+
 from app.db.database import get_db_session
 from app.models import Board, Task
 from app.models.task_assignee import TaskAssignee
@@ -100,6 +103,17 @@ def create_task(actor: Actor, task_data: TaskCreate) -> TaskResponse:
         db.add(db_task)
         db.flush()
         db.refresh(db_task)
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(db_task.id),
+            subject_type=SubjectType.TASK,
+            action="CREATED",
+            metadata={"title": db_task.title},
+        )
+
+        publish_history_event(event)
+
         return TaskResponse.model_validate(db_task)
 
 
@@ -109,13 +123,24 @@ def update_task(actor: Actor, task_id: int, task_data: TaskUpdate) -> TaskRespon
         project = db_task.board.project
 
         can_update_task(db, actor, project.id)
-
+        updated_fields = []
         for field, value in task_data.model_dump(exclude_unset=True).items():
             setattr(db_task, field, value)
+            updated_fields.append(field)
 
         db_task.updated_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         db.flush()
         db.refresh(db_task)
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(db_task.id),
+            subject_type=SubjectType.TASK,
+            action="UPDATED",
+            metadata={"updated_fields": updated_fields},
+        )
+
+        publish_history_event(event)
+
         return TaskResponse.model_validate(db_task)
 
 
@@ -128,7 +153,17 @@ def delete_task(actor: Actor, task_id: int) -> bool:
 
         db.delete(db_task)
         db.flush()
-        return True
+
+    event = Event(
+        actor_id=actor.user_id,
+        subject_id=str(db_task.id),
+        subject_type=SubjectType.TASK,
+        action="DELETED",
+    )
+
+    publish_history_event(event)
+
+    return True
 
 
 def assign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskResponse:
@@ -152,6 +187,17 @@ def assign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskRes
         )
         db.flush()
         db.refresh(task)
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(task_id),
+            subject_type=SubjectType.TASK,
+            action="MEMBERS_ASSIGNED",
+            metadata={"assignees_ids": normalized_assignees_ids},
+        )
+
+        publish_history_event(event)
+
         return TaskResponse.model_validate(task)
 
 
@@ -170,6 +216,16 @@ def unassign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskR
 
         db.flush()
         db.refresh(task)
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(task_id),
+            subject_type=SubjectType.TASK,
+            action="MEMBERS_UNASSIGNED",
+            metadata={"assignees_ids": normalized_assignees_ids},
+        )
+
+        publish_history_event(event)
+
         return TaskResponse.model_validate(task)
 
 

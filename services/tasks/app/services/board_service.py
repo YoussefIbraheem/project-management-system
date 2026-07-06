@@ -1,9 +1,9 @@
-from cProfile import label
 from typing import List, Optional
 
+from shared.event import Event, SubjectType
+from shared.publisher import publish_history_event
 from slugify import slugify
 
-from app import logger
 from app.db.database import get_db_session
 from app.models import Board, BoardColumn
 from app.permissions.board_permission import (
@@ -12,7 +12,6 @@ from app.permissions.board_permission import (
     can_delete_board,
     can_delete_board_column,
     can_update_board,
-    can_update_board_column,
     can_view_board,
     can_view_board_column,
     can_view_board_columns,
@@ -107,6 +106,16 @@ def create_board(actor: Actor, board_data: BoardCreate) -> BoardResponse:
         db.flush()
         db.refresh(db_board)
 
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(db_board.id),
+            subject_type=SubjectType.BOARD,
+            action="CREATED",
+            metadata={"name": board_data.name},
+        )
+
+        publish_history_event(event)
+
         if board_data.default_columns:
             create_default_columns(db, db_board.id)
 
@@ -131,15 +140,27 @@ def update_board(
         db_board = get_board_or_404(db, board_id)
 
         can_update_board(db, actor, db_board)
-
+        updated_fields = []
         if board_data.name is not None:
             db_board.name = board_data.name  # type: ignore[assignment]
+            updated_fields.append("name")
 
         if board_data.description is not None:
             db_board.description = board_data.description  # type: ignore[assignment]
+            updated_fields.append("description")
 
         db.flush()
         db.refresh(db_board)
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(db_board.id),
+            subject_type=SubjectType.BOARD,
+            action="UPDATED",
+            metadata={"updated_fields": updated_fields},
+        )
+
+        publish_history_event(event)
 
         return BoardResponse.model_validate(db_board)
 
@@ -164,6 +185,15 @@ def delete_board(actor: Actor, board_id: int) -> bool:
 
         db.delete(db_board)
         db.flush()
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(board_id),
+            subject_type=SubjectType.BOARD,
+            action="DELETED",
+        )
+
+        publish_history_event(event)
 
         return True
 
@@ -236,6 +266,17 @@ def create_column(actor: Actor, board_id: int, board_column_data: BoardColumnCre
         db.add(new_column)
         db.commit()
         db.refresh(new_column)
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(new_column.id),
+            subject_type=SubjectType.BOARD,
+            action="COLUMN_CREATED",
+            metadata={"label": new_column.label},
+        )
+
+        publish_history_event(event)
+
         return BoardColumnDetailsResponse.model_validate(new_column)
 
 
@@ -259,5 +300,14 @@ def delete_column(actor: Actor, board_id: int, column_id: int):
 
         db.delete(column)
         db.commit()
+
+        event = Event(
+            actor_id=actor.user_id,
+            subject_id=str(column_id),
+            subject_type=SubjectType.BOARD,
+            action="COLUMN_DELETED",
+        )
+
+        publish_history_event(event)
 
         return True

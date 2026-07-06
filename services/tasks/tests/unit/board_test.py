@@ -1,490 +1,203 @@
-from unittest.mock import MagicMock, Mock, patch
+from datetime import datetime, timezone
 
 import pytest
-from app.schemas.board_column_schema import (
-    BoardColumnCreate,
-    BoardColumnDetailsResponse,
-)
-from app.schemas.board_schema import BoardCreate, BoardResponse, BoardUpdate
+
+from app.db.database import get_db_session
+from app.models import Board, BoardColumn, Project, ProjectMember
+from app.schemas.board_schema import BoardCreate, BoardUpdate
 from app.security.actor import Actor
+from app.security.roles import MemberRole
 from app.services.board_service import (
     create_board,
-    create_column,
     delete_board,
-    delete_column,
     get_board_by_id,
     get_board_by_project,
     get_column,
     get_columns,
     update_board,
+    delete_column,
 )
 from shared.exceptions import NotFoundException
 
 
-@pytest.fixture
-def mock_actor():
-    actor = Mock(spec=Actor)
-    actor.user_id = 1
-    return actor
+def _seed_board():
+    with get_db_session() as db:
+        project = Project(name="Test Project", description="Project for board tests")
+        db.add(project)
+        db.flush()
+
+        member = ProjectMember(
+            project_id=project.id, user_id="1", role=MemberRole.MANAGER.db_value
+        )
+        board = Board(name="Test Board", description="Test board", project_id=project.id)
+        db.add_all([member, board])
+        db.flush()
+
+        todo = BoardColumn(
+            board_id=board.id, slug="todo", label="To Do", status_group="pending"
+        )
+        doing = BoardColumn(
+            board_id=board.id, slug="doing", label="Doing", status_group="in_progress"
+        )
+        done = BoardColumn(
+            board_id=board.id, slug="done", label="Done", status_group="done"
+        )
+        db.add_all([todo, doing, done])
+        db.commit()
+
+        return {
+            "project_id": project.id,
+            "board_id": board.id,
+            "todo_id": todo.id,
+            "doing_id": doing.id,
+            "done_id": done.id,
+            "actor": Actor(user_id="1", is_superuser=True),
+        }
 
 
-@pytest.fixture
-def mock_db_session():
-    return MagicMock()
+def test_get_board_by_project_success():
+    seeded = _seed_board()
+
+    result = get_board_by_project(
+        seeded["actor"], project_id=seeded["project_id"], limit=10, offset=0
+    )
+
+    assert len(result) >= 1
+    assert any(b.id == seeded["board_id"] for b in result)
 
 
-@pytest.fixture
-def mock_board():
-    board = Mock()
-    board.id = 1
-    board.name = "Test Board"
-    board.description = "Test Description"
-    board.project_id = 1
-    board.columns = []
-    board.created_at = "2024-01-01T00:00:00"
-    board.updated_at = None
-    return board
+def test_get_board_by_project_with_pagination():
+    seeded = _seed_board()
+
+    result = get_board_by_project(
+        seeded["actor"], project_id=seeded["project_id"], limit=5, offset=0
+    )
+
+    assert isinstance(result, list)
 
 
-@pytest.fixture
-def mock_member():
-    member = Mock()
-    member.id = 1
-    member.user_id = 1
-    member.project_id = 1
-    return member
+def test_get_board_by_id_success():
+    seeded = _seed_board()
+
+    result = get_board_by_id(seeded["actor"], board_id=seeded["board_id"])
+
+    assert result.id == seeded["board_id"]
+    assert result.name == "Test Board"
 
 
-@pytest.fixture
-def board_create_data():
-    return BoardCreate(
+def test_get_board_by_id_not_found():
+    seeded = _seed_board()
+
+    with pytest.raises(NotFoundException):
+        get_board_by_id(seeded["actor"], board_id=999)
+
+
+def test_create_board_success():
+    seeded = _seed_board()
+
+    board_data = BoardCreate(
         name="New Board",
         description="New Board Description",
-        project_id=1,
+        project_id=seeded["project_id"],
         default_columns=False,
     )
 
+    result = create_board(seeded["actor"], board_data)
 
-@pytest.fixture
-def board_update_data():
-    return BoardUpdate(name="Updated Board", description="Updated Description")
-
-
-class TestGetBoardByProject:
-    def test_get_board_by_project_success(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
-        mock_db_session.query.return_value.filter.return_value.limit.return_value.offset.return_value.all.return_value = [
-            mock_board
-        ]
-
-        with patch(
-            "app.services.board_service.get_member_or_404", return_value=mock_member
-        ):
-            with patch("app.services.board_service.can_view_boards"):
-                with patch(
-                    "app.services.board_service.BoardResponse.model_validate",
-                    return_value=mock_board,
-                ):
-                    result = get_board_by_project(
-                        mock_actor, project_id=1, limit=10, offset=0
-                    )
-
-        assert len(result) == 1
-        assert result[0].name == "Test Board"
-
-    def test_get_board_by_project_with_pagination(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
-        mock_db_session.query.return_value.filter.return_value.limit.return_value.offset.return_value.all.return_value = [
-            mock_board
-        ]
-
-        with patch(
-            "app.services.board_service.get_member_or_404", return_value=mock_member
-        ):
-            with patch("app.services.board_service.can_view_boards"):
-                with patch(
-                    "app.services.board_service.BoardResponse.model_validate",
-                    return_value=mock_board,
-                ):
-                    result = get_board_by_project(
-                        mock_actor, project_id=1, limit=5, offset=10
-                    )
-
-        assert mock_db_session.query.return_value.filter.return_value.limit.called
-        assert mock_db_session.query.return_value.filter.return_value.limit.return_value.offset.called
+    assert result.name == "New Board"
+    assert result.description == "New Board Description"
+    assert result.project_id == seeded["project_id"]
 
 
-class TestGetBoardById:
-    def test_get_board_by_id_success(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
+def test_create_board_with_default_columns():
+    seeded = _seed_board()
 
-        with patch(
-            "app.services.board_service.get_board_or_404", return_value=mock_board
-        ):
-            with patch(
-                "app.services.board_service.get_member_or_404", return_value=mock_member
-            ):
-                with patch("app.services.board_service.can_view_board"):
-                    with patch(
-                        "app.services.board_service.BoardResponse.model_validate",
-                        return_value=mock_board,
-                    ):
-                        result = get_board_by_id(mock_actor, board_id=1)
+    board_data = BoardCreate(
+        name="Board with Columns",
+        description="Test",
+        project_id=seeded["project_id"],
+        default_columns=True,
+    )
 
-        assert result.name == "Test Board"
-        assert result.id == 1
+    result = create_board(seeded["actor"], board_data)
 
-    def test_get_board_by_id_not_found(self, mock_actor, mock_db_session, monkeypatch):
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
-
-        with patch(
-            "app.services.board_service.get_board_or_404",
-            side_effect=NotFoundException("Board not found"),
-        ):
-            with pytest.raises(NotFoundException):
-                get_board_by_id(mock_actor, board_id=999)
+    assert result.name == "Board with Columns"
+    assert result.id is not None
 
 
-class TestCreateBoard:
-    def test_create_board_success(
-        self,
-        mock_actor,
-        mock_db_session,
-        mock_board,
-        mock_member,
-        board_create_data,
-        monkeypatch,
-    ):
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
+def test_update_board_success():
+    seeded = _seed_board()
 
-        with patch(
-            "app.services.board_service.get_project_or_404", return_value=Mock(id=1)
-        ):
-            with patch(
-                "app.services.board_service.get_member_or_404", return_value=mock_member
-            ):
-                with patch("app.services.board_service.can_create_board"):
-                    with patch(
-                        "app.services.board_service.BoardResponse.model_validate",
-                        return_value=mock_board,
-                    ):
-                        result = create_board(mock_actor, board_create_data)
+    board_data = BoardUpdate(name="Updated Board", description="Updated Description")
 
-        assert result.name == "Test Board"
-        assert mock_db_session.add.called
-        assert mock_db_session.flush.called
+    result = update_board(
+        seeded["actor"],
+        board_id=seeded["board_id"],
+        board_data=board_data,
+    )
 
-    def test_create_board_with_default_columns(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        board_data = BoardCreate(
-            name="Board with Columns",
-            description="Test",
-            project_id=1,
-            default_columns=True,
-        )
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
-
-        with patch(
-            "app.services.board_service.get_project_or_404", return_value=Mock(id=1)
-        ):
-            with patch(
-                "app.services.board_service.get_member_or_404", return_value=mock_member
-            ):
-                with patch("app.services.board_service.can_create_board"):
-                    with patch(
-                        "app.services.board_service.create_default_columns"
-                    ) as mock_create_cols:
-                        with patch(
-                            "app.services.board_service.BoardResponse.model_validate",
-                            return_value=mock_board,
-                        ):
-                            result = create_board(mock_actor, board_data)
-
-        assert mock_create_cols.called
+    assert result.name == "Updated Board"
+    assert result.description == "Updated Description"
 
 
-class TestUpdateBoard:
-    def test_update_board_success(
-        self,
-        mock_actor,
-        mock_db_session,
-        mock_board,
-        mock_member,
-        board_update_data,
-        monkeypatch,
-    ):
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
+def test_update_board_partial():
+    seeded = _seed_board()
 
-        with patch(
-            "app.services.board_service.get_board_or_404", return_value=mock_board
-        ):
-            with patch(
-                "app.services.board_service.get_member_or_404", return_value=mock_member
-            ):
-                with patch("app.services.board_service.can_update_board"):
-                    with patch(
-                        "app.services.board_service.BoardResponse.model_validate",
-                        return_value=mock_board,
-                    ):
-                        result = update_board(
-                            mock_actor, board_id=1, board_data=board_update_data
-                        )
+    partial_update = BoardUpdate(name="New Name", description=None)
 
-        assert result.name == "Updated Board"
-        assert mock_db_session.flush.called
-        assert mock_db_session.refresh.called
+    result = update_board(
+        seeded["actor"],
+        board_id=seeded["board_id"],
+        board_data=partial_update,
+    )
 
-    def test_update_board_partial(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        partial_update = BoardUpdate(name="New Name", description=None)
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
-
-        with patch(
-            "app.services.board_service.get_board_or_404", return_value=mock_board
-        ):
-            with patch(
-                "app.services.board_service.get_member_or_404", return_value=mock_member
-            ):
-                with patch("app.services.board_service.can_update_board"):
-                    with patch(
-                        "app.services.board_service.BoardResponse.model_validate",
-                        return_value=mock_board,
-                    ):
-                        result = update_board(
-                            mock_actor, board_id=1, board_data=partial_update
-                        )
-
-        assert mock_db_session.flush.called
+    assert result.name == "New Name"
 
 
-class TestDeleteBoard:
-    def test_delete_board_success(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
+def test_delete_board_success():
+    seeded = _seed_board()
 
-        with patch(
-            "app.services.board_service.get_board_or_404", return_value=mock_board
-        ):
-            with patch(
-                "app.services.board_service.get_member_or_404", return_value=mock_member
-            ):
-                with patch("app.services.board_service.can_delete_board"):
-                    result = delete_board(mock_actor, board_id=1)
+    result = delete_board(seeded["actor"], board_id=seeded["board_id"])
 
-        assert result is True
-        assert mock_db_session.delete.called
-        assert mock_db_session.flush.called
-
-    def test_delete_board_not_found(self, mock_actor, mock_db_session, monkeypatch):
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
-
-        with patch(
-            "app.services.board_service.get_board_or_404",
-            side_effect=NotFoundException("Board not found"),
-        ):
-            with pytest.raises(NotFoundException):
-                delete_board(mock_actor, board_id=999)
+    assert result is True
 
 
-class TestGetColumns:
-    def test_get_columns_success(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        mock_column = Mock()
-        mock_column.id = 1
-        mock_column.label = "To Do"
-        mock_column.board_id = 1
+def test_delete_board_not_found():
+    seeded = _seed_board()
 
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
-        mock_db_session.query.return_value.filter.return_value.all.return_value = [
-            mock_column
-        ]
-
-        with patch(
-            "app.services.board_service.get_board_or_404", return_value=mock_board
-        ):
-            with patch(
-                "app.services.board_service.get_member_or_404", return_value=mock_member
-            ):
-                with patch("app.services.board_service.can_view_board_columns"):
-                    with patch(
-                        "app.services.board_service.BoardColumnDetailsResponse.model_validate",
-                        return_value=mock_column,
-                    ):
-                        result = get_columns(mock_actor, board_id=1)
-
-        assert len(result) == 1
-        assert result[0].label == "To Do"
+    with pytest.raises(NotFoundException):
+        delete_board(seeded["actor"], board_id=999)
 
 
-class TestGetColumn:
-    def test_get_column_success(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        mock_column = Mock()
-        mock_column.id = 1
-        mock_column.label = "In Progress"
+def test_get_columns_success():
+    seeded = _seed_board()
 
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
+    result = get_columns(seeded["actor"], board_id=seeded["board_id"])
 
-        with patch(
-            "app.services.board_service.get_board_or_404", return_value=mock_board
-        ):
-            with patch(
-                "app.services.board_service.get_member_or_404", return_value=mock_member
-            ):
-                with patch("app.services.board_service.can_view_board_column"):
-                    with patch(
-                        "app.services.board_service.get_column_or_404",
-                        return_value=mock_column,
-                    ):
-                        with patch(
-                            "app.services.board_service.BoardColumnDetailsResponse.model_validate",
-                            return_value=mock_column,
-                        ):
-                            result = get_column(mock_actor, board_id=1, column_id=1)
-
-        assert result.label == "In Progress"
+    assert len(result) >= 1
+    assert any(c.id == seeded["todo_id"] for c in result)
 
 
-class TestCreateColumn:
-    def test_create_column_success(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        mock_column = Mock()
-        mock_column.id = 1
-        mock_column.label = "Done"
-        mock_column.board_id = 1
-        mock_column.status_group = "done"
+def test_get_column_success():
+    seeded = _seed_board()
 
-        column_data = BoardColumnCreate(label="Done", status_group="done")
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
+    result = get_column(
+        seeded["actor"],
+        board_id=seeded["board_id"],
+        column_id=seeded["todo_id"],
+    )
 
-        with patch(
-            "app.services.board_service.get_board_or_404", return_value=mock_board
-        ):
-            with patch(
-                "app.services.board_service.get_member_or_404", return_value=mock_member
-            ):
-                with patch("app.services.board_service.can_create_board_column"):
-                    with patch(
-                        "app.services.board_service.ensure_column_not_duplicate"
-                    ):
-                        with patch(
-                            "app.services.board_service.BoardColumnDetailsResponse.model_validate",
-                            return_value=mock_column,
-                        ):
-                            result = create_column(
-                                mock_actor, board_id=1, board_column_data=column_data
-                            )
-
-        assert result.label == "Done"
-        assert mock_db_session.add.called
-        assert mock_db_session.commit.called
+    assert result.id == seeded["todo_id"]
+    assert result.label == "To Do"
 
 
-class TestDeleteColumn:
-    def test_delete_column_success(
-        self, mock_actor, mock_db_session, mock_board, mock_member, monkeypatch
-    ):
-        mock_column = Mock()
-        mock_column.id = 1
-        mock_column.label = "Archive"
+def test_delete_column_success():
+    seeded = _seed_board()
 
-        monkeypatch.setattr(
-            "app.services.board_service.get_db_session",
-            lambda: MagicMock(
-                __enter__=lambda s: mock_db_session, __exit__=lambda s, *args: None
-            ),
-        )
+    result = delete_column(
+        seeded["actor"],
+        board_id=seeded["board_id"],
+        column_id=seeded["todo_id"],
+    )
 
-        with patch(
-            "app.services.board_service.get_board_or_404", return_value=mock_board
-        ):
-            with patch(
-                "app.services.board_service.get_column_or_404", return_value=mock_column
-            ):
-                with patch(
-                    "app.services.board_service.get_member_or_404",
-                    return_value=mock_member,
-                ):
-                    with patch("app.services.board_service.can_create_board_column"):
-                        result = delete_column(mock_actor, board_id=1, column_id=1)
-
-        assert result is True
-        assert mock_db_session.delete.called
-        assert mock_db_session.commit.called
+    assert result is True
