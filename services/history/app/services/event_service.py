@@ -1,12 +1,16 @@
+import re
 from datetime import datetime, timezone
 from typing import Optional
+
 from app.models.event import Event
 from app.schemas.event_schema import EventCreate, EventResponse
 
 
 async def get_events(
     service: Optional[str] = None,
-    user_id: Optional[str] = None,
+    actor_id: Optional[str] = None,
+    metadata: Optional[str] = None,
+    date: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
 ):
@@ -14,8 +18,13 @@ async def get_events(
 
     if service:
         filters.append(Event.service == service)
-    if user_id:
-        filters.append(Event.user_id == user_id)
+    if actor_id:
+        filters.append(Event.actor_id == actor_id)
+    if metadata:
+        filters.append(re.compile(metadata, re.IGNORECASE))
+    if date:
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        filters.append(Event.timestamp >= date_obj)
 
     query = Event.find(*filters)
 
@@ -38,7 +47,7 @@ async def create_event(event_data: dict):
 
     event_create = EventCreate(**event_data)
     event = Event(
-        actor_id= event_create.actor_id,
+        actor_id=event_create.actor_id,
         service=event_create.service,
         action=event_create.action,
         subject_id=event_create.subject_id,

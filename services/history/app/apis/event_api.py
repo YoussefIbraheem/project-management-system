@@ -14,8 +14,15 @@ async def events_get(
     service: Optional[str] = Query(
         None, description="The service that generated the events"
     ),
-    user_id: Optional[str] = Query(
+    actor_id: Optional[str] = Query(
         None, description="The user ID associated with the events"
+    ),
+    metadata: Optional[str] = Query(
+        None, description="Searchable metadata for the events using the given keyword"
+    ),
+    date: Optional[str] = Query(
+        None,
+        description="The date range for the events starting from input data till current date (format: YYYY-MM-DD)",
     ),
     limit: int = Query(50, description="The maximum number of events to return"),
     offset: int = Query(
@@ -24,9 +31,13 @@ async def events_get(
     ),
 ):
     try:
-
         events = await get_events(
-            service=service, user_id=user_id, limit=limit, offset=offset
+            service=service,
+            actor_id=actor_id,
+            limit=limit,
+            offset=offset,
+            metadata=metadata,
+            date=date,
         )
 
         return events
