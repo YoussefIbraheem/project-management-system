@@ -1,143 +1,154 @@
-from security.roles import ROLE_POWER, MemberRole, get_role_object, has_power
-from shared.exceptions import APIException, ForbiddenException
+from app.security.actor import Actor
+from app.security.roles import MemberRole, get_role_object, has_power
+from shared.exceptions import BadRequestException, ForbiddenException
 
-from app.security.context import TaskPermissionContext
+from app.models import Task
+from app.permissions.project_permission import get_member_or_404
 
 
-def can_view_tasks(ctx: TaskPermissionContext):
-    if ctx.actor.can_override():
+def can_view_tasks(db, actor: Actor, project_id: int):
+    if actor.can_override():
         return
-
-    task_project_id =  int(ctx.target_project_id)
-    member_project_id = int(ctx.action_member.project_id)
-    if member_project_id != task_project_id:
+    member = get_member_or_404(db, project_id, actor.user_id)
+    if not member:
         raise ForbiddenException()
 
-    member_role = get_role_object(ctx.action_member.role)
+    member_role = get_role_object(member.role)
 
     if not has_power(member_role, MemberRole.MEMBER):
         raise ForbiddenException()
 
 
-def can_view_task(ctx: TaskPermissionContext):
-    if ctx.actor.can_override():
+def can_view_task(db, actor: Actor, project_id: int):
+    if actor.can_override():
         return
-
-    task_project_id =  int(ctx.target_project_id)
-    member_project_id = int(ctx.action_member.project_id)
-    if member_project_id != task_project_id:
+    member = get_member_or_404(db, project_id, actor.user_id)
+    if not member:
         raise ForbiddenException()
 
-    member_role = get_role_object(ctx.action_member.role)
+    member_role = get_role_object(member.role)
 
     if not has_power(member_role, MemberRole.MEMBER):
         raise ForbiddenException()
 
 
-def can_create_task(ctx: TaskPermissionContext):
-    if ctx.actor.can_override():
+def can_create_task(db, actor: Actor, project_id: int):
+    if actor.can_override():
         return
 
-    task_project_id =  int(ctx.target_project_id)
-    member_project_id = int(ctx.action_member.project_id)
-    if member_project_id != task_project_id:
+    member = get_member_or_404(db, project_id, actor.user_id)
+    if not member:
         raise ForbiddenException()
 
-    member_role = get_role_object(ctx.action_member.role)
+    member_role = get_role_object(member.role)
 
     if not has_power(member_role, MemberRole.MANAGER):
         raise ForbiddenException()
 
 
-def can_update_task(ctx: TaskPermissionContext):
-    if ctx.actor.can_override():
+def can_update_task(db, actor: Actor, project_id: int):
+    if actor.can_override():
         return
 
-    task_project_id =  int(ctx.target_project_id)
-    member_project_id = int(ctx.action_member.project_id)
-    if member_project_id != task_project_id:
+    member = get_member_or_404(db, project_id, actor.user_id)
+    if not member:
         raise ForbiddenException()
 
-    member_role = get_role_object(ctx.action_member.role)
-
-    if not has_power(member_role, MemberRole.MANAGER):
-        raise ForbiddenException()
-
-
-def can_delete_task(ctx: TaskPermissionContext):
-    if ctx.actor.can_override():
-        return
-
-    task_project_id =  int(ctx.target_project_id)
-    member_project_id = int(ctx.action_member.project_id)
-    if member_project_id != task_project_id:
-        raise ForbiddenException()
-
-    member_role = get_role_object(ctx.action_member.role)
-
-    if not has_power(member_role, MemberRole.MANAGER):
-        raise ForbiddenException()
-
-
-def can_view_task_assignees(ctx: TaskPermissionContext):
-    if ctx.actor.can_override():
-        return
-
-    task_project_id =  int(ctx.target_project_id)
-    member_project_id = int(ctx.action_member.project_id)
-    if member_project_id != task_project_id:
-        raise ForbiddenException()
-
-    member_role = get_role_object(ctx.action_member.role)
+    member_role = get_role_object(member.role)
 
     if not has_power(member_role, MemberRole.MEMBER):
         raise ForbiddenException()
 
 
-def can_view_task_assignee(ctx: TaskPermissionContext):
-    if ctx.actor.can_override():
+def can_delete_task(db, actor: Actor, project_id: int, target_task: Task):
+    if actor.can_override():
         return
 
-    task_project_id =  int(ctx.target_project_id)
-    member_project_id = int(ctx.action_member.project_id)
-    if member_project_id != task_project_id:
+    member = get_member_or_404(db, project_id, actor.user_id)
+    if not member:
         raise ForbiddenException()
 
-    member_role = get_role_object(ctx.action_member.role)
+    member_role = get_role_object(member.role)
+
+    if not has_power(member_role, MemberRole.MANAGER):
+        raise ForbiddenException()
+
+    if actor.user_id != target_task.creator_id:
+        raise ForbiddenException()
+
+
+def can_view_task_assignees(db, actor: Actor, project_id: int):
+    if actor.can_override():
+        return
+
+    member = get_member_or_404(db, project_id, actor.user_id)
+    if not member:
+        raise ForbiddenException()
+
+    member_role = get_role_object(member.role)
 
     if not has_power(member_role, MemberRole.MEMBER):
         raise ForbiddenException()
 
 
-def can_create_task_assignee(ctx: TaskPermissionContext):
-    if ctx.actor.can_override():
-        return
-
-    task_project_id =  int(ctx.target_project_id)
-    member_project_id = int(ctx.action_member.project_id)
-    if member_project_id != task_project_id:
+def can_view_task_assignee(db, actor: Actor, project_id: int):
+    member = get_member_or_404(db, project_id, actor.user_id)
+    if not member:
         raise ForbiddenException()
 
-    member_role = get_role_object(ctx.action_member.role)
+    member_role = get_role_object(member.role)
+
+    if not has_power(member_role, MemberRole.MEMBER):
+        raise ForbiddenException()
+
+
+def can_create_task_assignee(
+    db, actor: Actor, project_id: int, target_task: Task, target_member_user_id: str
+):
+    member = get_member_or_404(db, project_id, actor.user_id)
+    if not member:
+        raise ForbiddenException()
+
+    member_role = get_role_object(member.role)
 
     if not has_power(member_role, MemberRole.MANAGER):
         raise ForbiddenException()
 
+    if actor.user_id != target_task.creator_id:
+        raise ForbiddenException()
 
-def can_update_task_assignee(ctx: TaskPermissionContext):
+    target_member = get_member_or_404(db, project_id, target_member_user_id)
+
+    if not target_member:
+        raise BadRequestException(
+            message="Target member is not part of the project or does not exist"
+        )
+
+
+def can_update_task_assignee(
+    db, actor: Actor, project_id: int, target_member_user_id: str, target_task: Task
+):
     pass
 
 
-def can_delete_task_assignee(ctx: TaskPermissionContext):
-    if ctx.actor.can_override():
-        return
-
-    task_project_id =  int(ctx.target_project_id)
-    member_project_id = int(ctx.action_member.project_id)
-    if member_project_id != task_project_id:
+def can_delete_task_assignee(
+    db, actor: Actor, project_id: int, target_task: Task, target_member_user_id: str
+):
+    member = get_member_or_404(db, project_id, actor.user_id)
+    if not member:
         raise ForbiddenException()
 
-    member_role = get_role_object(ctx.action_member.role)
+    member_role = get_role_object(member.role)
 
     if not has_power(member_role, MemberRole.MANAGER):
         raise ForbiddenException()
+
+    if actor.user_id != target_task.creator_id:
+        raise ForbiddenException()
+
+    target_member = get_member_or_404(db, project_id, target_member_user_id)
+
+    if not target_member:
+        raise BadRequestException(
+            message="Target member is not part of the project or does not exist"
+        )

@@ -5,10 +5,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import TaskPriority
 
+
 class TaskAssignee(BaseModel):
     user_id: str
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class TaskBase(BaseModel):
     id: int = Field(..., description="Task ID")
@@ -46,8 +48,7 @@ class TaskUpdate(BaseModel):
     )
     description: Optional[str] = Field(None, max_length=1000, description="Description")
     priority: Optional[str] = Field(None, description="Task priority")
-    creator_id: Optional[str] = Field(None, description="ID of the task owner")
-    board_id: Optional[int] = Field(None, description="ID of the parent board")
+    column_id: Optional[int] = Field(None, description="ID of the parent column")
     due_date: Optional[datetime] = Field(None, description="Due date of the task")
 
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
@@ -58,13 +59,10 @@ class TaskStats(BaseModel):
     tasks_by_status: dict = Field(..., description="Number of tasks by status")
     tasks_by_priority: dict = Field(..., description="Number of tasks by priority")
 
+
 class TaskAssign(BaseModel):
     assignees_ids: list[str] = Field(..., description="List of assignee IDs")
 
 
 class TaskUnassign(BaseModel):
     assignees_ids: list[str] = Field(..., description="List of unassignee IDs")
-
-
-
-    

@@ -45,10 +45,9 @@ def test_create_task_validates_creator_and_returns_response(
     client, auth_headers, seeded_data
 ):
     from app.security.roles import MemberRole
-    
+
     board = seeded_data["board"]
     column = seeded_data["doing"]
-    project_id = seeded_data["project"].id
     member_role = seeded_data["member"].role
 
     response = client.post(
@@ -83,13 +82,13 @@ def test_create_task_validates_creator_and_returns_response(
 
 def test_create_task_rejects_missing_title(client, auth_headers, seeded_data):
     from app.security.roles import MemberRole
-    
+
     member_role = seeded_data["member"].role
-    
+
     # Only test with roles that can create tasks
     if member_role not in [MemberRole.OWNER.db_value, MemberRole.MANAGER.db_value]:
         pytest.skip("Test only applies to OWNER/MANAGER roles")
-    
+
     response = client.post(
         "/api/v1/tasks/",
         headers=auth_headers(),
@@ -100,11 +99,8 @@ def test_create_task_rejects_missing_title(client, auth_headers, seeded_data):
 
 
 def test_update_task(client, auth_headers, seeded_data):
-    from app.security.roles import MemberRole
-    
-    task_id = seeded_data["task"].id
-    member_role = seeded_data["member"].role
 
+    task_id = seeded_data["task"].id
     response = client.put(
         f"/api/v1/tasks/{task_id}",
         headers=auth_headers(),
@@ -120,7 +116,7 @@ def test_update_task(client, auth_headers, seeded_data):
 
 def test_assign_task(client, auth_headers, seeded_data):
     from app.security.roles import MemberRole
-    
+
     task_id = seeded_data["task"].id
     member_role = seeded_data["member"].role
 
@@ -145,7 +141,7 @@ def test_assign_task(client, auth_headers, seeded_data):
 
 def test_unassign_task(client, auth_headers, seeded_data):
     from app.security.roles import MemberRole
-    
+
     task_id = seeded_data["task"].id
     member_role = seeded_data["member"].role
 
@@ -182,7 +178,7 @@ def test_unassign_task(client, auth_headers, seeded_data):
 
 def test_delete_task(client, auth_headers, seeded_data):
     from app.security.roles import MemberRole
-    
+
     task_id = seeded_data["task"].id
     member_role = seeded_data["member"].role
 

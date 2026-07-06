@@ -1,10 +1,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from pydantic import ValidationError
-from shared.event import Event, SubjectType
 from shared.exceptions import APIException, BadRequestException, ValidationException
 from shared.openapi.decorators import document
-from shared.publisher import publish_history_event
 
 from app.schemas.task_schema import (
     TaskAssign,
@@ -23,11 +21,19 @@ from app.services.task_service import (
     update_task,
 )
 
+from . import get_actor
+
 task_bp = Blueprint("task", __name__, url_prefix="/api/v1/tasks/")
 
 
 @document(
     query_params=[
+        {
+            "name": "project_id",
+            "type": "integer",
+            "required": True,
+            "description": "The ID of the project for which to retrieve tasks",
+        },
         {
             "name": "board_id",
             "type": "integer",
@@ -77,23 +83,30 @@ task_bp = Blueprint("task", __name__, url_prefix="/api/v1/tasks/")
 @jwt_required()
 def tasks_list():
     try:
+        project_id = request.args.get("project_id")
         board_id = request.args.get("board_id")
         user_id = request.args.get("user_id")
         assigned_to = request.args.get("assigned_to")
-        status = request.args.get("status")
+        column_id = request.args.get("column_id")
         priority = request.args.get("priority")
         limit = request.args.get("limit")
         offset = request.args.get("offset")
+        actor = get_actor()
+
+        if not project_id:
+            raise BadRequestException("Project ID is required")
 
         tasks = get_tasks(
-            board_id,
-            user_id,
-            assigned_to,
-            status,
-            priority,
-            limit,
-            offset,  # type:ignore
-        )
+            actor=actor,
+            project_id=project_id,  # type: ignore
+            board_id=board_id,  # type: ignore
+            creator_id=user_id,
+            assigned_to=assigned_to,
+            column_id=column_id,  # type: ignore
+            priority=priority,
+            limit=limit,  # type: ignore
+            offset=offset,  # type: ignore
+        )  # type: ignore
         return jsonify([task.model_dump() for task in tasks]), 200
     except APIException as e:
         return e.to_response()
@@ -104,7 +117,8 @@ def tasks_list():
 @jwt_required()
 def task_get(task_id: int):
     try:
-        task = get_task_by_id(task_id=task_id)
+        actor = get_actor()
+        task = get_task_by_id(actor=actor, task_id=task_id)
         return jsonify(task.model_dump()), 200
     except APIException as e:
         return e.to_response()
@@ -121,7 +135,8 @@ def task_create():
 
         data["creator_id"] = get_jwt_identity()
         task_data = TaskCreate(**data)
-        created_task = create_task(task_data=task_data)
+        actor = get_actor()
+        created_task = create_task(actor=actor, task_data=task_data)
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
@@ -142,8 +157,9 @@ def task_update(task_id):
         if not data:
             raise BadRequestException("Request body is missing or not valid JSON")
 
+        actor = get_actor()
         task_data = TaskUpdate(**data)
-        updated_task = update_task(task_id=task_id, task_data=task_data)
+        updated_task = update_task(actor=actor, task_id=task_id, task_data=task_data)
         return jsonify(updated_task.model_dump()), 200
     except ValidationError as e:
         return ValidationException(
@@ -158,7 +174,8 @@ def task_update(task_id):
 @jwt_required()
 def task_delete(task_id: int):
     try:
-        success = delete_task(task_id=task_id)
+        actor = get_actor()
+        success = delete_task(actor=actor, task_id=task_id)
         if not success:
             return jsonify({"error": "Task not found"}), 404
         return jsonify({"message": f"Task with id {task_id} has been deleted!"}), 200
@@ -174,10 +191,10 @@ def task_assign(task_id):
         data = request.get_json()
         if not data:
             raise BadRequestException("Request body is missing or not valid JSON")
-
+        actor = get_actor()
         task_assign_data = TaskAssign(**data)
         task = assign_task(
-            task_id=task_id, assignees_ids=task_assign_data.assignees_ids
+            actor=actor, task_id=task_id, assignees_ids=task_assign_data.assignees_ids
         )
         return jsonify(task.model_dump()), 200
     except ValidationError as e:
@@ -197,10 +214,10 @@ def task_unassign(task_id):
         data = request.get_json()
         if not data:
             raise BadRequestException("Request body is missing or not valid JSON")
-
+        actor = get_actor()
         task_unassign_data = TaskUnassign(**data)
         task = unassign_task(
-            task_id=task_id, assignees_ids=task_unassign_data.assignees_ids
+            actor=actor, task_id=task_id, assignees_ids=task_unassign_data.assignees_ids
         )
         return jsonify(task.model_dump()), 200
     except ValidationError as e:

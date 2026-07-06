@@ -1,11 +1,13 @@
 from datetime import datetime, timezone
 
 import pytest
+from app import logger
 from app.db.database import get_db_session
 from app.models import Board, BoardColumn, Project, ProjectMember, Task
-from app.security.roles import MemberRole
 from app.models.task import TaskPriority
 from app.schemas.task_schema import TaskCreate, TaskUpdate
+from app.security.actor import Actor
+from app.security.roles import MemberRole
 from app.services.task_service import (
     assign_task,
     create_task,
@@ -21,11 +23,12 @@ from shared.exceptions import NotFoundException
 def _seed_task():
     with get_db_session() as db:
         project = Project(name="Alpha", description="Project Alpha")
+        actor = Actor(user_id="1", is_superuser=True)
         db.add(project)
         db.flush()
 
         member = ProjectMember(
-            project_id=project.id, user_id="user-1", role=MemberRole.MANAGER.db_value
+            project_id=project.id, user_id="1", role=MemberRole.MANAGER.db_value
         )
         board = Board(name="Board 1", description="Main board", project_id=project.id)
         db.add_all([member, board])
@@ -46,7 +49,7 @@ def _seed_task():
             column_id=todo.id,
             priority=TaskPriority.LOW.db_value,
             due_date=datetime(2026, 1, 1, tzinfo=timezone.utc),
-            creator_id="user-1",
+            creator_id="1",
             board_id=board.id,
         )
         db.add(task)
@@ -58,13 +61,20 @@ def _seed_task():
             "todo_id": todo.id,
             "doing_id": doing.id,
             "task_id": task.id,
+            "actor": actor,
         }
 
 
 def test_get_tasks_returns_tasks():
     seeded = _seed_task()
 
-    tasks = get_tasks(board_id=seeded["board_id"], limit=10, offest=0) #type: ignore
+    tasks = get_tasks(
+        actor=seeded["actor"],
+        project_id=seeded["project_id"],
+        board_id=seeded["board_id"],
+        limit=10,
+        offset=0,
+    )  # type: ignore
 
     assert len(tasks) >= 1
     assert tasks[0].board_id == seeded["board_id"]
@@ -73,25 +83,26 @@ def test_get_tasks_returns_tasks():
 def test_get_task_by_id_returns_task():
     seeded = _seed_task()
 
-    task = get_task_by_id(seeded["task_id"]) #type: ignore
+    task = get_task_by_id(seeded["actor"], seeded["task_id"])  # type: ignore
 
-    assert task.id == seeded["task_id"] #type: ignore
-    assert task.title == "Task 1" #type: ignore
+    assert task.id == seeded["task_id"]  # type: ignore
+    assert task.title == "Task 1"  # type: ignore
 
 
 def test_create_task_persists_task():
     seeded = _seed_task()
 
     task = create_task(
+        seeded["actor"],
         TaskCreate(
             title="Created Task",
             description="Body",
-            column_id=seeded["doing_id"], #type: ignore
+            column_id=seeded["doing_id"],  # type: ignore
             priority=TaskPriority.MEDIUM.db_value,
             creator_id="user-1",
-            board_id=seeded["board_id"], #type: ignore
+            board_id=seeded["board_id"],  # type: ignore
             due_date=datetime(2026, 2, 1, tzinfo=timezone.utc),
-        )
+        ),
     )
 
     assert task.title == "Created Task"
@@ -102,9 +113,12 @@ def test_update_task_updates_fields():
     seeded = _seed_task()
 
     task = update_task(
-        seeded["task_id"], #type: ignore
-        TaskUpdate(title="Updated Task", priority=TaskPriority.HIGH.db_value), #type: ignore
+        seeded["actor"],
+        seeded["task_id"],  # type: ignore
+        TaskUpdate(title="Updated Task", priority=TaskPriority.HIGH.db_value),  # type: ignore
     )
+
+    logger.info(f"UPDATED TASK DATA:{task}")
 
     assert task.title == "Updated Task"
     assert task.priority == TaskPriority.HIGH.db_value
@@ -113,19 +127,20 @@ def test_update_task_updates_fields():
 def test_assign_and_unassign_task():
     seeded = _seed_task()
 
-    assigned = assign_task(seeded["task_id"], ["user-1"])  #type: ignore
+    assigned = assign_task(seeded["actor"], seeded["task_id"], ["1"])  # type: ignore
     assert len(assigned.assignees) == 1
 
-    unassigned = unassign_task(seeded["task_id"], ["user-1"]) #type: ignore
+    unassigned = unassign_task(seeded["actor"], seeded["task_id"], ["1"])  # type: ignore
     assert unassigned.assignees == []
 
 
 def test_delete_task_returns_true():
     seeded = _seed_task()
 
-    assert delete_task(seeded["task_id"]) is True #type: ignore
+    assert delete_task(seeded["actor"], seeded["task_id"]) is True  # type: ignore
 
 
 def test_get_task_by_id_raises_not_found():
+    seeded = _seed_task()
     with pytest.raises(NotFoundException):
-        get_task_by_id(999)
+        get_task_by_id(seeded["actor"], 999)
