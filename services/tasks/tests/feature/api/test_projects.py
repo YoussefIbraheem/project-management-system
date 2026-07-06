@@ -1,9 +1,6 @@
 from app.models import Project
 from app.security.roles import MemberRole
-
-from tests.conftest import logger
-
-
+from app import logger
 def test_list_projects_returns_projects(client, auth_headers, db_session, seeded_data):
     extra = Project(name="Beta", description="Second project")
     db_session.add(extra)

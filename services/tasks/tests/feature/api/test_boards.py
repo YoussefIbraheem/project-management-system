@@ -1,9 +1,5 @@
-import pytest
+from app import logger
 from app.security.roles import MemberRole
-from flask import abort
-from shared.exceptions import APIException, ForbiddenException
-
-from tests.conftest import logger
 
 
 def test_list_boards_by_project(client, auth_headers, seeded_data):
