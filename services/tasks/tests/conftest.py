@@ -23,7 +23,6 @@ from app import create_app
 from app.db import database as db_module
 from app.models import Base, Board, BoardColumn, Project, ProjectMember, Task
 from app.security.roles import MemberRole
-from app import logger
 
 @pytest.fixture()
 def engine():
