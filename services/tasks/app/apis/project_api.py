@@ -1,12 +1,11 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
 from shared.exceptions import APIException, BadRequestException, ValidationException
 from shared.openapi.decorators import document
 
 from app.schemas.project_member_schema import ProjectMemberCreate, ProjectMemberResponse
 from app.schemas.project_schema import ProjectCreate, ProjectResponse, ProjectUpdate
-from app.security.actor import Actor
 from app.services.project_service import (
     create_member,
     create_project,
@@ -80,12 +79,7 @@ def project_create():
         if not data:
             raise BadRequestException("Request body is missing or not valid JSON")
         project_data = ProjectCreate(**data)
-        claims = get_jwt()
-        user_id = str(get_jwt_identity())
-        actor = Actor(
-            user_id=user_id,
-            is_superuser=claims.get("is_superuser", False),
-        )
+        actor = get_actor()
 
         project = create_project(actor=actor, project_data=project_data)
     except ValidationError as e:
