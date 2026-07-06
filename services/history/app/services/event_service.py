@@ -28,7 +28,7 @@ async def get_events(
 
     query = Event.find(*filters)
 
-    events = await query.sort(-Event.timestamp).skip(offset).limit(limit).to_list()
+    events = await query.sort(-Event.timestamp).skip(offset).limit(limit).to_list() #type: ignore
 
     return [EventResponse(**event.model_dump(by_alias=True)) for event in events]
 

@@ -1,10 +1,9 @@
-from datetime import datetime
-
 from bson import ObjectId as _ObjectId
-from app.models.event import DateTimeUTC, utc_now
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
+
+from app.models.event import DateTimeUTC, utc_now
 
 ObjectId = Annotated[
     str, BeforeValidator(lambda v: str(v) if isinstance(v, _ObjectId) else v)
