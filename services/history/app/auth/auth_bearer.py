@@ -24,8 +24,10 @@ class JWTBearer(HTTPBearer):
                 )
             if not self.verify_jwt(credentials.credentials):
                 raise HTTPException(
-                    status_code=403, detail="Invalid token or expired token."
+                    status_code=403,
+                    detail="Invalid token or expired token. Check logs for further details.",
                 )
+
             return credentials.credentials
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
@@ -35,6 +37,12 @@ class JWTBearer(HTTPBearer):
 
         try:
             payload = decode_jwt(jwtoken)
+            if payload:
+                is_superuser = payload["is_superuser"]
+                if not is_superuser:
+                    raise HTTPException(
+                        status_code=403, detail="User doesn't have enough privileges."
+                    )
         except Exception as e:
             logger.error(f"Error decoding JWT token: {e}")
             payload = None
