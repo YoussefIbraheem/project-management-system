@@ -24,6 +24,34 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         return token
 
+    def validate(self, data):
+        user = authenticate(username=data.get("email"), password=data.get("password"))
+
+        if not user:
+            raise serializers.ValidationError("Invalid Credentials.")
+
+        if not user.is_verified:
+            code = UserVerification.objects.update_or_create(
+                user=user, defaults={"code": generate_verification_code()}
+            )[0]
+
+            logger.info(f"USER DATA:{user.id} \n CODE:{code.code}")
+
+            raise serializers.ValidationError(
+                "Account not verified. A new verification code has been sent to your email."
+            )
+
+        if not user.is_active:
+            raise serializers.ValidationError(
+                "This account is inactive, refer to us for reverification."
+            )
+
+        return {
+            "refresh": self.get_token(user).get("refresh"),
+            "access": self.get_token(user).get("access"),
+            "user": user,
+        }
+
 
 class UserRegisterationSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(

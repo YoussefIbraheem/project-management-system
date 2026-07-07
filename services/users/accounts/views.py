@@ -3,7 +3,14 @@ import logging
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, permissions, response, status, views , authentication
+from rest_framework import (
+    authentication,
+    generics,
+    permissions,
+    response,
+    status,
+    views,
+)
 from rest_framework_simplejwt import tokens
 
 from .events import (
@@ -76,7 +83,7 @@ class UserLoginView(views.APIView):
         serializer = CustomTokenObtainPairSerializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data
-            user = serializer.user
+            user = data["user"]
 
             actor_id = request.user.id if request.user.id else user.id
 
@@ -87,14 +94,7 @@ class UserLoginView(views.APIView):
                 email=user.email,
             )
 
-            # publish_history_event(event.to_dict())
-
-            # refresh = tokens.RefreshToken.for_user(user=user)
-            # refresh["sub"] = str(user.id)  # required by flask-jwt-extended
-
-            # logger.warning(
-            #     f"REFRESH TOKEN FOR USER {user.username}: {str(refresh)}", exc_info=True
-            # )
+            publish_history_event(event.to_dict())
 
             return response.Response(
                 {
@@ -147,7 +147,7 @@ class UserProfileView(views.APIView):
             updated_fields = [
                 {"name": field, "new_value": getattr(user_profile, field)}
                 for field in serializer.validated_data.keys()
-                if getattr(serializer.validated_data, field) is not None
+                if getattr(serializer.validated_data, field, None) is not None
             ]
 
             event = UserProfileUpdateEvent(
@@ -159,7 +159,6 @@ class UserProfileView(views.APIView):
             )
 
             publish_history_event(event.to_dict())
-
             return response.Response(serializer.data)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -235,7 +234,7 @@ class UserLogoutView(views.APIView):
 
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAdminUser,permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser, permissions.IsAuthenticated]
     serializer_class = UserSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["email", "username", "is_verified"]
@@ -247,7 +246,7 @@ class UserListView(generics.ListAPIView):
 
 class UserDetailsView(generics.RetrieveAPIView):
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAdminUser,permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser, permissions.IsAuthenticated]
     serializer_class = UserSerializer
 
     @swagger_auto_schema(serializer_class=UserSerializer)
