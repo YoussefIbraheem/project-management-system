@@ -33,7 +33,7 @@ class Settings:
     DEBUG: bool = True
 
     # Database settings
-    DB_URL: str = "postgresql://postgres:password@localhost:5432/trello_tasks_db"
+    DB_URL: str = "postgresql://postgres:password@localhost:5432/pms_tasks_db"
 
     # Broker URL
     BROKER_URL = "amqp://guest:guest@rabbitmq:5672/"
