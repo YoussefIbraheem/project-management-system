@@ -1,4 +1,5 @@
 services:
+# Services
   # Django Users Service
   users-service:
     image: project_management_system_django
@@ -39,7 +40,8 @@ services:
     depends_on:
       postgresdb:
         condition: service_healthy
-
+        
+  # FastAPI History Service
   history-service:
     build:
       context: ./services/history
@@ -90,7 +92,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-
+  # FastAPI Notification Service
   notifications-service:
     build:
       context: ./services/notifications
@@ -107,7 +109,7 @@ services:
         condition: service_started
       postgresdb:
         condition: service_started
-
+# DBs
   postgresdb:
     image: postgres:16-alpine
     container_name: postgresdb
@@ -134,7 +136,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-
+# MISC
   rabbitmq:
     image: rabbitmq:4.2.2-management-alpine
     container_name: rabbitmq_service
@@ -149,54 +151,68 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
       - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
 
-  celery_users_worker:
-    container_name: celery_users_worker
-    build:
-      context: ./services/users
-      dockerfile: Dockerfile
-    command: celery -A users worker --loglevel=info
-    volumes:
-      - ./services/users:/accounts
-    working_dir: /accounts
-    env_file:
-      - ./services/users/.env
-    environment:
-      POSTGRESQL_HOST: postgresdb
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-    depends_on:
-      postgresdb:
-        condition: service_healthy
-      redis:
-        condition: service_started
-      rabbitmq:
-        condition: service_started
-      users-service:
-        condition: service_started
-  celery_history_worker:
-    container_name: celery_history_worker
+  history-worker:
     build:
       context: ./services/history
       dockerfile: Dockerfile
-    command: celery -A app.consumers.history_consumer worker --loglevel=info --queues=history
+    container_name: history_worker
+    command: python app/consumers/history_consumer.py
     volumes:
       - ./services/history:/app
-    working_dir: /app
-    env_file:
-      - ./services/history/.env
-    environment:
-      MONGODB_HOST: mongodb
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
     depends_on:
       mongodb:
         condition: service_healthy
-      redis:
-        condition: service_started
       rabbitmq:
         condition: service_started
-      history-service:
-        condition: service_started
+
+  # celery_users_worker:
+  #   container_name: celery_users_worker
+  #   build:
+  #     context: ./services/users
+  #     dockerfile: Dockerfile
+  #   command: celery -A users worker --loglevel=info
+  #   volumes:
+  #     - ./services/users:/accounts
+  #   working_dir: /accounts
+  #   env_file:
+  #     - ./services/users/.env
+  #   environment:
+  #     POSTGRESQL_HOST: postgresdb
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  #   depends_on:
+  #     postgresdb:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_started
+  #     rabbitmq:
+  #       condition: service_started
+  #     users-service:
+  #       condition: service_started
+  # celery_history_worker:
+  #   container_name: celery_history_worker
+  #   build:
+  #     context: ./services/history
+  #     dockerfile: Dockerfile
+  #   command: celery -A app.consumers.history_consumer worker --loglevel=info --queues=history
+  #   volumes:
+  #     - ./services/history:/app
+  #   working_dir: /app
+  #   env_file:
+  #     - ./services/history/.env
+  #   environment:
+  #     MONGODB_HOST: mongodb
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  #   depends_on:
+  #     mongodb:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_started
+  #     rabbitmq:
+  #       condition: service_started
+  #     history-service:
+  #       condition: service_started
 
 volumes:
   postgres_data:

@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: Optional[int] = 30
 
     CELERY_BROKER_URL: Optional[str] = "amqp://guest:guest@rabbitmq:5672//"
+    RABBITMQ_BROKER_URL: Optional[str] = "amqp://guest:guest@rabbitmq:5672//"
     CELERY_RESULT_BACKEND: Optional[str] = "redis://redis:6379/0"
     ALLOW_INVALID_CERTS: Optional[bool] = False
 

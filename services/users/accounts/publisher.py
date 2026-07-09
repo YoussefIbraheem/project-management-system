@@ -1,34 +1,47 @@
-from celery import shared_task
-from users import celery_app
-from kombu import Producer, Exchange, Connection
+import json
 import logging
+import os
 import uuid
+import environ
+import pika
 
+env = environ.Env()
+env.read_env(os.path.join(os.path.dirname(__file__), ".env"))
 logger = logging.getLogger(__name__)
 
 
-@shared_task
 def publish_history_event(event_data):
     try:
         logger.info(f"Publishing history event: {event_data}")
-        with Connection(celery_app.conf.broker_url) as conn:
+        data = {
+            "task": "app.consumers.history_consumer.record_activity",
+            "id": str(uuid.uuid4()),
+            "args": [event_data],
+            "kwargs": {},
+            "retries": 0,
+        }
+        
+        params = pika.ConnectionParameters(
+            host=env.str("RABBITMQ_HOST"), #type: ignore
+            port=env.int("RABBITMQ_PORT"),  #type: ignore
+            virtual_host="/",
+            credentials=pika.PlainCredentials(
+                username=env.str("RABBITMQ_USER"),  #type: ignore
+                password=env.str("RABBITMQ_PASSWORD"),  #type: ignore
+            ),
+        )
+        message = json.dumps(data).encode("utf-8")
+        with pika.BlockingConnection(params) as conn:
             with conn.channel() as channel:
-                producer = Producer(
-                    channel,
-                    exchange=Exchange("history", type="direct", durable=True),
-                    routing_key="history",
-                )
-                producer.publish(
-                    body={
-                        "task": "app.consumers.history_consumer.record_activity",
-                        "id": str(uuid.uuid4()),
-                        "args": [event_data],
-                        "kwargs": {},
-                        "retries": 0,
+                channel.queue_declare(
+                    queue="history",
+                    durable=True,
+                    arguments={
+                        "x-dead-letter-exchange": "dlx",
+                        "x-dead-letter-routing-key": "history.failed",
                     },
-                    declare=[],
-                    serializer="json",
                 )
+                channel.basic_publish(routing_key="history", exchange="", body=message)
         logger.info("History event published successfully.")
     except Exception as e:
         logger.error(f"Error publishing history event: {e}", exc_info=True)

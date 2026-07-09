@@ -58,3 +58,4 @@ async def create_event(event_data: dict):
 
     await event.insert()
     return str(event.id)
+    

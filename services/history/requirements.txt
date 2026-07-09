@@ -1,3 +1,5 @@
+aio-pika==9.6.2
+aiormq==6.9.4
 amqp==5.3.1
 annotated-doc==0.0.4
 annotated-types==0.7.0
@@ -32,9 +34,13 @@ markdown-it-py==4.0.0
 MarkupSafe==3.0.3
 mdurl==0.1.2
 motor==3.7.1
+multidict==6.7.1
 packaging==26.2
+pamqp==3.3.0
+pika==1.4.1
 pluggy==1.6.0
 prompt_toolkit==3.0.52
+propcache==0.5.2
 pwdlib==0.3.0
 pycparser==3.0
 pydantic==2.13.3
@@ -70,3 +76,4 @@ vine==5.1.0
 watchfiles==1.1.1
 wcwidth==0.7.0
 websockets==16.0
+yarl==1.24.2
