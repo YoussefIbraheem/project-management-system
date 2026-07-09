@@ -48,7 +48,7 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.CheckConstraint("role IN ('owner', 'admin', 'member')", name='check_role'),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete="CASCADE"),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('project_id', 'user_id')
     )
