@@ -1,13 +1,13 @@
-from sqlmodel import Field, Relationship
+from sqlmodel import Field, ForeignKey, Relationship
 from . import datetime , utc_now , Base
-from typing import TYPE_CHECKING
 from .notification import Notification
 
 class UserReplica(Base, table=True):
-    __tablename__ = "user_replicas" #type: ignore
-    
+     
     user_id: str = Field(primary_key=True, index=True)
-    email: str = Field(index=True)
+    email: str = Field(index=True,unique=True)
+    username: str = Field(index=True,unique=True)
+    
     display_name: str | None = None
     
     created_at: datetime = Field(default_factory=utc_now)

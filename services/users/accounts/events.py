@@ -1,6 +1,7 @@
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from sre_compile import dis
 from typing import Optional
 
 
@@ -27,8 +28,15 @@ class BaseEvent:
 
 @dataclass
 class UserRegisterEvent(BaseEvent):
-    def __init__(self, subject_id: str, email: str, username: str, actor_id: str):
-        self.metadata = {"email": email, "username": username}
+    def __init__(
+        self,
+        subject_id: str,
+        email: str,
+        username: str,
+        actor_id: str,
+        display_name: Optional[str]=None,
+    ):
+        self.metadata = {"email": email, "username": username,"user_id":subject_id,"display_name":display_name}
 
         super().__init__(
             subject_id=subject_id, actor_id=actor_id, metadata=self.metadata
@@ -62,14 +70,18 @@ class UserProfileUpdateEvent(BaseEvent):
         subject_id: str,
         actor_id: str,
         email: str,
-        username:str,
+        username: str,
         updated_fields: Optional[list] = [],
     ):
         super().__init__(
             subject_id=subject_id,
             subject_type="user_profile",
             actor_id=actor_id,
-            metadata={"email": email, "username":username ,"updated_fields": updated_fields},
+            metadata={
+                "email": email,
+                "username": username,
+                "updated_fields": updated_fields,
+            },
         )
 
 

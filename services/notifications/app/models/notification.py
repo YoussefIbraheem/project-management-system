@@ -1,13 +1,13 @@
-from sqlmodel import Field,Relationship
+from sqlmodel import Field, ForeignKey,Relationship
 from . import datetime , utc_now , Base
 from typing import Optional
 from enum import StrEnum
-from .user_replica import UserReplica
 from .email_log import EmailLog
-# from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-# if TYPE_CHECKING:
-#     from . import UserReplica , EmailLog
+if TYPE_CHECKING:
+    from .user_replica import UserReplica
+    from .email_log import EmailLog
 
 
 class NotificationType(StrEnum):
@@ -22,10 +22,9 @@ class NotificationType(StrEnum):
     TASK_DUE_SOON = "task_due_soon"
 
 class Notification(Base,table=True):
-    __tablename__ = "notifications" #type: ignore
 
     id: int | None = Field(default=None, primary_key=True)
-    user_id: str = Field(index=True,foreign_key="user_replica.user_id")
+    user_id: str = Field(index=True,foreign_key="userreplica.user_id")
     type: str = Field(index=True)
     subject: Optional[str] = None
     title: str
@@ -33,5 +32,5 @@ class Notification(Base,table=True):
     is_read: bool = Field(default=False)
     created_at: datetime = Field(default_factory=utc_now)
 
-    user_replica: UserReplica = Relationship(back_populates="notifications")
+    user_replica: "UserReplica" = Relationship(back_populates="notifications")
     email_logs: list["EmailLog"] = Relationship(back_populates="notification")

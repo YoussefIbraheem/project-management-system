@@ -1,11 +1,10 @@
-from sqlmodel import Field, Relationship
+from sqlmodel import Field, ForeignKey, Relationship
 from . import datetime , utc_now , Base
 from enum import StrEnum
-from .notification import Notification
-# from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-# if TYPE_CHECKING:
-#     from . import Notification
+if TYPE_CHECKING:
+    from .notification import Notification
 
 class EmailStatus(StrEnum):
     PENDING = "pending"
@@ -14,8 +13,7 @@ class EmailStatus(StrEnum):
     RETRYING = "retrying"
 
 class EmailLog(Base,table=True):
-    __tablename__ = "email_logs" #type: ignore
-    
+     
     id: int | None = Field(default=None, primary_key=True)
     email_address: str = Field(index=True)
     notification_id: int = Field(foreign_key="notification.id")

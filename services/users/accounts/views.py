@@ -23,7 +23,7 @@ from .events import (
     UserRegisterEvent,
 )
 from .models import User, UserProfile
-from .publisher import publish_history_event
+from .publishers import publish_history_event , publish_notification_event
 from .serializers import (
     CustomTokenObtainPairSerializer,
     UserLoginSerializer,
@@ -49,14 +49,25 @@ class UserRegisterationView(views.APIView):
 
             actor_id = request.user.id if request.user.id else user.id
 
+            display_name = ""
+
+            if user.first_name:
+                display_name += user.first_name
+
+            if user.last_name:
+                display_name += " " + user.last_name
+
+
             event = UserRegisterEvent(
                 actor_id=str(actor_id),
                 subject_id=str(user.id),
                 username=user.username,
                 email=user.email,
+                display_name=display_name
             )
 
             publish_history_event(event.to_dict())
+            publish_notification_event(event.to_dict())
 
             refresh = tokens.RefreshToken.for_user(user=user)
 
@@ -95,6 +106,7 @@ class UserLoginView(views.APIView):
             )
 
             publish_history_event(event.to_dict())
+            publish_notification_event(event.to_dict())
 
             return response.Response(
                 {
@@ -242,7 +254,6 @@ class UserListView(generics.ListAPIView):
     @swagger_auto_schema(serializer_class=UserSerializer(many=True))
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-
 
 class UserDetailsView(generics.RetrieveAPIView):
     queryset = User.objects.all()
