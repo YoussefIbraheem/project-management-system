@@ -1,4 +1,4 @@
-from sqlmodel import Field, ForeignKey, Relationship
+from sqlmodel import Field, Relationship
 from . import datetime , utc_now , Base
 from enum import StrEnum
 from typing import TYPE_CHECKING
