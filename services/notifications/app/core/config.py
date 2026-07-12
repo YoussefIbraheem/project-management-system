@@ -14,7 +14,11 @@ class Settings(BaseSettings):
     DB_URL: Optional[str] = (
         "postgresql://youssef:password@postgresdb:5432/pms_notifications_db"
     )
-    BROKER_URL: Optional[str] = "amqp://guest:guest@rabbitmq:5672/"
+    BROKER_URL: Optional[str] = "amqp://guest:guest@rabbitmq:5672//"
+    RABBITMQ_HOST: Optional[str]="rabbitmq"
+    RABBITMQ_PORT: Optional[int]=5672
+    RABBITMQ_USER: Optional[str]="guest"
+    RABBITMQ_PASSWORD: Optional[str]="guest"
 
 
 settings= Settings()

@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Query
-from app.services.user_replica_service import list_users_replicas
+from fastapi import APIRouter, HTTPException
+from app.services.user_replica_service import get_user_replica, list_users_replicas
 from app.db.database import SessionDep
 router = APIRouter(prefix="/users_replicas")
 
@@ -7,5 +7,12 @@ router = APIRouter(prefix="/users_replicas")
 def users_replicas_list(session:SessionDep,limit: int = 100, offset: int = 0):
     try:
         return list_users_replicas(session,limit=limit, offset=offset)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{user_id}")
+def users_replica_by_user_id(user_id: str, session: SessionDep):
+    try:
+        return get_user_replica(session, user_id=user_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
