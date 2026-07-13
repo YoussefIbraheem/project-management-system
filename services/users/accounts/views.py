@@ -1,10 +1,8 @@
 import logging
 
-from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import (
-    authentication,
     generics,
     permissions,
     response,
@@ -12,6 +10,7 @@ from rest_framework import (
     views,
 )
 from rest_framework_simplejwt import tokens
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
 from .events import (
     UserDeleteEvent,
@@ -23,15 +22,15 @@ from .events import (
     UserRegisterEvent,
 )
 from .models import User, UserProfile
-from .publishers import publish_history_event , publish_notification_event
+from .publishers import publish_history_event, publish_notification_event
 from .serializers import (
-    CustomTokenObtainPairSerializer,
-    UserLoginSerializer,
+    UserDeleteSerializer,
+    UserLoginJWTSerializer,
     UserLogoutSerializer,
     UserPasswordChangeSerializer,
-    UserProfileSerializer,
     UserRegisterationSerializer,
     UserSerializer,
+    UserUpdateSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,9 +45,7 @@ class UserRegisterationView(views.APIView):
         serializer = UserRegisterationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-
             actor_id = request.user.id if request.user.id else user.id
-
             display_name = ""
 
             if user.first_name:
@@ -57,13 +54,12 @@ class UserRegisterationView(views.APIView):
             if user.last_name:
                 display_name += " " + user.last_name
 
-
             event = UserRegisterEvent(
                 actor_id=str(actor_id),
                 subject_id=str(user.id),
                 username=user.username,
                 email=user.email,
-                display_name=display_name
+                display_name=display_name,
             )
 
             publish_history_event(event.to_dict())
@@ -89,9 +85,9 @@ class UserLoginView(views.APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
 
-    @swagger_auto_schema(request_body=UserLoginSerializer)
+    @swagger_auto_schema(request_body=UserLoginJWTSerializer)
     def post(self, request):
-        serializer = CustomTokenObtainPairSerializer(data=request.data)
+        serializer = UserLoginJWTSerializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data
             user = data["user"]
@@ -104,9 +100,7 @@ class UserLoginView(views.APIView):
                 username=user.username,
                 email=user.email,
             )
-
             publish_history_event(event.to_dict())
-            publish_notification_event(event.to_dict())
 
             return response.Response(
                 {
@@ -125,53 +119,54 @@ class UserLoginView(views.APIView):
             )
 
 
-class UserProfileView(views.APIView):
+class UserView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @swagger_auto_schema(responses={200: UserProfileSerializer()})
+    @swagger_auto_schema(responses={200: UserSerializer()})
     def get(self, request):
         try:
-            profile = request.user.profile
-            serializer = UserProfileSerializer(profile).data
+            user = request.user
+            serializer = UserSerializer(user).data
             return response.Response(serializer)
 
         except UserProfile.DoesNotExist:
-            profile = UserProfile.objects.create(user=request.user)
-            serializer = UserProfileSerializer(profile).data
+            UserProfile.objects.create(user=request.user)
+            serializer = UserSerializer(request.user).data
             return response.Response(serializer)
+
+
+class UserUpdateView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(
-        request_body=UserProfileSerializer, responses={200: UserProfileSerializer()}
+        request_body=UserUpdateSerializer, responses={200: UserSerializer()}
     )
     def put(self, request):
-        try:
-            profile = request.user.profile
-        except UserProfile.DoesNotExist:
-            profile = UserProfile.objects.create(user=request.user)
+        serializer = UserUpdateSerializer(
+            request.user, data=request.data, context={"request": request}
+        )
 
-        serializer = UserProfileSerializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
 
+        serializer.save()
+        return response.Response(serializer.data)
+
+        # return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserDeleteView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=UserDeleteSerializer, responses={204: "User Deleted Successfully!"}
+    )
+    def delete(self, request):
+        serializer = UserDeleteSerializer(
+            data=request.data, context={"request": request}
+        )
         if serializer.is_valid():
-            user_profile = serializer.save()
-
-            actor_id = request.user.id if request.user.id else user_profile.user.id
-
-            updated_fields = [
-                {"name": field, "new_value": getattr(user_profile, field)}
-                for field in serializer.validated_data.keys()
-                if getattr(serializer.validated_data, field, None) is not None
-            ]
-
-            event = UserProfileUpdateEvent(
-                actor_id=str(actor_id),
-                subject_id=str(user_profile.id),
-                email=user_profile.user.email,
-                username=user_profile.user.username,
-                updated_fields=updated_fields,
-            )
-
-            publish_history_event(event.to_dict())
-            return response.Response(serializer.data)
+            serializer.save()
+            return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -254,6 +249,7 @@ class UserListView(generics.ListAPIView):
     @swagger_auto_schema(serializer_class=UserSerializer(many=True))
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
 
 class UserDetailsView(generics.RetrieveAPIView):
     queryset = User.objects.all()

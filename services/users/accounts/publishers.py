@@ -59,7 +59,7 @@ def publish_notification_event(event_data):
         logger.info(f"Publishing notification event: {event_data}")
         params = _fetch_connection_params()
         data = {
-            "task": "app.consumers.notification.record_activity",
+            "task": "app.consumers.notification_consumer.record_activity",
             "id": str(uuid.uuid4()),
             "args": [event_data],
             "kwargs": {},
@@ -69,15 +69,15 @@ def publish_notification_event(event_data):
         with pika.BlockingConnection(params) as conn:
             with conn.channel() as channel:
                 channel.queue_declare(
-                    queue="history",
+                    queue="notification",
                     durable=True,
                     arguments={
                         "x-dead-letter-exchange": "dlx",
-                        "x-dead-letter-routing-key": "notifications.failed",
+                        "x-dead-letter-routing-key": "notification.failed",
                     },
                 )
                 channel.basic_publish(
-                    routing_key="notifications", exchange="", body=message
+                    routing_key="notification", exchange="", body=message
                 )
                 logger.info("Notification event published successfully.")
     except Exception as e:

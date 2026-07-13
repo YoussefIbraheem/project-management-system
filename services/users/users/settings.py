@@ -193,7 +193,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 SIMPLE_JWT = {
-    "TOKEN_OBTAIN_SERIALIZER":"accounts.serializers.CustomTokenObtainPairSerializer",
+    "TOKEN_OBTAIN_SERIALIZER":"accounts.serializers.UserLoginJWTSerializer",
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=env.int("ACCESS_TOKEN_LIFETIME", default=2)
     ),
