@@ -217,5 +217,3 @@ __marimo__/
 
 # OpenAPI documentation file
 openapi.yaml
-pyproject.toml
-.zed/
