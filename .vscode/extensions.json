@@ -1,3 +1,5 @@
 {
-  "recommendations": ["detachhead.basedpyright"]
+  "recommendations": [
+    "detachhead.basedpyright"
+  ],
 }

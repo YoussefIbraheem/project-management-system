@@ -1,0 +1,20 @@
+[tool.basedpyright]
+exclude = ["**/node_modules",
+    "**/__pycache__",
+    "**/.venv",
+    "**/.mypy_cache",
+    "**/.pytest_cache",
+    "**/.vscode",
+    "**/.git",
+]
+extraPaths= ["services/notifications","services/tasks","services/history","service/users"]
+defineConstant = { DEBUG = true }
+
+reportMissingImports = "warning"
+reportUnknownParameterType="none"
+reportUnknownVariableType="none"
+reportAny="none"
+reportUnusedCallResult="none"
+
+pythonVersion = "3.14.4"
+pythonPlatform = "Linux"
