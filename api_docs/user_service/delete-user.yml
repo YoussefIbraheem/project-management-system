@@ -1,0 +1,15 @@
+info:
+  name: delete-user
+  type: http
+  seq: 10
+
+http:
+  method: DELETE
+  url: "{{url}}/delete"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
