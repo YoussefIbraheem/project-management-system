@@ -5,12 +5,14 @@ from app.services.user_replica_service import (
     create_user_replica,
     delete_user_replica,
     update_user_replica,
+    check_user_replica_exists
 )
 
 USER_EVENT_HANDLERS = {
     UserEventType.USER_REGISTER: create_user_replica,
     UserEventType.USER_PROFILE_UPDATE: update_user_replica,
     UserEventType.USER_DELETE: delete_user_replica,
+    UserEventType.USER_LOGIN: check_user_replica_exists, # No need to
 }
 
 
