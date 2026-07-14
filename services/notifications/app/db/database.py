@@ -1,9 +1,10 @@
 from app.core.config import settings
-from sqlmodel import SQLModel, create_engine , Session
+from sqlmodel import SQLModel, create_engine, Session
 from typing import Annotated
 from fastapi import Depends
 
-engine = create_engine(url=settings.DB_URL) # type: ignore
+engine = create_engine(url=settings.DB_URL)
+
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)

@@ -18,7 +18,7 @@ def decode_jwt(token: str) -> dict | None:
         decoded_token = jwt.decode(
             token,
             settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM],  # type: ignore
+            algorithms=[settings.ALGORITHM],
         )
         return decoded_token if decoded_token["exp"] >= time.time() else None
     except jwt.ExpiredSignatureError as e:

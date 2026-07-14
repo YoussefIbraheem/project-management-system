@@ -83,7 +83,7 @@ def test_get_projects_returns_projects():
 def test_get_project_by_id_returns_project():
     project_id = _seed_project(user_id="1")
 
-    project = get_project_by_id(project_id)  # type: ignore
+    project = get_project_by_id(project_id)
 
     assert project.id == project_id
     assert project.name == "Alpha"
@@ -105,7 +105,7 @@ def test_update_project_updates_fields():
     actor = Actor(user_id="1", is_superuser=True)
     project = update_project(
         actor,
-        project_id,  # type: ignore
+        project_id,
         ProjectUpdate(name="Renamed Project", description="Updated desc"),
     )
 
@@ -117,7 +117,7 @@ def test_delete_project_returns_true():
     project_id = _seed_project(user_id="1")
     actor = Actor(user_id="1", is_superuser=True)
 
-    assert delete_project(actor, project_id) is True  # type: ignore
+    assert delete_project(actor, project_id) is True
 
 
 def test_get_project_by_id_raises_not_found():
@@ -135,7 +135,7 @@ def test_get_members_empty_returns_empty_list():
 
         actor = Actor(user_id="1", is_superuser=True)
 
-        members = get_members(actor, project_id)  # type: ignore
+        members = get_members(actor, project_id)
 
     assert len(members) == 0
 
@@ -183,7 +183,7 @@ def test_create_member_adds_new_member():
     new_member = create_member(
         actor,
         seeded["project_id"],
-        ProjectMemberCreate(user_id="4", role=MemberRole.MEMBER.db_value), #type: ignore
+        ProjectMemberCreate(user_id="4", role=MemberRole.MEMBER.db_value),  # type: ignore
     )
 
     assert new_member.user_id == "4"
@@ -202,7 +202,7 @@ def test_create_member_project_not_found_raises_404():
         create_member(
             actor,
             999,
-            ProjectMemberCreate(user_id="new-member", role=MemberRole.MEMBER.db_value), #type: ignore
+            ProjectMemberCreate(user_id="new-member", role=MemberRole.MEMBER.db_value),  # type: ignore
         )
 
 

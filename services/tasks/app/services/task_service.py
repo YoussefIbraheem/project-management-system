@@ -88,8 +88,8 @@ def get_user_tasks(actor: Actor):
 def create_task(actor: Actor, task_data: TaskCreate) -> TaskResponse:
     with get_db_session() as db:
         board = get_board_or_404(db, task_data.board_id)
-        column = get_column_or_404(db, board.id, task_data.column_id)  # type: ignore
-        can_create_task(db, actor, board.project_id)  # type: ignore
+        column = get_column_or_404(db, board.id, task_data.column_id)
+        can_create_task(db, actor, board.project_id)
         db_task = Task(
             title=task_data.title,
             description=task_data.description,
@@ -128,7 +128,7 @@ def update_task(actor: Actor, task_id: int, task_data: TaskUpdate) -> TaskRespon
             setattr(db_task, field, value)
             updated_fields.append(field)
 
-        db_task.updated_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        db_task.updated_at = datetime.now(timezone.utc)[assignment]
         db.flush()
         db.refresh(db_task)
         event = Event(

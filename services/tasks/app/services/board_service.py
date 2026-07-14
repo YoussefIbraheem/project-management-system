@@ -142,11 +142,11 @@ def update_board(
         can_update_board(db, actor, db_board)
         updated_fields = []
         if board_data.name is not None:
-            db_board.name = board_data.name  # type: ignore[assignment]
+            db_board.name = board_data.name[assignment]
             updated_fields.append("name")
 
         if board_data.description is not None:
-            db_board.description = board_data.description  # type: ignore[assignment]
+            db_board.description = board_data.description[assignment]
             updated_fields.append("description")
 
         db.flush()
@@ -256,7 +256,7 @@ def create_column(actor: Actor, board_id: int, board_column_data: BoardColumnCre
 
         can_create_board_column(db, actor, board)
 
-        ensure_column_not_duplicate(db, board.id, board_column_data.label)  # type: ignore[assignment]
+        ensure_column_not_duplicate(db, board.id, board_column_data.label)[assignment]
         new_column = BoardColumn(
             label=board_column_data.label,
             slug=slugify(board_column_data.label),
@@ -296,7 +296,7 @@ def delete_column(actor: Actor, board_id: int, column_id: int):
 
         can_delete_board_column(db, actor, board)
 
-        column = get_column_or_404(db, board.id, column_id)  # type: ignore
+        column = get_column_or_404(db, board.id, column_id)
 
         db.delete(column)
         db.commit()

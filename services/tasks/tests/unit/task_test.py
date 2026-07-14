@@ -74,7 +74,7 @@ def test_get_tasks_returns_tasks():
         board_id=seeded["board_id"],
         limit=10,
         offset=0,
-    )  # type: ignore
+    )
 
     assert len(tasks) >= 1
     assert tasks[0].board_id == seeded["board_id"]
@@ -83,10 +83,10 @@ def test_get_tasks_returns_tasks():
 def test_get_task_by_id_returns_task():
     seeded = _seed_task()
 
-    task = get_task_by_id(seeded["actor"], seeded["task_id"])  # type: ignore
+    task = get_task_by_id(seeded["actor"], seeded["task_id"])
 
-    assert task.id == seeded["task_id"]  # type: ignore
-    assert task.title == "Task 1"  # type: ignore
+    assert task.id == seeded["task_id"]
+    assert task.title == "Task 1"
 
 
 def test_create_task_persists_task():
@@ -97,10 +97,10 @@ def test_create_task_persists_task():
         TaskCreate(
             title="Created Task",
             description="Body",
-            column_id=seeded["doing_id"],  # type: ignore
+            column_id=seeded["doing_id"],
             priority=TaskPriority.MEDIUM.db_value,
             creator_id="user-1",
-            board_id=seeded["board_id"],  # type: ignore
+            board_id=seeded["board_id"],
             due_date=datetime(2026, 2, 1, tzinfo=timezone.utc),
         ),
     )
@@ -114,8 +114,8 @@ def test_update_task_updates_fields():
 
     task = update_task(
         seeded["actor"],
-        seeded["task_id"],  # type: ignore
-        TaskUpdate(title="Updated Task", priority=TaskPriority.HIGH.db_value),  # type: ignore
+        seeded["task_id"],
+        TaskUpdate(title="Updated Task", priority=TaskPriority.HIGH.db_value),
     )
 
     logger.info(f"UPDATED TASK DATA:{task}")
@@ -127,17 +127,17 @@ def test_update_task_updates_fields():
 def test_assign_and_unassign_task():
     seeded = _seed_task()
 
-    assigned = assign_task(seeded["actor"], seeded["task_id"], ["1"])  # type: ignore
+    assigned = assign_task(seeded["actor"], seeded["task_id"], ["1"])
     assert len(assigned.assignees) == 1
 
-    unassigned = unassign_task(seeded["actor"], seeded["task_id"], ["1"])  # type: ignore
+    unassigned = unassign_task(seeded["actor"], seeded["task_id"], ["1"])
     assert unassigned.assignees == []
 
 
 def test_delete_task_returns_true():
     seeded = _seed_task()
 
-    assert delete_task(seeded["actor"], seeded["task_id"]) is True  # type: ignore
+    assert delete_task(seeded["actor"], seeded["task_id"]) is True
 
 
 def test_get_task_by_id_raises_not_found():

@@ -76,8 +76,8 @@ task_bp = Blueprint("task", __name__, url_prefix="/api/v1/tasks/")
             "required": False,
             "description": "The offset for pagination",
         },
-    ],  # type:ignore
-    response_schema=TaskResponse,  # type:ignore
+    ],  # type: ignore
+    response_schema=TaskResponse,  # type: ignore
 )
 @task_bp.route("/", methods=["GET"])
 @jwt_required()
@@ -98,21 +98,21 @@ def tasks_list():
 
         tasks = get_tasks(
             actor=actor,
-            project_id=project_id,  # type: ignore
-            board_id=board_id,  # type: ignore
+            project_id=project_id,
+            board_id=board_id,
             creator_id=user_id,
             assigned_to=assigned_to,
-            column_id=column_id,  # type: ignore
+            column_id=column_id,
             priority=priority,
-            limit=limit,  # type: ignore
-            offset=offset,  # type: ignore
-        )  # type: ignore
+            limit=limit,
+            offset=offset,
+        )
         return jsonify([task.model_dump() for task in tasks]), 200
     except APIException as e:
         return e.to_response()
 
 
-@document(response_schema=TaskResponse)  # type:ignore
+@document(response_schema=TaskResponse)  # type: ignore
 @task_bp.route("/<int:task_id>", methods=["GET"])
 @jwt_required()
 def task_get(task_id: int):
@@ -124,7 +124,7 @@ def task_get(task_id: int):
         return e.to_response()
 
 
-@document(request_schema=TaskCreate, response_schema=TaskResponse)  # type:ignore
+@document(request_schema=TaskCreate, response_schema=TaskResponse)  # type: ignore
 @task_bp.route("/", methods=["POST"])
 @jwt_required()
 def task_create():
@@ -140,7 +140,7 @@ def task_create():
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
-            data=e.errors(),  # type:ignore
+            data=e.errors(),  # type: ignore
         ).to_response()
     except APIException as e:
         return e.to_response()
@@ -148,7 +148,7 @@ def task_create():
         return jsonify(created_task.model_dump()), 201
 
 
-@document(request_schema=TaskUpdate, response_schema=TaskResponse)  # type:ignore
+@document(request_schema=TaskUpdate, response_schema=TaskResponse)  # type: ignore
 @task_bp.route("/<int:task_id>", methods=["PUT"])
 @jwt_required()
 def task_update(task_id):
@@ -164,7 +164,7 @@ def task_update(task_id):
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
-            data=e.errors(),  # type:ignore
+            data=e.errors(),  # type: ignore
         ).to_response()
     except APIException as e:
         return e.to_response()
@@ -183,7 +183,7 @@ def task_delete(task_id: int):
         return e.to_response()
 
 
-@document(request_schema=TaskAssign, response_schema=TaskResponse)  # type:ignore
+@document(request_schema=TaskAssign, response_schema=TaskResponse)  # type: ignore
 @task_bp.route("/<int:task_id>/assign", methods=["POST"])
 @jwt_required()
 def task_assign(task_id):
@@ -200,13 +200,13 @@ def task_assign(task_id):
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
-            data=e.errors(),  # type:ignore
+            data=e.errors(),  # type: ignore
         ).to_response()
     except APIException as e:
         return e.to_response()
 
 
-@document(request_schema=TaskUnassign, response_schema=TaskResponse)  # type:ignore
+@document(request_schema=TaskUnassign, response_schema=TaskResponse)  # type: ignore
 @task_bp.route("/<int:task_id>/unassign", methods=["POST"])
 @jwt_required()
 def task_unassign(task_id):
@@ -223,7 +223,7 @@ def task_unassign(task_id):
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
-            data=e.errors(),  # type:ignore
+            data=e.errors(),  # type: ignore
         ).to_response()
     except APIException as e:
         return e.to_response()

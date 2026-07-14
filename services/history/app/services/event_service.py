@@ -28,7 +28,7 @@ async def get_events(
 
     query = Event.find(*filters)
 
-    events = await query.sort(-Event.timestamp).skip(offset).limit(limit).to_list()  # type: ignore
+    events = await query.sort(-Event.timestamp).skip(offset).limit(limit).to_list()
 
     return [EventResponse(**event.model_dump(by_alias=True)) for event in events]
 
@@ -58,4 +58,3 @@ async def create_event(event_data: dict):
 
     await event.insert()
     return str(event.id)
-    

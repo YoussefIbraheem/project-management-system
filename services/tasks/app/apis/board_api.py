@@ -54,8 +54,8 @@ board_bp = Blueprint("board", __name__, url_prefix="/api/v1/boards/")
             "required": False,
             "description": "The offset for pagination",
         },
-    ],  # type: ignore
-    response_schema=BoardResponse,  # type: ignore
+    ],
+    response_schema=BoardResponse,
 )
 @board_bp.route("/", methods=["GET"])
 @jwt_required()
@@ -67,28 +67,28 @@ def boards_get():
         actor = get_actor()
         boards = get_board_by_project(
             actor=actor,
-            project_id=project_id,  # type: ignore
-            limit=limit,  # type: ignore
-            offset=offset,  # type: ignore
+            project_id=project_id,
+            limit=limit,
+            offset=offset,
         )
         return jsonify([board.model_dump() for board in boards]), 200
     except APIException as e:
         return e.to_response()
 
 
-@document(response_schema=BoardResponse)  # type: ignore
+@document(response_schema=BoardResponse)
 @board_bp.route("/<int:board_id>", methods=["GET"])
 @jwt_required()
 def board_get(board_id: int):
     try:
         actor = actor = get_actor()
         board = get_board_by_id(actor=actor, board_id=board_id)
-        return jsonify(board.model_dump()), 200  # type: ignore
+        return jsonify(board.model_dump()), 200
     except APIException as e:
         return e.to_response()
 
 
-@document(request_schema=BoardCreate, response_schema=BoardResponse)  # type: ignore
+@document(request_schema=BoardCreate, response_schema=BoardResponse)
 @board_bp.route("/", methods=["POST"])
 @jwt_required()
 def board_create():
@@ -103,13 +103,13 @@ def board_create():
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
-            data=e.errors(),  # type: ignore
+            data=e.errors(),
         ).to_response()
     except APIException as e:
         return e.to_response()
 
 
-@document(request_schema=BoardUpdate, response_schema=BoardResponse)  # type: ignore
+@document(request_schema=BoardUpdate, response_schema=BoardResponse)
 @board_bp.route("/<int:board_id>", methods=["PUT"])
 @jwt_required()
 def board_update(board_id: int):
@@ -122,11 +122,11 @@ def board_update(board_id: int):
         updated_board = update_board(
             actor=actor, board_id=board_id, board_data=board_data
         )
-        return jsonify(updated_board.model_dump()), 200  # type: ignore
+        return jsonify(updated_board.model_dump()), 200
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
-            data=e.errors(),  # type: ignore
+            data=e.errors(),
         ).to_response()
     except APIException as e:
         return e.to_response()
@@ -142,15 +142,16 @@ def board_delete(board_id: int):
         if not success:
             return NotFoundException(message="Board not found").to_response()
 
-        return jsonify(
-            {"message": f"Board with id {board_id} deleted successfully"}
-        ), 200
+        return (
+            jsonify({"message": f"Board with id {board_id} deleted successfully"}),
+            200,
+        )
 
     except APIException as e:
         return e.to_response()
 
 
-@document(response_schema=BoardColumnDetailsResponse)  # type: ignore
+@document(response_schema=BoardColumnDetailsResponse)
 @board_bp.route("/<int:board_id>/columns", methods=["GET"])
 @jwt_required()
 def columns_get(board_id: int):
@@ -162,7 +163,7 @@ def columns_get(board_id: int):
         return e.to_response()
 
 
-@document(response_schema=BoardColumnDetailsResponse)  # type: ignore
+@document(response_schema=BoardColumnDetailsResponse)
 @board_bp.route("/<int:board_id>/columns/<int:column_id>", methods=["GET"])
 @jwt_required()
 def column_get(board_id: int, column_id: int):
@@ -174,7 +175,7 @@ def column_get(board_id: int, column_id: int):
         return e.to_response()
 
 
-@document(request_schema=BoardColumnCreate, response_schema=BoardColumnDetailsResponse)  # type: ignore
+@document(request_schema=BoardColumnCreate, response_schema=BoardColumnDetailsResponse)
 @board_bp.route("/<int:board_id>/columns", methods=["POST"])
 @jwt_required()
 def column_create(board_id: int):
@@ -192,7 +193,7 @@ def column_create(board_id: int):
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
-            data=e.errors(),  # type: ignore
+            data=e.errors(),
         ).to_response()
     except APIException as e:
         return e.to_response()

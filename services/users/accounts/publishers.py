@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import uuid
-
 import environ
 import pika
 
@@ -13,12 +12,12 @@ logger = logging.getLogger(__name__)
 
 def _fetch_connection_params():
     params = pika.ConnectionParameters(
-        host=env.str("RABBITMQ_HOST"),  # type: ignore
-        port=env.int("RABBITMQ_PORT"),  # type: ignore
+        host=env.str("RABBITMQ_HOST"),
+        port=env.int("RABBITMQ_PORT"),
         virtual_host="/",
         credentials=pika.PlainCredentials(
-            username=env.str("RABBITMQ_USER"),  # type: ignore
-            password=env.str("RABBITMQ_PASSWORD"),  # type: ignore
+            username=env.str("RABBITMQ_USER"),
+            password=env.str("RABBITMQ_PASSWORD"),
         ),
     )
     return params
@@ -69,15 +68,15 @@ def publish_notification_event(event_data):
         with pika.BlockingConnection(params) as conn:
             with conn.channel() as channel:
                 channel.queue_declare(
-                    queue="notification",
+                    queue="notifications",
                     durable=True,
                     arguments={
                         "x-dead-letter-exchange": "dlx",
-                        "x-dead-letter-routing-key": "notification.failed",
+                        "x-dead-letter-routing-key": "notifications.failed",
                     },
                 )
                 channel.basic_publish(
-                    routing_key="notification", exchange="", body=message
+                    routing_key="notifications", exchange="", body=message
                 )
                 logger.info("Notification event published successfully.")
     except Exception as e:

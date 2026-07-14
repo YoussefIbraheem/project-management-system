@@ -44,8 +44,8 @@ project_bp = Blueprint("project", __name__, url_prefix="/api/v1/projects")
             "required": False,
             "description": "Pagination offset",
         },
-    ],  # type: ignore
-    response_schema=ProjectResponse,  # type: ignore
+    ],
+    response_schema=ProjectResponse,
 )
 @project_bp.route("/", methods=["GET"])
 @jwt_required()
@@ -59,7 +59,7 @@ def projects_list():
         return e.to_response()
 
 
-@document(response_schema=ProjectResponse)  # type: ignore
+@document(response_schema=ProjectResponse)
 @project_bp.route("/<int:project_id>", methods=["GET"])
 @jwt_required()
 def project_details(project_id: int):
@@ -70,7 +70,7 @@ def project_details(project_id: int):
         return e.to_response()
 
 
-@document(request_schema=ProjectCreate, response_schema=ProjectResponse)  # type: ignore
+@document(request_schema=ProjectCreate, response_schema=ProjectResponse)
 @project_bp.route("/", methods=["POST"])
 @jwt_required()
 def project_create():
@@ -92,7 +92,7 @@ def project_create():
     return jsonify(project.model_dump()), 201
 
 
-@document(request_schema=ProjectUpdate, response_schema=ProjectResponse)  # type: ignore
+@document(request_schema=ProjectUpdate, response_schema=ProjectResponse)
 @project_bp.route("/<int:project_id>", methods=["PUT"])
 @jwt_required()
 def project_update(project_id: int):
@@ -125,12 +125,13 @@ def project_delete(project_id: int):
     except APIException as e:
         return e.to_response()
     else:
-        return jsonify(
-            {"message": f"Project with id {project_id} has been deleted"}
-        ), 200
+        return (
+            jsonify({"message": f"Project with id {project_id} has been deleted"}),
+            200,
+        )
 
 
-@document(response_schema=ProjectMemberResponse)  # type: ignore
+@document(response_schema=ProjectMemberResponse)
 @project_bp.route("/<int:project_id>/members", methods=["GET"])
 @jwt_required()
 def project_members_list(project_id):
@@ -142,7 +143,7 @@ def project_members_list(project_id):
         return e.to_response()
 
 
-@document(response_schema=ProjectMemberResponse)  # type: ignore
+@document(response_schema=ProjectMemberResponse)
 @project_bp.route("/<int:project_id>/members/<int:user_id>", methods=["GET"])
 @jwt_required()
 def project_member_details(project_id, user_id):
@@ -154,7 +155,7 @@ def project_member_details(project_id, user_id):
         return e.to_response()
 
 
-@document(response_schema=ProjectMemberResponse)  # type: ignore
+@document(response_schema=ProjectMemberResponse)
 @project_bp.route("/<int:project_id>/members", methods=["POST"])
 @jwt_required()
 def project_member_create(project_id):
@@ -171,13 +172,13 @@ def project_member_create(project_id):
     except ValidationError as e:
         return ValidationException(
             message="Validation Error",
-            data=e.errors(),  # type: ignore
+            data=e.errors(),
         ).to_response()
     except APIException as e:
         return e.to_response()
 
 
-@document(response_schema=ProjectMemberResponse)  # type: ignore
+@document(response_schema=ProjectMemberResponse)
 @project_bp.route("/<int:project_id>/members/<int:user_id>", methods=["PUT"])
 @jwt_required()
 def project_member_role_update(project_id, user_id):

@@ -100,10 +100,10 @@ def update_project(
         can_update_project(db=db, actor=actor, project=db_project)
 
         if project_data.name is not None:
-            db_project.name = project_data.name  # type: ignore[assignment]
+            db_project.name = project_data.name[assignment]
 
         if project_data.description is not None:
-            db_project.description = project_data.description  # type: ignore[assignment]
+            db_project.description = project_data.description[assignment]
 
         db.commit()
         db.refresh(db_project)
@@ -228,7 +228,7 @@ def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
         project = get_project_or_404(db, project_id)
         can_update_project_member_role(db, actor, project, user_id)
         target_member = get_member_or_404(db, project_id, user_id)
-        target_member.role = role  # type: ignore[assignment]
+        target_member.role = role[assignment]
         db.flush()
         db.refresh(target_member)
 
