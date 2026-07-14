@@ -61,20 +61,12 @@ class UserRegisterationView(views.APIView):
                 email=user.email,
                 display_name=display_name,
             )
-
             publish_history_event(event.to_dict())
             publish_notification_event(event.to_dict())
 
-            refresh = tokens.RefreshToken.for_user(user=user)
-
             return response.Response(
                 {
-                    "message": "User registered successfully",
-                    "user": UserSerializer(user).data,
-                    "tokens": {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                    },
+                    "message": "User registered successfully. Verification email sent.",
                 },
                 status=status.HTTP_201_CREATED,
             )
