@@ -14,6 +14,7 @@ from .models import User, UserProfile, UserVerification
 
 class UserSerializer(serializers.ModelSerializer):
     bio = serializers.CharField(read_only=True, source="profile.bio")
+
     class Meta:
         model = User
         fields = [
@@ -43,6 +44,7 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
         write_only=True, min_length=8, max_length=16
     )
     bio = serializers.CharField(read_only=True, source="profile.bio")
+
     class Meta:
         model = User
         fields = [
@@ -53,24 +55,16 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "bio",
-            "profile_picture"
+            "profile_picture",
         ]
         extra_kwargs = {
             "email": {"required": True},
             "username": {"required": True},
             "password": {"required": True, "write_only": True},
             "password_confirm": {"required": True, "write_only": True},
-            "profile_picture":{"required":False},
-            "bio":{"required":False},
+            "profile_picture": {"required": False},
+            "bio": {"required": False},
         }
-
-    def create(self, validated_data):
-        validated_data.pop("password_confirm")
-        user = User.objects.create(**validated_data)
-        UserProfile.objects.create(user=user)
-        if validated_data.get("bio"):
-            UserProfile.objects.filter(user=user).update(bio=validated_data["bio"])
-        return user
 
     def validate_username(self, value):
         value_exists = User.objects.filter(username=value).exists()
@@ -96,6 +90,14 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
         password_validation.validate_password(attrs.get("password"))
         attrs["password"] = hashers.make_password(attrs.get("password"))
         return attrs
+
+    def create(self, validated_data):
+        validated_data.pop("password_confirm")
+        user = User.objects.create(**validated_data)
+        UserProfile.objects.create(user=user)
+        if validated_data.get("bio"):
+            UserProfile.objects.filter(user=user).update(bio=validated_data["bio"])
+        return user
 
 
 class UserLoginJWTSerializer(TokenObtainPairSerializer):
@@ -139,7 +141,7 @@ class UserLoginJWTSerializer(TokenObtainPairSerializer):
 
         return {
             "refresh": str(refresh),
-            "access":  str(refresh.access_token),
+            "access": str(refresh.access_token),
             "user": user,
         }
 
@@ -188,7 +190,9 @@ class UserUpdateSerializer(serializers.Serializer):
         instance.username = validated_data.get("username", instance.username)
         instance.first_name = validated_data.get("first_name", instance.first_name)
         instance.last_name = validated_data.get("last_name", instance.last_name)
-        instance.profile_picture = validated_data.get("profile_picture", instance.last_name)
+        instance.profile_picture = validated_data.get(
+            "profile_picture", instance.last_name
+        )
         instance.save()
         if hasattr(instance, "profile"):
             instance.profile.bio = validated_data.get("bio", instance.profile.bio)
