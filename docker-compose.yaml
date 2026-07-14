@@ -165,12 +165,12 @@ services:
       rabbitmq:
         condition: service_started
 
-  notification-worker:
+  notifications-worker:
     build: 
       context: ./services/notifications
       dockerfile: Dockerfile
     container_name: notification_worker
-    command: python app/consumers/notification_consumer.py
+    command: python app/consumers/notifications_consumer.py
     volumes:
       - ./services/notifications:/app
     depends_on:

@@ -13,23 +13,14 @@ http:
     type: form-urlencoded
     data:
       - name: username
-        value: testuser
+        value: testuser1
       - name: email
-        value: test@test.com
+        value: test1@test.com
       - name: password
         value: password@123
       - name: password_confirm
         value: password@123
   auth: inherit
-
-runtime:
-  scripts:
-    - type: after-response
-      code: |-
-        let accessToken = res.body["tokens"]["access"]
-        let refreshToken = res.body["tokens"]["refresh"]
-        bru.setVar("accessToken", accessToken)
-        bru.setVar("refreshToken", refreshToken)
 
 settings:
   encodeUrl: true

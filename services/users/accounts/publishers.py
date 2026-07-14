@@ -55,7 +55,7 @@ def publish_history_event(event_data):
 
 def publish_notification_event(event_data):
     try:
-        logger.info(f"Publishing notification event: {event_data}")
+        logger.info(f"Publishing notifications event: {event_data}")
         params = _fetch_connection_params()
         data = {
             "task": "app.consumers.notification_consumer.record_activity",
@@ -78,7 +78,7 @@ def publish_notification_event(event_data):
                 channel.basic_publish(
                     routing_key="notifications", exchange="", body=message
                 )
-                logger.info("Notification event published successfully.")
+                logger.info("Notifications event published successfully.")
     except Exception as e:
-        logger.error(f"Error publishing notification event: {e}", exc_info=True)
+        logger.error(f"Error publishing notifications event: {e}", exc_info=True)
         raise
