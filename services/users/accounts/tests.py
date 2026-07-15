@@ -804,12 +804,6 @@ class UserDetailsTestCase(BaseAPITestCase):
 class UserVerificationEmailTestCase(BaseAPITestCase):
     """
     Test cases for the email verification endpoint.
-
-    NOTE: the "wrong code" branch in `UserVerificationEmailView.post()`
-    references an undefined variable `e`, which raises a `NameError` that is
-    then swallowed by the surrounding `except Exception as e:` and turned
-    into a generic 400 response. We assert on the status code only, not the
-    (currently broken) error message.
     """
 
     def setUp(self):
