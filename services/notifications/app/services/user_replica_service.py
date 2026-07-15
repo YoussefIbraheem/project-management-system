@@ -6,9 +6,7 @@ from app.db.database import Session, engine
 
 from app.models.user_replica import UserReplica
 from app.schemas.user_replica_schema import (
-    UserReplicaCreateSchema,
     UserReplicaSchema,
-    UserReplicaUpdateSchema,
 )
 
 
@@ -26,7 +24,8 @@ def get_user_replica(user_id: str):
         query = select(UserReplica).where("user_id" == user_id)
 
         user_replica = session.exec(query).first()
-
+        if not user_replica:
+            return None
         return UserReplicaSchema.model_validate(user_replica)
 
 
@@ -59,11 +58,9 @@ def check_user_replica_exists(
     with Session(engine) as session:
         query = select(UserReplica).where("user_id" == user_id)
         new_user_replica = session.exec(query).first()
-        
+
         if not new_user_replica:
-            return create_user_replica(
-                user_id, username, email, display_name
-            )
+            return create_user_replica(user_id, username, email, display_name)
 
         return UserReplicaSchema.model_validate(new_user_replica)
 
