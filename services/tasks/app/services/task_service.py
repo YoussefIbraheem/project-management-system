@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 from typing import List, Optional
-
-from shared.event import Event, SubjectType
-from shared.publisher import publish_history_event
+from shared.event import Event, SubjectType, EventAction
+from shared.publishers import publish_history_event, publish_notification_event
 
 from app.db.database import get_db_session
 from app.models import Board, Task
@@ -108,10 +107,11 @@ def create_task(actor: Actor, task_data: TaskCreate) -> TaskResponse:
             actor_id=actor.user_id,
             subject_id=str(db_task.id),
             subject_type=SubjectType.TASK,
-            action="CREATED",
+            action=EventAction.TASK_CREATE,
             metadata={"title": db_task.title},
         )
 
+        publish_notification_event(event)
         publish_history_event(event)
 
         return TaskResponse.model_validate(db_task)
@@ -128,17 +128,18 @@ def update_task(actor: Actor, task_id: int, task_data: TaskUpdate) -> TaskRespon
             setattr(db_task, field, value)
             updated_fields.append(field)
 
-        db_task.updated_at = datetime.now(timezone.utc)[assignment]
+        db_task.updated_at = datetime.now(timezone.utc)
         db.flush()
         db.refresh(db_task)
         event = Event(
             actor_id=actor.user_id,
             subject_id=str(db_task.id),
             subject_type=SubjectType.TASK,
-            action="UPDATED",
+            action=EventAction.TASK_UPDATE,
             metadata={"updated_fields": updated_fields},
         )
 
+        publish_notification_event(event)
         publish_history_event(event)
 
         return TaskResponse.model_validate(db_task)
@@ -158,9 +159,9 @@ def delete_task(actor: Actor, task_id: int) -> bool:
         actor_id=actor.user_id,
         subject_id=str(db_task.id),
         subject_type=SubjectType.TASK,
-        action="DELETED",
+        action=EventAction.TASK_DELETE,
     )
-
+    publish_notification_event(event)
     publish_history_event(event)
 
     return True
@@ -192,10 +193,11 @@ def assign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskRes
             actor_id=actor.user_id,
             subject_id=str(task_id),
             subject_type=SubjectType.TASK,
-            action="MEMBERS_ASSIGNED",
+            action=EventAction.TASK_MEMBER_ASSIGN,
             metadata={"assignees_ids": normalized_assignees_ids},
         )
 
+        publish_notification_event(event)
         publish_history_event(event)
 
         return TaskResponse.model_validate(task)
@@ -220,10 +222,11 @@ def unassign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskR
             actor_id=actor.user_id,
             subject_id=str(task_id),
             subject_type=SubjectType.TASK,
-            action="MEMBERS_UNASSIGNED",
+            action=EventAction.TASK_MEMBER_UNASSIGN,
             metadata={"assignees_ids": normalized_assignees_ids},
         )
 
+        publish_notification_event(event)
         publish_history_event(event)
 
         return TaskResponse.model_validate(task)
@@ -233,10 +236,10 @@ def unassign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskR
 #     with get_db_session() as db:
 #         db_rows = db.query(Task.priority, Task.creator_id).all()
 
-#         tasks_by_priority = {p.value: 0 for p in TaskPriority}
+#         tasks_by_priority = {p: 0 for p in TaskPriority}
 #         tasks_by_creator = {}
 #         for priority, creator_id in db_rows:
-#             tasks_by_priority[priority.value] += 1
+#             tasks_by_priority[priority] += 1
 #             tasks_by_creator[creator_id] = tasks_by_creator.get(creator_id, 0) + 1
 
 #         return {

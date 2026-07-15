@@ -1,7 +1,7 @@
 from typing import List
 
-from shared.event import Event, SubjectType
-from shared.publisher import publish_history_event
+from shared.event import Event, SubjectType , EventAction
+from shared.publishers import publish_history_event, publish_notification_event
 from app.db.database import get_db_session
 from app.models import ProjectMember
 from app.models.project import Project
@@ -77,7 +77,7 @@ def create_project(actor: Actor, project_data: ProjectCreate) -> ProjectResponse
             actor_id=actor.user_id,
             subject_id=str(db_project.id),
             subject_type=SubjectType.PROJECT,
-            action="CREATED",
+            action=EventAction.PROJECT_CREATE,
         )
 
         publish_history_event(event)
@@ -88,22 +88,23 @@ def create_project(actor: Actor, project_data: ProjectCreate) -> ProjectResponse
 def update_project(
     actor: Actor, project_id: int, project_data: ProjectUpdate
 ) -> ProjectResponse:
-    """Update Project
-
-    Keyword arguments:
-    project_id -- the ID of the project to update
-    project_data -- the updated data for the project
-    Return: a ProjectResponse object representing the updated project, or None if not found
     """
+    Update a Project
+        Keyword arguments:
+        project_id -- the ID of the project to update
+        project_data -- the updated data for the project
+        Return: a ProjectResponse object representing the updated project, or None if not found
+    """
+
     with get_db_session() as db:
         db_project = get_project_or_404(db, project_id)
         can_update_project(db=db, actor=actor, project=db_project)
 
         if project_data.name is not None:
-            db_project.name = project_data.name[assignment]
+            db_project.name = project_data.name
 
         if project_data.description is not None:
-            db_project.description = project_data.description[assignment]
+            db_project.description = project_data.description
 
         db.commit()
         db.refresh(db_project)
@@ -116,7 +117,7 @@ def update_project(
             actor_id=actor.user_id,
             subject_id=str(db_project.id),
             subject_type=SubjectType.PROJECT,
-            action="UPDATED",
+            action=EventAction.PROJECT_UPDATE,
             metadata=updated_fields,
         )
 
@@ -126,7 +127,8 @@ def update_project(
 
 
 def delete_project(actor: Actor, project_id: int) -> bool:
-    """Delete Project
+    """
+    Delete Project
 
     Keyword arguments:
     project_id -- the ID of the project to delete
@@ -142,7 +144,7 @@ def delete_project(actor: Actor, project_id: int) -> bool:
             actor_id=actor.user_id,
             subject_id=str(db_project.id),
             subject_type=SubjectType.PROJECT,
-            action="DELETED",
+            action=EventAction.PROJECT_DELETE,
         )
 
         publish_history_event(event)
@@ -208,10 +210,11 @@ def create_member(actor: Actor, project_id: int, member_data: ProjectMemberCreat
             actor_id=actor.user_id,
             subject_id=str(member.id),
             subject_type=SubjectType.PROJECT,
-            action="MEMBER_ADDED",
+            action=EventAction.PROJECT_MEMBER_ADD,
             metadata=member_data.model_dump(exclude_unset=True),
         )
 
+        publish_notification_event(event)
         publish_history_event(event)
 
         return ProjectMemberResponse.model_validate(member)
@@ -228,7 +231,7 @@ def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
         project = get_project_or_404(db, project_id)
         can_update_project_member_role(db, actor, project, user_id)
         target_member = get_member_or_404(db, project_id, user_id)
-        target_member.role = role[assignment]
+        target_member.role = role
         db.flush()
         db.refresh(target_member)
 
@@ -236,13 +239,15 @@ def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
             actor_id=actor.user_id,
             subject_id=str(target_member.id),
             subject_type=SubjectType.PROJECT,
-            action="MEMBER_ROLE_UPDATED",
+            action=EventAction.PROJECT_MEMBER_UPDATE,
             metadata={
                 "project_id": str(project_id),
                 "role": role,
                 "user_id": str(user_id),
             },
         )
+
+        publish_notification_event(event)
         publish_history_event(event)
 
         return ProjectMemberResponse.model_validate(target_member)
@@ -266,12 +271,14 @@ def delete_member(actor: Actor, project_id: int, user_id: str):
             actor_id=actor.user_id,
             subject_id=str(member.id),
             subject_type=SubjectType.PROJECT,
-            action="MEMBER_REMOVED",
+            action=EventAction.PROJECT_MEMBER_DELETE,
             metadata={
                 "project_id": str(project_id),
                 "user_id": user_id,
             },
         )
+
+        publish_notification_event(event)
         publish_history_event(event)
 
         return True

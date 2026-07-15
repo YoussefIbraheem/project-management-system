@@ -1,7 +1,7 @@
 from typing import List, Optional
 
-from shared.event import Event, SubjectType
-from shared.publisher import publish_history_event
+from shared.event import Event, SubjectType, EventAction
+from shared.publishers import publish_history_event
 from slugify import slugify
 
 from app.db.database import get_db_session
@@ -29,7 +29,7 @@ from app.validators.board_validator import (
     get_board_or_404,
     get_column_or_404,
 )
-from app.validators.project_validator import get_member_or_404, get_project_or_404
+from app.validators.project_validator import get_project_or_404
 
 
 def get_board_by_project(
@@ -110,7 +110,7 @@ def create_board(actor: Actor, board_data: BoardCreate) -> BoardResponse:
             actor_id=actor.user_id,
             subject_id=str(db_board.id),
             subject_type=SubjectType.BOARD,
-            action="CREATED",
+            action=EventAction.BOARD_CREATE,
             metadata={"name": board_data.name},
         )
 
@@ -142,11 +142,11 @@ def update_board(
         can_update_board(db, actor, db_board)
         updated_fields = []
         if board_data.name is not None:
-            db_board.name = board_data.name[assignment]
+            db_board.name = board_data.name
             updated_fields.append("name")
 
         if board_data.description is not None:
-            db_board.description = board_data.description[assignment]
+            db_board.description = board_data.description
             updated_fields.append("description")
 
         db.flush()
@@ -156,7 +156,7 @@ def update_board(
             actor_id=actor.user_id,
             subject_id=str(db_board.id),
             subject_type=SubjectType.BOARD,
-            action="UPDATED",
+            action=EventAction.BOARD_UPDATE,
             metadata={"updated_fields": updated_fields},
         )
 
@@ -190,7 +190,7 @@ def delete_board(actor: Actor, board_id: int) -> bool:
             actor_id=actor.user_id,
             subject_id=str(board_id),
             subject_type=SubjectType.BOARD,
-            action="DELETED",
+            action=EventAction.BOARD_DELETE,
         )
 
         publish_history_event(event)
@@ -256,7 +256,7 @@ def create_column(actor: Actor, board_id: int, board_column_data: BoardColumnCre
 
         can_create_board_column(db, actor, board)
 
-        ensure_column_not_duplicate(db, board.id, board_column_data.label)[assignment]
+        ensure_column_not_duplicate(db, board.id, board_column_data.label)
         new_column = BoardColumn(
             label=board_column_data.label,
             slug=slugify(board_column_data.label),
@@ -271,7 +271,7 @@ def create_column(actor: Actor, board_id: int, board_column_data: BoardColumnCre
             actor_id=actor.user_id,
             subject_id=str(new_column.id),
             subject_type=SubjectType.BOARD,
-            action="COLUMN_CREATED",
+            action=EventAction.BOARD_COLUMN_CREATE,
             metadata={"label": new_column.label},
         )
 
@@ -305,7 +305,7 @@ def delete_column(actor: Actor, board_id: int, column_id: int):
             actor_id=actor.user_id,
             subject_id=str(column_id),
             subject_type=SubjectType.BOARD,
-            action="COLUMN_DELETED",
+            action=EventAction.BOARD_COLUMN_DELETE,
         )
 
         publish_history_event(event)
