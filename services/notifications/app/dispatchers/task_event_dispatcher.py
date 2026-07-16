@@ -5,8 +5,8 @@ from app.constants.task_event_types import TaskEventType
 TASK_EVENT_HANDLERS = {
     TaskEventType.TASK_CREATE:print("task create triggered!"),
     TaskEventType.TASK_UPDATE:print("task update triggered!"),
-    TaskEventType.TASK_MEMBER_ASSIGN:print("task assign triggered!"),
-    TaskEventType.TASK_MEMBER_UNASSIGN:print("task unassign triggered!"),
+    TaskEventType.TASK_ASSIGN:print("task assign triggered!"),
+    TaskEventType.TASK_UNASSIGN:print("task unassign triggered!"),
 }
 
 

@@ -193,7 +193,7 @@ def assign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskRes
             actor_id=actor.user_id,
             subject_id=str(task_id),
             subject_type=SubjectType.TASK,
-            action=EventAction.TASK_MEMBER_ASSIGN,
+            action=EventAction.TASK_ASSIGN,
             metadata={"assignees_ids": normalized_assignees_ids},
         )
 
