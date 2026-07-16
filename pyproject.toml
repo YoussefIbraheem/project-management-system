@@ -8,6 +8,7 @@ reportArgumentType="warning"
 reportAny = "none"
 reportIndexIssue="hint"
 reportAttributeAccessIssue="warning"
+reportOptionalMemberAccess="warning"
 
 pythonVersion = "3.14"
 pythonPlatform = "Linux"
