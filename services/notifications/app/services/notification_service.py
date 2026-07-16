@@ -26,7 +26,6 @@ def get_notification(notification_id: str):
 def create_notification(
     user_id: str,
     type: str,
-    title: str,
     body: str,
     subject: Optional[str] = None,
     is_read: bool = False,
@@ -35,7 +34,6 @@ def create_notification(
         new_notification = Notification(
             user_id=user_id,
             type=type,
-            title=title,
             body=body,
             subject=subject,
             is_read=is_read,
@@ -50,7 +48,6 @@ def create_notification(
 def update_notification(
     notification_id: int,
     type: Optional[str],
-    title: Optional[str],
     body: Optional[str],
     subject: Optional[str] = None,
     is_read: Optional[bool] = False,
@@ -64,7 +61,6 @@ def update_notification(
 
         updateables = {
             "type": type,
-            "title": title,
             "body": body,
             "subject": subject,
             "is_read": is_read,
