@@ -1,6 +1,6 @@
 from typing import List
 
-from shared.event import Event, SubjectType , EventAction
+from shared.event import Event, SubjectType, EventAction
 from shared.publishers import publish_history_event, publish_notification_event
 from app.db.database import get_db_session
 from app.models import ProjectMember
@@ -211,7 +211,7 @@ def create_member(actor: Actor, project_id: int, member_data: ProjectMemberCreat
             subject_id=str(member.id),
             subject_type=SubjectType.PROJECT,
             action=EventAction.PROJECT_MEMBER_ADD,
-            metadata=member_data.model_dump(exclude_unset=True),
+            metadata={"recipients_ids": [member.user_id], "project_name": project.name},
         )
 
         publish_notification_event(event)
@@ -243,7 +243,8 @@ def update_member_role(actor: Actor, project_id: int, role: str, user_id: str):
             metadata={
                 "project_id": str(project_id),
                 "role": role,
-                "user_id": str(user_id),
+                "recipients_ids":[str(user_id)],
+                "project_name": project.name,
             },
         )
 
@@ -273,8 +274,8 @@ def delete_member(actor: Actor, project_id: int, user_id: str):
             subject_type=SubjectType.PROJECT,
             action=EventAction.PROJECT_MEMBER_DELETE,
             metadata={
-                "project_id": str(project_id),
-                "user_id": user_id,
+                "recipients_ids": [str(user_id)],
+                "project_name": project.name,
             },
         )
 

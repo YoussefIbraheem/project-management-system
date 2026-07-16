@@ -1,5 +1,8 @@
 from datetime import datetime, timezone
 from typing import List, Optional
+from sqlalchemy import select
+from sqlalchemy.orm import load_only
+from app.models.project_member import ProjectMember
 from shared.event import Event, SubjectType, EventAction
 from shared.publishers import publish_history_event, publish_notification_event
 
@@ -88,6 +91,15 @@ def create_task(actor: Actor, task_data: TaskCreate) -> TaskResponse:
     with get_db_session() as db:
         board = get_board_or_404(db, task_data.board_id)
         column = get_column_or_404(db, board.id, task_data.column_id)
+        project_members_ids_stmt = (
+            select(ProjectMember)
+            .options(load_only(ProjectMember.user_id))
+            .where(ProjectMember.project_id == board.project_id)
+        )
+        project_members_ids = [
+            project_member.user_id
+            for project_member in db.execute(project_members_ids_stmt).scalars()
+        ]
         can_create_task(db, actor, board.project_id)
         db_task = Task(
             title=task_data.title,
@@ -108,7 +120,12 @@ def create_task(actor: Actor, task_data: TaskCreate) -> TaskResponse:
             subject_id=str(db_task.id),
             subject_type=SubjectType.TASK,
             action=EventAction.TASK_CREATE,
-            metadata={"title": db_task.title},
+            metadata={
+                "task_title": db_task.title,
+                "project_name": board.project.name,
+                "task_title": db_task.title,
+                "recipients_ids": project_members_ids,
+            },
         )
 
         publish_notification_event(event)
@@ -121,7 +138,6 @@ def update_task(actor: Actor, task_id: int, task_data: TaskUpdate) -> TaskRespon
     with get_db_session() as db:
         db_task = get_task_or_404(db, task_id)
         project = db_task.board.project
-
         can_update_task(db, actor, project.id)
         updated_fields = []
         for field, value in task_data.model_dump(exclude_unset=True).items():
@@ -129,6 +145,14 @@ def update_task(actor: Actor, task_id: int, task_data: TaskUpdate) -> TaskRespon
             updated_fields.append(field)
 
         db_task.updated_at = datetime.now(timezone.utc)
+        assignees_ids_stmt = (
+            select(TaskAssignee)
+            .options(load_only(TaskAssignee.user_id))
+            .where(TaskAssignee.task_id == task_id)
+        )
+        assignees_ids = [
+            assignee_id for assignee_id in db.execute(assignees_ids_stmt).scalars()
+        ]
         db.flush()
         db.refresh(db_task)
         event = Event(
@@ -136,7 +160,12 @@ def update_task(actor: Actor, task_id: int, task_data: TaskUpdate) -> TaskRespon
             subject_id=str(db_task.id),
             subject_type=SubjectType.TASK,
             action=EventAction.TASK_UPDATE,
-            metadata={"updated_fields": updated_fields},
+            metadata={
+                "updated_fields": updated_fields,
+                "recipients_ids": assignees_ids,
+                "project_name": project.name,
+                "task_title": db_task.title,
+            },
         )
 
         publish_notification_event(event)
@@ -194,7 +223,11 @@ def assign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskRes
             subject_id=str(task_id),
             subject_type=SubjectType.TASK,
             action=EventAction.TASK_ASSIGN,
-            metadata={"assignees_ids": normalized_assignees_ids},
+            metadata={
+                "assignees_ids": normalized_assignees_ids,
+                "project_name": project.name,
+                "task_title": task.title,
+            },
         )
 
         publish_notification_event(event)
@@ -222,8 +255,12 @@ def unassign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskR
             actor_id=actor.user_id,
             subject_id=str(task_id),
             subject_type=SubjectType.TASK,
-            action=EventAction.TASK_MEMBER_UNASSIGN,
-            metadata={"assignees_ids": normalized_assignees_ids},
+            action=EventAction.TASK_UNASSIGN,
+            metadata={
+                "assignees_ids": normalized_assignees_ids,
+                "task_title": task.title,
+                "project_name": project.name,
+            },
         )
 
         publish_notification_event(event)

@@ -26,12 +26,21 @@ def _seed_task():
         actor = Actor(user_id="1", is_superuser=True)
         db.add(project)
         db.flush()
-
-        member = ProjectMember(
-            project_id=project.id, user_id="1", role=MemberRole.MANAGER.db_value
-        )
+        
+        members = []
+        for i in range(1,5):
+            members.append(
+                ProjectMember(
+                    project_id=project.id,
+                    user_id=str(i),
+                    role=MemberRole.MANAGER.db_value,
+                )
+            )
+        db.add_all(members)
+        db.flush()
+        
         board = Board(name="Board 1", description="Main board", project_id=project.id)
-        db.add_all([member, board])
+        db.add(board)
         db.flush()
 
         todo = BoardColumn(
@@ -55,6 +64,8 @@ def _seed_task():
         db.add(task)
         db.flush()
         db.refresh(task)
+        
+        
         return {
             "project_id": project.id,
             "board_id": board.id,
@@ -62,6 +73,7 @@ def _seed_task():
             "doing_id": doing.id,
             "task_id": task.id,
             "actor": actor,
+            "members_ids":[member.user_id for member in members]
         }
 
 
@@ -115,7 +127,7 @@ def test_update_task_updates_fields():
     task = update_task(
         seeded["actor"],
         seeded["task_id"],
-        TaskUpdate(title="Updated Task", priority=TaskPriority.HIGH.db_value),
+        TaskUpdate(title="Updated Task", priority=TaskPriority.HIGH.db_value), #type: ignore
     )
 
     logger.info(f"UPDATED TASK DATA:{task}")
@@ -126,13 +138,12 @@ def test_update_task_updates_fields():
 
 def test_assign_and_unassign_task():
     seeded = _seed_task()
+    members_ids = seeded["members_ids"]
+    assigned = assign_task(seeded["actor"], seeded["task_id"], members_ids)
+    assert len(assigned.assignees) == len(members_ids)
 
-    assigned = assign_task(seeded["actor"], seeded["task_id"], ["1"])
-    assert len(assigned.assignees) == 1
-
-    unassigned = unassign_task(seeded["actor"], seeded["task_id"], ["1"])
+    unassigned = unassign_task(seeded["actor"], seeded["task_id"], members_ids)
     assert unassigned.assignees == []
-
 
 def test_delete_task_returns_true():
     seeded = _seed_task()
