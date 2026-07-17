@@ -142,7 +142,7 @@ def update_task(actor: Actor, task_id: int, task_data: TaskUpdate) -> TaskRespon
         updated_fields = []
         for field, value in task_data.model_dump(exclude_unset=True).items():
             setattr(db_task, field, value)
-            updated_fields.append(field)
+            updated_fields.append({field: value})
 
         db_task.updated_at = datetime.now(timezone.utc)
         assignees_ids_stmt = (
@@ -224,7 +224,7 @@ def assign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskRes
             subject_type=SubjectType.TASK,
             action=EventAction.TASK_ASSIGN,
             metadata={
-                "assignees_ids": normalized_assignees_ids,
+                "recipients_ids": normalized_assignees_ids,
                 "project_name": project.name,
                 "task_title": task.title,
             },
@@ -257,7 +257,7 @@ def unassign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskR
             subject_type=SubjectType.TASK,
             action=EventAction.TASK_UNASSIGN,
             metadata={
-                "assignees_ids": normalized_assignees_ids,
+                "recipients_ids": normalized_assignees_ids,
                 "task_title": task.title,
                 "project_name": project.name,
             },

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from app.services.user_replica_service import get_user_replica, list_users_replicas
+from app.services.user_replica_service import get_user_replica_by_id, list_users_replicas
 
 router = APIRouter(prefix="/users_replicas")
 
@@ -16,6 +16,6 @@ def users_replicas_list(limit: int = 100, offset: int = 0):
 @router.get("/{user_id}")
 def users_replica_by_user_id(user_id: str):
     try:
-        return get_user_replica(user_id=user_id)
+        return get_user_replica_by_id(user_id=user_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

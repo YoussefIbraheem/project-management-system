@@ -13,20 +13,27 @@ from app.schemas.user_replica_schema import (
 def list_users_replicas(limit: int = 10, offset: int = 0):
     with Session(engine) as session:
         query = select(UserReplica).offset(offset).limit(limit)
-
         users_replicas = session.exec(query).all()
 
         return [UserReplicaSchema.model_validate(user) for user in users_replicas]
 
 
-def get_user_replica(user_id: str):
+def get_user_replica_by_id(user_id: str) -> Optional[UserReplicaSchema]:
     with Session(engine) as session:
         query = select(UserReplica).where("user_id" == user_id)
-
         user_replica = session.exec(query).first()
+
         if not user_replica:
             return None
         return UserReplicaSchema.model_validate(user_replica)
+
+
+def fetch_users_replicas_by_ids(user_ids: list[str]):
+    with Session(engine) as session:
+        query = select(UserReplica).where(UserReplica.user_id.in_(user_ids))
+        users_replicas = session.exec(query).all()
+
+        return [UserReplicaSchema.model_validate(user) for user in users_replicas]
 
 
 def create_user_replica(

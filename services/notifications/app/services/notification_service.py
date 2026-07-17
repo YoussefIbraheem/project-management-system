@@ -3,6 +3,7 @@ from typing import Optional
 from sqlmodel import select
 from app.models.notification import Notification
 from app.db.database import Session, engine
+from app.models.user_replica import UserReplica
 from app.schemas.notification_schema import NotificationSchema
 
 
@@ -31,16 +32,21 @@ def create_notification(
     is_read: bool = False,
 ):
     with Session(engine) as session:
+        user_replica_q = select(UserReplica).where(UserReplica.user_id == user_id)
+        user_replica = session.exec(user_replica_q).first()
+        if not user_replica:
+            raise ValueError(f"No user found for user_id: {user_id}")
         new_notification = Notification(
-            user_id=user_id,
+            user_id=user_replica.user_id,
             type=type,
-            body=body,
             subject=subject,
+            body=body,
             is_read=is_read,
         )
 
-        session.add(Notification)
+        session.add(new_notification)
         session.commit()
+        session.refresh(new_notification)
 
         return NotificationSchema.model_validate(new_notification)
 

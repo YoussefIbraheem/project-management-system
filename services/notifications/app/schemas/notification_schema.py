@@ -1,16 +1,19 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
+from app.models import utc_now
 
 
 class NotificationSchema(BaseModel):
-    id: str
-    user_id: str
-    type: str
-    subject: Optional[str]
-    body: str
-    is_read: bool
-    created_at: datetime
+    id: int = Field(...)
+    user_id: str = Field(...)
+    type: str = Field(...)
+    subject: Optional[str] = Field(None)
+    body: str = Field(...)
+    is_read: bool = Field(..., default_factory=False)
+    created_at: datetime = Field(..., default_factory=utc_now)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NotificationCreateSchema(BaseModel):
@@ -19,6 +22,8 @@ class NotificationCreateSchema(BaseModel):
     subject: Optional[str] = Field(None)
     body: str = Field(...)
     is_read: bool = Field(...)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NotificationUpdateSchema(BaseModel):

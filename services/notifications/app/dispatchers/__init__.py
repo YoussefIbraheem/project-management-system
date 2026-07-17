@@ -10,6 +10,8 @@ SERVICE_DISPATCHERS = {
 
 
 def dispatch(payload):
+    print("Dispatching...")
+    print(f"Payload: {payload}")
     service = payload["service"]
     dispatcher = SERVICE_DISPATCHERS.get(service)
 
@@ -17,4 +19,4 @@ def dispatch(payload):
         print(f"Unknown service {service}")
         return
 
-    return dispatcher(payload)
+    dispatcher(payload)
