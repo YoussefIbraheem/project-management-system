@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: Optional[bool] = False
     SMTP_USERNAME: Optional[str] = "your_email@gmail.com"
     SMTP_PASSWORD: Optional[str] = "your_password"
+    DNS_TIMEOUT: Optional[int] = 5
+    SMTP_VERIFY_TIMEOUT: Optional[int] = 8
 
 
 settings = Settings()

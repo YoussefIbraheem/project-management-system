@@ -3,10 +3,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.apis.user_replica_api import router as user_replica_router
 from app.db.database import create_db_and_tables
+from app import logger
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
-    print("Starting server...")
+    logger.info("Starting server...")
     create_db_and_tables() 
     yield
     

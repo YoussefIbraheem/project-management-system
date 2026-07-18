@@ -53,13 +53,13 @@ def create_notification(
 
 def update_notification(
     notification_id: int,
-    type: Optional[str],
-    body: Optional[str],
+    type: Optional[str] = None,
+    body: Optional[str] = None,
     subject: Optional[str] = None,
-    is_read: Optional[bool] = False,
+    is_read: Optional[bool] = None,
 ):
     with Session(engine) as session:
-        query = select(Notification).where("id" == notification_id)
+        query = select(Notification).where(Notification.id == notification_id)
         notification = session.exec(query).first()
 
         if not notification:

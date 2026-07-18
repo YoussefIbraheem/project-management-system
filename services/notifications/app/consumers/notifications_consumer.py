@@ -1,27 +1,25 @@
 import asyncio
 import json
-
 import aio_pika
-
 from app.core.config import settings
 from app.dispatchers import dispatch
-
+from app import rmq_logger
 
 async def callback(message: aio_pika.abc.AbstractIncomingMessage):
     async with message.process():
         try:
             body_json = json.loads(message.body.decode("utf-8"))
             data = body_json["args"][0]
-            print("Processing message...")
-            print(f"DATA: {data}")
+            rmq_logger.info("Processing message...")
+            rmq_logger.info(f"DATA: {data}")
             dispatch(data)
-            print("Message processed successfully")
+            rmq_logger.info("Message processed successfully")
         except Exception as e:
-            print(f"Error processing message: {e}")
+            rmq_logger.info(f"Error processing message: {e}")
 
 
 async def record_activity():
-    print("Recording activity...")
+    rmq_logger.info("Recording activity...")
 
     connection = await aio_pika.connect_robust(settings.BROKER_URL)
     async with connection:
@@ -36,7 +34,7 @@ async def record_activity():
             },
         )
         await queue.consume(callback)
-        print("Listening for messages...")
+        rmq_logger.info("Listening for messages...")
         await asyncio.Future()
 
 

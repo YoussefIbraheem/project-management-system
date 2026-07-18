@@ -1,8 +1,8 @@
-from aio_pika import logger
-
+from aio_pika import rmq_logger
+from inspect import iscoroutinefunction
 from .user_event_dispatcher import _dispatch as _dispatch_user
 from .task_event_dispatcher import _dispatch as _dispatch_task
-
+import asyncio
 SERVICE_DISPATCHERS = {
     "users": _dispatch_user,
     "tasks":_dispatch_task
@@ -19,4 +19,7 @@ def dispatch(payload):
         print(f"Unknown service {service}")
         return
 
-    dispatcher(payload)
+    if iscoroutinefunction(dispatcher):
+        asyncio.create_task(dispatcher(payload))
+    else:
+        dispatcher(payload)

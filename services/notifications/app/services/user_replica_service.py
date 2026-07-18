@@ -73,9 +73,9 @@ def check_user_replica_exists(
 
 
 def update_user_replica(
-    user_id: str,
-    username: str,
-    email: str,
+    user_id: Optional[str],
+    username: Optional[str],
+    email: Optional[str],
     display_name: Optional[str],
 ):
     with Session(engine) as session:

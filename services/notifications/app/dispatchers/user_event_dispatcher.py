@@ -1,5 +1,3 @@
-from aio_pika import logger
-
 from app.constants.user_event_types import UserEventType
 from app.schemas.user_replica_schema import UserReplicaCreateSchema
 from app.services.user_replica_service import (
@@ -8,6 +6,7 @@ from app.services.user_replica_service import (
     update_user_replica,
     check_user_replica_exists,
 )
+from app import rmq_logger
 
 USER_EVENT_HANDLERS = {
     UserEventType.USER_REGISTER: create_user_replica,
@@ -21,7 +20,7 @@ def _dispatch(payload):
     try:
         action = UserEventType(payload["action"])
     except ValueError:
-        print(f"Unknown event {payload['action']}")
+        rmq_logger.error(f"Unknown event {payload['action']}")
         return
 
     handler = USER_EVENT_HANDLERS.get(action)
