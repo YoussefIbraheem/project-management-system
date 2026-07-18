@@ -48,6 +48,8 @@ services:
       dockerfile: Dockerfile
     user: "${CURRENT_UID}:${CURRENT_GID}"
     container_name: history_service
+    environment:
+      - PYTHONUNBUFFERED=1
     ports:
       - "5006:5006"
     volumes:
@@ -98,6 +100,8 @@ services:
       context: ./services/notifications
       dockerfile: Dockerfile
     container_name: notifications_service
+    environment:
+      - PYTHONUNBUFFERED=1
     ports:
       - "8081:8081"
     volumes:
@@ -157,6 +161,8 @@ services:
       dockerfile: Dockerfile
     container_name: history_worker
     command: python app/consumers/history_consumer.py
+    environment:
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./services/history:/app
     depends_on:
@@ -171,6 +177,8 @@ services:
       dockerfile: Dockerfile
     container_name: notification_worker
     command: python app/consumers/notifications_consumer.py
+    environment:
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./services/notifications:/app
     depends_on:
