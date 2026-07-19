@@ -1,4 +1,3 @@
-from aio_pika import rmq_logger
 from inspect import iscoroutinefunction
 from .user_event_dispatcher import _dispatch as _dispatch_user
 from .task_event_dispatcher import _dispatch as _dispatch_task
