@@ -62,5 +62,3 @@ async def _dispatch(payload):
                     notification_id=notification.id,
                     is_read=True,
                 )
-                
-        # TODO Create create_mail send_mail functions in the new mail_service
