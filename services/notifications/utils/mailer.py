@@ -3,7 +3,6 @@ from stamina import retry_context
 from app.core.config import settings
 from app.templates import NotificationContent
 from email_validator import validate_email as _validate_syntax, EmailNotValidError
-import logging
 import aiosmtplib
 import dns.asyncresolver
 import dns.resolver
