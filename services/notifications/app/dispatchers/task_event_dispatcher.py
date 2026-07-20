@@ -10,7 +10,7 @@ from app.services.user_replica_service import (
 )
 from app.services.notification_service import create_notification, update_notification
 from utils.mailer import send_email
-from app import rmq_logger
+from notifications.app import rmq_logger
 
 TASK_NOTIFICATION_BUILDERS = {
     TaskEventType.TASK_CREATE: task_create_template,
