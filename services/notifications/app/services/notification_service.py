@@ -10,7 +10,7 @@ from app.schemas.notification_schema import NotificationSchema
 def list_notifications(limit: int = 10, offset: int = 0):
     with Session(engine) as session:
         query = select(Notification).offset(offset).limit(limit)
-        notifications = session.exec(query).all()
+        notifications = session.exec(query).all() #type: ignore
 
         return [NotificationSchema.model_validate(n) for n in notifications]
 
@@ -18,7 +18,7 @@ def list_notifications(limit: int = 10, offset: int = 0):
 def get_notification(notification_id: str):
     with Session(engine) as session:
         query = select(Notification).where("id" == notification_id)
-        notification = session.exec(query).first()
+        notification = session.exec(query).first() #type: ignore
         if not notification:
             return None
         return NotificationSchema.model_validate(notification)
@@ -33,7 +33,7 @@ def create_notification(
 ):
     with Session(engine) as session:
         user_replica_q = select(UserReplica).where(UserReplica.user_id == user_id)
-        user_replica = session.exec(user_replica_q).first()
+        user_replica = session.exec(user_replica_q).first() #type: ignore
         if not user_replica:
             raise ValueError(f"No user found for user_id: {user_id}")
         new_notification = Notification(
@@ -60,7 +60,7 @@ def update_notification(
 ):
     with Session(engine) as session:
         query = select(Notification).where(Notification.id == notification_id)
-        notification = session.exec(query).first()
+        notification = session.exec(query).first() #type: ignore
 
         if not notification:
             raise ValueError(f"Notification with id {notification_id} not found")
@@ -85,7 +85,7 @@ def update_notification(
 def delete_notification(notification_id: int):
     with Session(engine) as session:
         query = select(Notification).where("id" == notification_id)
-        notification = session.exec(query).first()
+        notification = session.exec(query).first() #type: ignore
         if not notification:
             raise ValueError(f"Notification with id {notification_id} not found")
         session.delete(notification)

@@ -13,7 +13,7 @@ from app.schemas.user_replica_schema import (
 def list_users_replicas(limit: int = 10, offset: int = 0):
     with Session(engine) as session:
         query = select(UserReplica).offset(offset).limit(limit)
-        users_replicas = session.exec(query).all()
+        users_replicas = session.exec(query).all() #type: ignore
 
         return [UserReplicaSchema.model_validate(user) for user in users_replicas]
 
@@ -21,7 +21,7 @@ def list_users_replicas(limit: int = 10, offset: int = 0):
 def get_user_replica_by_id(user_id: str) -> Optional[UserReplicaSchema]:
     with Session(engine) as session:
         query = select(UserReplica).where("user_id" == user_id)
-        user_replica = session.exec(query).first()
+        user_replica = session.exec(query).first() #type: ignore
 
         if not user_replica:
             return None
@@ -30,8 +30,8 @@ def get_user_replica_by_id(user_id: str) -> Optional[UserReplicaSchema]:
 
 def fetch_users_replicas_by_ids(user_ids: list[str]):
     with Session(engine) as session:
-        query = select(UserReplica).where(UserReplica.user_id.in_(user_ids))
-        users_replicas = session.exec(query).all()
+        query = select(UserReplica).where(UserReplica.user_id.in_(user_ids)) #type: ignore
+        users_replicas = session.exec(query).all() #type: ignore
 
         return [UserReplicaSchema.model_validate(user) for user in users_replicas]
 
@@ -64,7 +64,7 @@ def check_user_replica_exists(
 ):
     with Session(engine) as session:
         query = select(UserReplica).where("user_id" == user_id)
-        new_user_replica = session.exec(query).first()
+        new_user_replica = session.exec(query).first() #type: ignore
 
         if not new_user_replica:
             return create_user_replica(user_id, username, email, display_name)
@@ -80,7 +80,7 @@ def update_user_replica(
 ):
     with Session(engine) as session:
         query = select(UserReplica).where("user_id" == user_id)
-        user_replica = session.exec(query).first()
+        user_replica = session.exec(query).first() #type: ignore
 
         if not user_replica:
             raise ValueError(f"No user replica found with id {user_id}")
@@ -104,7 +104,7 @@ def update_user_replica(
 def delete_user_replica(user_id: str):
     with Session(engine) as session:
         query = select(UserReplica).where("user_id" == user_id)
-        user_replica = session.exec(query).first()
+        user_replica = session.exec(query).first() #type: ignore
 
         if not user_replica:
             raise ValueError(f"No user replica found with id {user_id}")

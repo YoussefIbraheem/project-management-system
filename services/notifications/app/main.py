@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from app.apis.user_replica_api import router as user_replica_router
-from app.db.database import create_db_and_tables
+from app.db.database import create_db_and_tables #type: ignore
 from app import logger
 
 @asynccontextmanager
@@ -26,3 +26,4 @@ def read_item(item_id: int, q: str | None = None):
 
 
 app.include_router(user_replica_router)
+

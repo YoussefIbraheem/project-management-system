@@ -10,15 +10,3 @@ class UserReplicaSchema(BaseModel):
     display_name: Optional[str] = Field(None, description="Display name of the user")
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class UserReplicaCreateSchema(UserReplicaSchema):
-    pass
-
-
-class UserReplicaUpdateSchema(BaseModel):
-    email: Optional[str] = Field(None, description="Email address of the user")
-    username: Optional[str] = Field(None, description="Username of the user")
-    displayname: Optional[str] = Field(None, description="Display name of the user")
-
-    model_config = ConfigDict(from_attributes=True)
