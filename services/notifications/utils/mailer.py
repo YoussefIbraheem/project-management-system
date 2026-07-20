@@ -150,7 +150,7 @@ async def send_email(content: NotificationContent):
                         email_log_id=email_log.id,
                         status=EmailStatus.SENT.value,
                         attempts=attempt.num,
-                        sent_at= utc_now
+                        sent_at= utc_now #TODO: CHECK IF THIS WORKS. 
                     )
                     
                 rmq_logger.info("Email sent successfully!")
