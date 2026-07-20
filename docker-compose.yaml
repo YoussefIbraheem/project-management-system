@@ -1,13 +1,15 @@
 services:
-# Services
+  # Services
   # Django Users Service
   users-service:
     image: project_management_system_django
     build:
       context: ./services/users
       dockerfile: Dockerfile
-    user: "${CURRENT_UID}:${CURRENT_GID}"
-    command: python manage.py runserver 0.0.0.0:8000
+    command: bash -c "
+      python manage.py migrate
+      && python manage.py runserver 0.0.0.0:8000
+      "
     container_name: users_service
     ports:
       - "8000:8000"
@@ -29,7 +31,6 @@ services:
     build:
       context: ./services/tasks
       dockerfile: Dockerfile
-    user: "${CURRENT_UID}:${CURRENT_GID}"
     container_name: tasks_service
     ports:
       - "5005:5005"
@@ -46,7 +47,6 @@ services:
     build:
       context: ./services/history
       dockerfile: Dockerfile
-    user: "${CURRENT_UID}:${CURRENT_GID}"
     container_name: history_service
     environment:
       - PYTHONUNBUFFERED=1
@@ -113,7 +113,7 @@ services:
         condition: service_started
       postgresdb:
         condition: service_started
-# DBs
+  # DBs
   postgresdb:
     image: postgres:16-alpine
     container_name: postgresdb
@@ -140,7 +140,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-# MISC
+  # MISC
   rabbitmq:
     image: rabbitmq:4.2.2-management-alpine
     container_name: rabbitmq_service
@@ -172,7 +172,7 @@ services:
         condition: service_started
 
   notifications-worker:
-    build: 
+    build:
       context: ./services/notifications
       dockerfile: Dockerfile
     container_name: notification_worker
