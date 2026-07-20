@@ -1,16 +1,17 @@
+from app import rmq_logger
+from utils.mailer import send_email
+
 from app.constants.task_event_types import TaskEventType
-from app.templates import NotificationContext
-from app.templates.task_create_template import task_create_template
-from app.templates.task_update_template import task_update_template
-from app.templates.task_assign_template import task_assign_template
-from app.templates.task_unassign_template import task_unassign_template
+from app.services.notification_service import create_notification, update_notification
 from app.services.user_replica_service import (
     fetch_users_replicas_by_ids,
     get_user_replica_by_id,
 )
-from app.services.notification_service import create_notification, update_notification
-from utils.mailer import send_email
-from notifications.app import rmq_logger
+from app.templates import NotificationContext
+from app.templates.task_assign_template import task_assign_template
+from app.templates.task_create_template import task_create_template
+from app.templates.task_unassign_template import task_unassign_template
+from app.templates.task_update_template import task_update_template
 
 TASK_NOTIFICATION_BUILDERS = {
     TaskEventType.TASK_CREATE: task_create_template,
@@ -18,6 +19,7 @@ TASK_NOTIFICATION_BUILDERS = {
     TaskEventType.TASK_ASSIGN: task_assign_template,
     TaskEventType.TASK_UNASSIGN: task_unassign_template,
 }
+
 
 async def _dispatch(payload):
     try:
@@ -32,11 +34,11 @@ async def _dispatch(payload):
         data = payload["metadata"]
         recipients = fetch_users_replicas_by_ids(data["recipients_ids"])
         rmq_logger.info(f"Fetched recipients: {recipients}")
-        
+
         if not recipients:
             rmq_logger.info("No recipients found")
             return
-        
+
         actor_data = get_user_replica_by_id(payload["actor_id"])
         actor_username = actor_data.username if actor_data else "Private User"
         rmq_logger.info("Building notification content...")
@@ -55,6 +57,7 @@ async def _dispatch(payload):
                 body=content.body,
                 subject=content.subject,
             )
+            content.notification_id = notification.id
             rmq_logger.info(f"Sending email to {recipient.email}")
             result = await send_email(content)
             if result:

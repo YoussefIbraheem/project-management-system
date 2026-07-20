@@ -5,7 +5,7 @@ from app.services.user_replica_service import (
     update_user_replica,
     check_user_replica_exists,
 )
-from notifications.app import rmq_logger
+from app import rmq_logger
 
 USER_EVENT_HANDLERS = {
     UserEventType.USER_REGISTER: create_user_replica,

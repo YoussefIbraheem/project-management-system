@@ -1,8 +1,8 @@
 from sqlmodel import Field, Relationship
-from . import datetime , utc_now , Base
+from . import utc_now , Base
 from enum import StrEnum
-from typing import TYPE_CHECKING
-
+from typing import TYPE_CHECKING, Optional
+from datetime import datetime
 if TYPE_CHECKING:
     from .notification import Notification
 
@@ -21,6 +21,8 @@ class EmailLog(Base,table=True):
     status: str = Field(default=EmailStatus.PENDING.value)
     attempts: int = 0
     error_message: str | None = None
-    sent_at: datetime = Field(default_factory=utc_now)
+    sent_at: datetime | None = None
+
+    created_at: datetime = Field(default_factory=utc_now)
 
     notification: "Notification" = Relationship(back_populates="email_logs")

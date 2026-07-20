@@ -8,6 +8,7 @@ class NotificationContent:
     subject: str
     body: str
     recipient_email:str
+    notification_id: Optional[int] = None
 
 @dataclass
 class NotificationContext:

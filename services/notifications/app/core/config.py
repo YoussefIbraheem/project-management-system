@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = "your_password"
     DNS_TIMEOUT: float = 5
     SMTP_VERIFY_TIMEOUT: float = 8
+    SMTP_MAX_ATTEMPTS: int = 3
 
 
 settings = Settings()
