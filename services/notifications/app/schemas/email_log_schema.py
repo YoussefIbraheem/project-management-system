@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.models import utc_now
 from app.models.email_log import EmailStatus
 
 
@@ -13,5 +15,8 @@ class EmailLogSchema(BaseModel):
     status: str = EmailStatus.PENDING.value
     attempts: int = 0
     error_message: Optional[str] = None
+    sent_at: Optional[datetime] = None
+
+    created_at: datetime = utc_now
 
     model_config = ConfigDict(from_attributes=True)

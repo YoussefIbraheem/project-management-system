@@ -1,7 +1,9 @@
-from app import rmq_logger
-from utils.mailer import send_email
+from aiosmtplib import SMTP
+from utils.mailer import EmailService
 
+from app import rmq_logger
 from app.constants.task_event_types import TaskEventType
+from app.core.config import settings
 from app.services.notification_service import create_notification, update_notification
 from app.services.user_replica_service import (
     fetch_users_replicas_by_ids,
@@ -59,7 +61,10 @@ async def _dispatch(payload):
             )
             content.notification_id = notification.id
             rmq_logger.info(f"Sending email to {recipient.email}")
-            result = await send_email(content)
+            service = EmailService(
+                logger=rmq_logger, settings=settings, smtp_client_factory=SMTP
+            )
+            result = await service.send_email(content)
             if result:
                 update_notification(
                     notification_id=notification.id,
