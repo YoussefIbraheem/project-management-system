@@ -1,17 +1,20 @@
-from pydantic.json_schema import models_json_schema
-from flask import Flask
-from .path_converter import FlaskPathConverter
-from .operations_builder import OperationBuilder
 import importlib
+
+from flask import Flask
+
+from .operations_builder import OperationBuilder
+from .path_converter import FlaskPathConverter
 
 
 class RouteCollector:
+    """
+    Collects routes from a Flask app and builds an OpenAPI-compatible 'paths' dict.
+    """
 
     def __init__(
         self,
         app: Flask,
         converter: FlaskPathConverter,
-
         operations_builder: OperationBuilder,
     ):
         self.app = app
@@ -49,21 +52,23 @@ class RouteCollector:
                 if openapi_path not in paths:
                     paths[openapi_path] = {}
 
-                # Each method on this route becomes its own Operation
-                for method in rule.methods:
-                    if method in self.IGNORED_METHODS:
-                        continue
+                if rule.methods:
+                    for method in rule.methods:
+                        if method in self.IGNORED_METHODS:
+                            continue
 
-                    endpoint = rule.endpoint.rsplit(".", 1)
-                    if len(endpoint) < 2:
-                        continue
-                    module_name, function_name = endpoint
-                    base_module = importlib.import_module(f"app.apis.{module_name}_api")
-                    func_data = getattr(base_module, function_name)
+                        endpoint = rule.endpoint.rsplit(".", 1)
+                        if len(endpoint) < 2:
+                            continue
+                        module_name, function_name = endpoint
+                        base_module = importlib.import_module(
+                            f"app.apis.{module_name}_api"
+                        )
+                        func_data = getattr(base_module, function_name)
 
-                    if func_data:
-                        operation = self.operations_builder.build(func_data)
-                        
-                        paths[openapi_path][method.lower()] = operation
+                        if func_data:
+                            operation = self.operations_builder.build(func_data)
+
+                            paths[openapi_path][method.lower()] = operation
 
         return paths

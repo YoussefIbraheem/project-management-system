@@ -4,9 +4,8 @@ from shared.openapi.route_collector import RouteCollector
 from shared.openapi.schema_collector import SchemaCollector
 from shared.openapi.doc_generator import OpenAPIDocGenerator
 from shared.openapi.operations_builder import OperationBuilder
-from app.db.database import get_db_session, create_tables
 from swagger_ui import api_doc
-from flask.logging import create_logger
+
 
 app = create_app()
 
@@ -16,7 +15,7 @@ def initiate_swagger_ui():
     routes_c = RouteCollector(app, converter, operations_builder)
     schemas_c = SchemaCollector("app.schemas")
     generator = OpenAPIDocGenerator(routes_c, schemas_c)
-    output_path = "./openapi.yaml"
+    output_path = settings.API_DOC_LOCATION
 
     try:
         generator.generate(output_path)

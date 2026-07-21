@@ -35,7 +35,7 @@ class OpenAPIDocGenerator:
                 "components": {
                     "schemas": processed_schemas.get('$defs', {}),
                 },
-                "paths": routes,   # ← now a properly structured dict
+                "paths": routes,
             }
         
         return openapi_schema

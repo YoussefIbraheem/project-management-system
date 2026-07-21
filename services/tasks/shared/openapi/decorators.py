@@ -2,9 +2,9 @@ from pydantic import BaseModel
 
 
 def document(
-    request_schema: BaseModel = None,
-    response_schema: BaseModel = None,
-    query_params: dict = None,
+    request_schema: BaseModel | None = None,
+    response_schema: BaseModel | None = None,
+    query_params: dict | None = None,
 ):
     def decorator(func):
         func._openapi_metadata = {

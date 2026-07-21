@@ -1,6 +1,8 @@
 import inspect
 
+
 class OperationBuilder:
+    """A class to build operations based on function data."""
 
     def build(self, func_data):
         parameters = []
@@ -14,7 +16,7 @@ class OperationBuilder:
         
         
         request_schema = pydantic_metadata.get("request_schema", None)
-        response_schema = pydantic_metadata.get("response_schema", None)
+        # * response_schema = pydantic_metadata.get("response_schema", None) # NOTE: Could be for a later use
 
         body_parameters = (
             request_schema.model_json_schema()["properties"] if request_schema else {}
@@ -65,7 +67,6 @@ class OperationBuilder:
         tag = func_data.__module__.split(".")[-1] 
         
         operation = {
-            # endpoint name is the view function name — use it as operationId
             "operationId": pydantic_metadata.get("operation_id", ""),
             "tags": [tag] if tag else [],
             "parameters": parameters,
