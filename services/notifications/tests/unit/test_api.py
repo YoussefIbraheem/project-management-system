@@ -17,7 +17,7 @@ def test_user_replica_routes_use_service_layer(monkeypatch):
         user_replica_api,
         "list_users_replicas",
         lambda limit=100, offset=0: [  # noqa: ARG005
-            {"user_id": "user-1", "email": "alice@example.com", "username": "alice", "display_name": "Alice"}
+            {"user_id": "1", "email": "alice@example.com", "username": "alice", "display_name": "Alice"}
         ],
     )
     monkeypatch.setattr(
@@ -33,9 +33,9 @@ def test_user_replica_routes_use_service_layer(monkeypatch):
 
     with TestClient(app) as client:
         list_response = client.get("/users_replicas/")
-        detail_response = client.get("/users_replicas/user-1")
+        detail_response = client.get("/users_replicas/1")
 
     assert list_response.status_code == 200
-    assert list_response.json()[0]["user_id"] == "user-1"
+    assert list_response.json()[0]["user_id"] == "1"
     assert detail_response.status_code == 200
-    assert detail_response.json()["user_id"] == "user-1"
+    assert detail_response.json()["user_id"] == "1"

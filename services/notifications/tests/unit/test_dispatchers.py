@@ -48,7 +48,7 @@ def test_task_dispatch_ignores_unknown_action(monkeypatch):
 
 def test_task_dispatch_creates_notifications_and_sends_email(monkeypatch):
     recipients = [
-        SimpleNamespace(user_id="user-1", email="alice@example.com", username="alice")
+        SimpleNamespace(user_id="1", email="alice@example.com", username="alice")
     ]
     actor = SimpleNamespace(username="bob")
     created_notifications = []
@@ -103,9 +103,9 @@ def test_task_dispatch_creates_notifications_and_sends_email(monkeypatch):
 
     payload = {
         "action": TaskEventType.TASK_CREATE.value,
-        "actor_id": "actor-1",
+        "actor_id": "1",
         "metadata": {
-            "recipients_ids": ["user-1"],
+            "recipients_ids": ["1"],
             "task_title": "Build API",
             "project_name": "Platform",
         },
@@ -115,7 +115,7 @@ def test_task_dispatch_creates_notifications_and_sends_email(monkeypatch):
 
     assert created_notifications == [
         {
-            "user_id": "user-1",
+            "user_id": "1",
             "type": TaskEventType.TASK_CREATE.value,
             "body": "Hi alice, bob created Build API",
             "subject": "Task Build API created",
@@ -141,9 +141,9 @@ def test_task_dispatch_skips_when_no_recipients(monkeypatch):
         task_event_dispatcher._dispatch(
             {
                 "action": TaskEventType.TASK_CREATE.value,
-                "actor_id": "actor-1",
+                "actor_id": "1",
                 "metadata": {
-                    "recipients_ids": ["missing"],
+                    "recipients_ids": ["999"],
                     "task_title": "Build API",
                     "project_name": "Platform",
                 },
@@ -157,7 +157,7 @@ def test_task_dispatch_skips_when_no_recipients(monkeypatch):
 
 def test_task_dispatch_falls_back_to_private_user_when_actor_missing(monkeypatch):
     recipients = [
-        SimpleNamespace(user_id="user-1", email="alice@example.com", username="alice")
+        SimpleNamespace(user_id="1", email="alice@example.com", username="alice")
     ]
     captured = {}
 
@@ -210,7 +210,7 @@ def test_task_dispatch_falls_back_to_private_user_when_actor_missing(monkeypatch
                 "action": TaskEventType.TASK_UPDATE.value,
                 "actor_id": "missing",
                 "metadata": {
-                    "recipients_ids": ["user-1"],
+                    "recipients_ids": ["1"],
                     "task_title": "Build API",
                     "project_name": "Platform",
                 },

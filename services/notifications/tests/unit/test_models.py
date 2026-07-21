@@ -7,7 +7,7 @@ from app.models.user_replica import UserReplica
 
 def test_user_replica_defaults_and_persistence(session):
     user = UserReplica(
-        user_id="user-1",
+        user_id="1",
         email="user@example.com",
         username="alice",
         display_name="Alice",
@@ -23,7 +23,7 @@ def test_user_replica_defaults_and_persistence(session):
 
 def test_notification_links_to_user_and_email_logs(session):
     user = UserReplica(
-        user_id="user-1",
+        user_id="1",
         email="user@example.com",
         username="alice",
         display_name="Alice",
@@ -60,7 +60,7 @@ def test_notification_links_to_user_and_email_logs(session):
 
 def test_email_log_defaults_and_relationship(session):
     user = UserReplica(
-        user_id="user-1",
+        user_id="1",
         email="user@example.com",
         username="alice",
         display_name="Alice",

@@ -28,23 +28,23 @@ from app.services.user_replica_service import (
 
 def test_user_replica_crud_flow():
     created = create_user_replica(
-        user_id="user-1",
+        user_id="1",
         username="alice",
         email="alice@example.com",
         display_name="Alice",
     )
-    assert created.user_id == "user-1"
+    assert created.user_id == "1"
     assert created.username == "alice"
 
     listed = list_users_replicas()
     assert len(listed) == 1
 
-    fetched = get_user_replica_by_id("user-1")
+    fetched = get_user_replica_by_id("1")
     assert fetched is not None
     assert fetched.email == "alice@example.com"
 
     updated = update_user_replica(
-        user_id="user-1",
+        user_id="1",
         username="alice-updated",
         email="alice+updated@example.com",
         display_name="Alice Updated",
@@ -53,38 +53,38 @@ def test_user_replica_crud_flow():
     assert updated.display_name == "Alice Updated"
 
     same_or_new = check_user_replica_exists(
-        user_id="user-1",
+        user_id="1",
         username="ignored",
         email="ignored@example.com",
         display_name=None,
     )
-    assert same_or_new.user_id == "user-1"
+    assert same_or_new.user_id == "1"
     assert same_or_new.username == "alice-updated"
 
-    deleted = delete_user_replica("user-1")
+    deleted = delete_user_replica("1")
     assert deleted is None
-    assert get_user_replica_by_id("user-1") is None
+    assert get_user_replica_by_id("1") is None
 
 
 def test_fetch_users_replicas_by_ids_returns_matching_subset():
-    create_user_replica("user-1", "alice", "alice@example.com", "Alice")
-    create_user_replica("user-2", "bob", "bob@example.com", "Bob")
+    create_user_replica("1", "alice", "alice@example.com", "Alice")
+    create_user_replica("2", "bob", "bob@example.com", "Bob")
 
-    matches = fetch_users_replicas_by_ids(["user-2", "missing", "user-1"])
+    matches = fetch_users_replicas_by_ids(["2", "missing", "1"])
 
-    assert {user.user_id for user in matches} == {"user-1", "user-2"}
+    assert {user.user_id for user in matches} == {"1", "2"}
 
 
 def test_notification_crud_flow():
-    create_user_replica("user-1", "alice", "alice@example.com", "Alice")
+    create_user_replica("1", "alice", "alice@example.com", "Alice")
 
     created = create_notification(
-        user_id="user-1",
+        user_id="1",
         type="TASK_CREATE",
         body="A task was created",
         subject="Task created",
     )
-    assert created.user_id == "user-1"
+    assert created.user_id == "1"
     assert created.type == "TASK_CREATE"
 
     listed = list_notifications()
@@ -106,9 +106,9 @@ def test_notification_crud_flow():
 
 
 def test_email_log_crud_flow():
-    create_user_replica("user-1", "alice", "alice@example.com", "Alice")
+    create_user_replica("1", "alice", "alice@example.com", "Alice")
     notification = create_notification(
-        user_id="user-1",
+        user_id="1",
         type="TASK_UPDATE",
         body="A task was updated",
         subject="Task updated",
