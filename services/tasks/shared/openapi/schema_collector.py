@@ -4,7 +4,7 @@ import inspect
 
 
 class SchemaCollector:
-    """Knows only how to discover and process Pydantic schemas."""
+    """Knows only how to discover and process Pydantic schemas using `decorators.py` decorators"""
     
     def __init__(self,base_module):
         self.base_module = base_module
