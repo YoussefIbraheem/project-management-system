@@ -17,7 +17,7 @@ def list_notifications(limit: int = 10, offset: int = 0):
 
 def get_notification(notification_id: str):
     with Session(engine) as session:
-        query = select(Notification).where("id" == notification_id)
+        query = select(Notification).where(Notification.id == notification_id)
         notification = session.exec(query).first() #type: ignore
         if not notification:
             return None
@@ -84,7 +84,7 @@ def update_notification(
 
 def delete_notification(notification_id: int):
     with Session(engine) as session:
-        query = select(Notification).where("id" == notification_id)
+        query = select(Notification).where(Notification.id == notification_id)
         notification = session.exec(query).first() #type: ignore
         if not notification:
             raise ValueError(f"Notification with id {notification_id} not found")

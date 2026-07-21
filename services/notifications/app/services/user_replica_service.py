@@ -20,7 +20,7 @@ def list_users_replicas(limit: int = 10, offset: int = 0):
 
 def get_user_replica_by_id(user_id: str) -> Optional[UserReplicaSchema]:
     with Session(engine) as session:
-        query = select(UserReplica).where("user_id" == user_id)
+        query = select(UserReplica).where(UserReplica.user_id == user_id)
         user_replica = session.exec(query).first() #type: ignore
 
         if not user_replica:
@@ -63,7 +63,7 @@ def check_user_replica_exists(
     display_name: Optional[str],
 ):
     with Session(engine) as session:
-        query = select(UserReplica).where("user_id" == user_id)
+        query = select(UserReplica).where(UserReplica.user_id == user_id)
         new_user_replica = session.exec(query).first() #type: ignore
 
         if not new_user_replica:
@@ -79,7 +79,7 @@ def update_user_replica(
     display_name: Optional[str],
 ):
     with Session(engine) as session:
-        query = select(UserReplica).where("user_id" == user_id)
+        query = select(UserReplica).where(UserReplica.user_id == user_id)
         user_replica = session.exec(query).first() #type: ignore
 
         if not user_replica:
@@ -103,7 +103,7 @@ def update_user_replica(
 
 def delete_user_replica(user_id: str):
     with Session(engine) as session:
-        query = select(UserReplica).where("user_id" == user_id)
+        query = select(UserReplica).where(UserReplica.user_id == user_id)
         user_replica = session.exec(query).first() #type: ignore
 
         if not user_replica:
