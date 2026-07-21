@@ -16,7 +16,7 @@ async def callback(message: aio_pika.abc.AbstractIncomingMessage):
             body_json = json.loads(message.body.decode('utf-8'))
             data = body_json["args"][0]
             print("Processing message...")
-            print(f"event_id:{body_json["id"]}")
+            print(f'event_id:{body_json["id"]}')
             print(f"event_type: {data['action']}")
             asyncio.create_task(create_event(data))
             print("Message processed successfully")

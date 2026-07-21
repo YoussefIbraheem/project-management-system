@@ -55,5 +55,7 @@ async def events_get_by_id(event_id: str):
             raise HTTPException(status_code=404, detail="Event not found")
 
         return event
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

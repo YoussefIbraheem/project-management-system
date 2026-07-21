@@ -10,11 +10,13 @@ from app.services.event_service import create_event, get_event_by_id, get_events
 async def test_get_events_returns_event_responses():
     mock_event = MagicMock()
     mock_event.model_dump.return_value = {
-        "_id": "event-1",
+        "_id": "1",
+        "actor_id": "1",
         "service": "test-service",
         "action": "created",
-        "user_id": "user-123",
-        "details": {"key": "value"},
+        "subject_id": "1",
+        "subject_type": "task",
+        "metadata": {"key": "value"},
         "timestamp": datetime(2026, 1, 1, tzinfo=timezone.utc),
     }
 
@@ -34,17 +36,19 @@ async def test_get_events_returns_event_responses():
 async def test_get_event_by_id_returns_response():
     mock_event = MagicMock()
     mock_event.model_dump.return_value = {
-        "_id": "event-1",
+        "_id": "1",
+        "actor_id": "1",
         "service": "test-service",
         "action": "created",
-        "user_id": "user-123",
-        "details": {"key": "value"},
+        "subject_id": "1",
+        "subject_type": "task",
+        "metadata": {"key": "value"},
         "timestamp": datetime(2026, 1, 1, tzinfo=timezone.utc),
     }
 
     with patch("app.services.event_service.Event") as MockEvent:
         MockEvent.get = AsyncMock(return_value=mock_event)
-        event = await get_event_by_id("event-1")
+        event = await get_event_by_id("1")
 
     assert event is not None
     assert event.service == "test-service"
@@ -54,7 +58,7 @@ async def test_get_event_by_id_returns_response():
 async def test_get_event_by_id_returns_none_for_missing():
     with patch("app.services.event_service.Event") as MockEvent:
         MockEvent.get = AsyncMock(return_value=None)
-        event = await get_event_by_id("missing-id")
+        event = await get_event_by_id("999")
 
     assert event is None
 
@@ -64,24 +68,28 @@ async def test_create_event_inserts_and_returns_id():
     with patch("app.services.event_service.Event") as MockEvent:
         mock_instance = MagicMock()
         mock_instance.insert = AsyncMock()
-        mock_instance.id = "new-event-id"
+        mock_instance.id = "1"
         MockEvent.return_value = mock_instance
 
         result = await create_event({
             "service": "history",
             "action": "create",
-            "user_id": "user-321",
-            "details": {"resource": "board"},
+            "actor_id": "1",
+            "subject_id": "1",
+            "subject_type": "board",
+            "metadata": {"resource": "board"},
         })
 
-    assert result == "new-event-id"
+    assert result == "1"
 
 
 @pytest.mark.asyncio
-async def test_create_event_requires_user_id():
+async def test_create_event_requires_actor_id():
     with pytest.raises(ValidationError):
         await create_event({
             "service": "history",
             "action": "create",
-            "details": {"resource": "board"},
+            "subject_id": "1",
+            "subject_type": "board",
+            "metadata": {"resource": "board"},
         })
