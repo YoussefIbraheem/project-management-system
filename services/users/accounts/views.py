@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta, timezone
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
@@ -21,7 +22,7 @@ from .events import (
     UserProfileUpdateEvent,
     UserRegisterEvent,
 )
-from .models import User, UserProfile
+from .models import User, UserProfile, UserVerification
 from .publishers import publish_history_event, publish_notification_event
 from .serializers import (
     UserDeleteSerializer,
@@ -31,6 +32,7 @@ from .serializers import (
     UserRegisterationSerializer,
     UserSerializer,
     UserUpdateSerializer,
+    _send_otp_code,
 )
 
 logger = logging.getLogger(__name__)
@@ -267,15 +269,31 @@ class UserVerificationEmailView(views.APIView):
         code = request.data.get("code")
 
         try:
-            user = User.objects.get(email=email)
-            verification = user.verification
+            user = User.objects.filter(email=email).first()
+            if not user:
+                return response.Response(
+                    "Email not found",
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            verification = UserVerification.objects.filter(user=user).last()
+            
+            if not verification or verification.created_at < datetime.now(
+                timezone.utc
+            ) - timedelta(hours=1):
+                _send_otp_code(user)
+                return response.Response(
+                    "Verification code not found or expired. A new code has been sent.",
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             if verification.code == code:
                 logger.info(
-                    f"Verifying user {user.email} ,Given code:{code}, Expected code:{verification.code}"
+                    f"Verifying user {user.email}..."
                 )
                 user.is_verified = True
                 user.save()
+                verification.delete()
 
                 actor_id = request.user.id if request.user.id else user.id
 
@@ -286,8 +304,6 @@ class UserVerificationEmailView(views.APIView):
                 )
 
                 publish_history_event(event.to_dict())
-
-                verification.delete()
 
                 return response.Response("User verified successfully.")
             else:

@@ -1,16 +1,16 @@
-import unittest
-import json
+import tempfile
 from unittest.mock import patch
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-
+import logging
 from . import views
 from .models import User, UserProfile, UserVerification
 
+logger = logging.getLogger(__name__)
 
 class BaseAPITestCase(TestCase):
     """
@@ -21,6 +21,11 @@ class BaseAPITestCase(TestCase):
 
     def setUp(self):
         super().setUp()
+        self._media_tmpdir = tempfile.TemporaryDirectory()
+        self._media_override = override_settings(MEDIA_ROOT=self._media_tmpdir.name)
+        self._media_override.enable()
+        self.addCleanup(self._media_override.disable)
+        self.addCleanup(self._media_tmpdir.cleanup)
         self.client = APIClient()
 
         history_patcher = patch.object(views, "publish_history_event")
@@ -824,6 +829,8 @@ class UserVerificationEmailTestCase(BaseAPITestCase):
         response = self.client.post(
             self.verify_url, {"email": self.user.email, "code": "123456"}
         )
+
+        logger.info(f"Response: {response.data}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()

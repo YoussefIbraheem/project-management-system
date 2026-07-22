@@ -7,9 +7,38 @@ from psycopg import logger
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from accounts.publishers import publish_notification_event
 from utils.generate_unique_number import generate_verification_code
 
+from accounts.events import UserEmailVerificationSendEvent
+from accounts.utils import generate_user_otp_code
+
 from .models import User, UserProfile, UserVerification
+
+
+def _send_otp_code(user: User):
+    try:
+        code = generate_user_otp_code(user)
+        email = user.email
+            
+        event = UserEmailVerificationSendEvent(
+            actor_id="SYSTEM", subject_id=user.id, code=code, email=email
+        )
+
+        publish_notification_event(event.to_dict())
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send OTP code for user {user.email}: {e}")
+        return False
+
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    verification_code = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+       
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -97,6 +126,8 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
         UserProfile.objects.create(user=user)
         if validated_data.get("bio"):
             UserProfile.objects.filter(user=user).update(bio=validated_data["bio"])
+
+        _send_otp_code(user)
         return user
 
 
@@ -108,10 +139,10 @@ class UserLoginJWTSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom claims
+        # NOTE: Add custom claims here
         token["is_superuser"] = user.is_superuser
         token["sub"] = str(user.id)
-        # ...
+        # * ...
 
         return token
 
@@ -122,11 +153,8 @@ class UserLoginJWTSerializer(TokenObtainPairSerializer):
             raise serializers.ValidationError("Invalid Credentials.")
 
         if not user.is_verified:
-            code = UserVerification.objects.update_or_create(
-                user=user, defaults={"code": generate_verification_code()}
-            )[0]
-
-            logger.info(f"USER DATA:{user.id} \n CODE:{code.code}")
+            _send_otp_code(user)
+            logger.info(f"OTP sent to {user.email}.")
 
             raise serializers.ValidationError(
                 "Account not verified. A new verification code has been sent to your email."

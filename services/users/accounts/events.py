@@ -34,9 +34,14 @@ class UserRegisterEvent(BaseEvent):
         email: str,
         username: str,
         actor_id: str,
-        display_name: Optional[str]=None,
+        display_name: Optional[str] = None,
     ):
-        self.metadata = {"email": email, "username": username,"user_id":subject_id,"display_name":display_name}
+        self.metadata = {
+            "email": email,
+            "username": username,
+            "user_id": subject_id,
+            "display_name": display_name,
+        }
 
         super().__init__(
             subject_id=subject_id, actor_id=actor_id, metadata=self.metadata
@@ -115,6 +120,16 @@ class UserEmailChangeEvent(BaseEvent):
     def __init__(self, subject_id: str, new_email: str, actor_id: str):
         super().__init__(
             subject_id=subject_id, actor_id=actor_id, metadata={"new_email": new_email}
+        )
+
+
+@dataclass
+class UserEmailVerificationSendEvent(BaseEvent):
+    def __init__(self, subject_id: str, actor_id: str, code: str, email: str):
+        super().__init__(
+            subject_id=subject_id,
+            actor_id=actor_id,
+            metadata={"code": code, "email": email},
         )
 
 
