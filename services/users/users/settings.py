@@ -193,7 +193,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 SIMPLE_JWT = {
-    "TOKEN_OBTAIN_SERIALIZER":"accounts.serializers.UserLoginJWTSerializer",
+    "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.UserLoginJWTSerializer",
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=env.int("ACCESS_TOKEN_LIFETIME", default=2)
     ),
@@ -214,3 +214,12 @@ CELERY_IGNORE_RESULT = True
 # CELERY_TASK_ROUTES = {
 #     "app.consumers.history_consumer.record_activity": {"queue": "history"}
 # }
+
+EMAIL_HOST = env.str("EMAIL_HOST")
+EMAIL_PORT = env.int("EMAIL_PORT")
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL")
+EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
+DEFAULT_FROM_EMAIL = f'"{env.str("EMAIL_DISPLAY_NAME")}" <{env.str("EMAIL_SENDER")}>'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

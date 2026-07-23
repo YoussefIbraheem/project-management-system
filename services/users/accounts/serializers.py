@@ -6,27 +6,29 @@ from django.contrib.auth import authenticate, hashers, password_validation
 from psycopg import logger
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-from accounts.publishers import publish_notification_event
-from utils.generate_unique_number import generate_verification_code
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.events import UserEmailVerificationSendEvent
+from accounts.publishers import publish_history_event
 from accounts.utils import generate_user_otp_code
+from accounts.mailers import UserVerificationEmail 
 
-from .models import User, UserProfile, UserVerification
+from .models import User, UserProfile
 
 
 def _send_otp_code(user: User):
     try:
         code = generate_user_otp_code(user)
-        email = user.email
-            
-        event = UserEmailVerificationSendEvent(
-            actor_id="SYSTEM", subject_id=user.id, code=code, email=email
-        )
+        email = UserVerificationEmail(user, code)
+        email.send()
 
-        publish_notification_event(event.to_dict())
-        return True
+        if email:
+            event = UserEmailVerificationSendEvent(
+                actor_id="SYSTEM", subject_id=user.id, code=code, email=user.email
+            )
+            publish_history_event(event.to_dict())
+            return True
+
     except Exception as e:
         logger.error(f"Failed to send OTP code for user {user.email}: {e}")
         return False
@@ -38,7 +40,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-       
 
 
 class UserSerializer(serializers.ModelSerializer):
