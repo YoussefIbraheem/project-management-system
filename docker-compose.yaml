@@ -41,7 +41,7 @@ services:
     depends_on:
       postgresdb:
         condition: service_healthy
-        
+
   # FastAPI History Service
   history-service:
     build:
@@ -154,6 +154,29 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
       - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
+
+  celery_users_worker:
+    container_name: celery_users_worker
+    build:
+      context: ./services/users
+      dockerfile: Dockerfile
+    command: celery -A users worker --loglevel=info
+    volumes:
+      - ./services/users:/accounts
+    working_dir: /accounts
+    env_file:
+      - ./services/users/.env
+    environment:
+      POSTGRESQL_HOST: postgresdb
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      users-service:
+        condition: service_started
 
   history-worker:
     build:

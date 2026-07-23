@@ -8,6 +8,7 @@ from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from accounts.models import User
+from users.celery import app as celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,8 @@ class UserVerificationEmail:
             )
             return ""
         return f"{base_url}?email={self.user.email}&code={self.code}"
-
+        
+    @celery_app.task(bind=True, ignore_result=True)
     def send(self):
         try:
             context = {
@@ -57,7 +59,7 @@ class UserVerificationEmail:
             )
 
             email.attach_alternative(html_content, "text/html")
-            email.send(fail_silently=False) # TODO: Create a background work as it takes a long time to prcess (Celery)
+            email.send(fail_silently=False)
             return True
         except Exception as e:
             print(f"Error sending verification email: {e}")
