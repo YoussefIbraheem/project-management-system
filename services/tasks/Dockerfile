@@ -19,8 +19,8 @@ RUN python -m pip install -r requirements.txt
 RUN apt-get update
 COPY . .
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY alembic_migration_entrypoint.sh /alembic_migration_entrypoint.sh
+RUN chmod +x /alembic_migration_entrypoint.sh
 
 ENTRYPOINT ["/alembic_migration_entrypoint.sh"]
 
