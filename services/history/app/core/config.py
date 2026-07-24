@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
-    API_V1: Optional[str] = "/api/v1"
+    API_PREFIX: Optional[str] = "/api/v1"
     PROJECT_NAME: Optional[str] = "History Service"
     HOST: Optional[str] = "0.0.0.0"
     PORT: Optional[int] = 5006

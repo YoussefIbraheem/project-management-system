@@ -36,7 +36,7 @@ app = FastAPI(lifespan=lifespan, dependencies=[Depends(JWTBearer())],title="Hist
 #     return {"item_id": item_id, "q": q}
 
 
-app.include_router(event_router,prefix=settings.API_V1)
+app.include_router(event_router,prefix=settings.API_PREFIX)
 
 
 @app.exception_handler(Exception)
