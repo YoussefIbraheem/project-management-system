@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
-    API_V1_STR: str = "/api/v1"
+    API_PREFIX: str = "/api/v1"
     PROJECT_NAME: str = "Notifications Service"
     HOST: str = "0.0.0.0"
     PORT: int = 5006

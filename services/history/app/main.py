@@ -23,20 +23,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await close_db()
 
 
-app = FastAPI(lifespan=lifespan, dependencies=[Depends(JWTBearer())])
+app = FastAPI(lifespan=lifespan, dependencies=[Depends(JWTBearer())],title="History Service API Documentation")
 
 
-@app.get("/")
-def read_root():
-    return {"project_name": settings.PROJECT_NAME}
+# @app.get("/")
+# def read_root():
+#     return {"project_name": settings.PROJECT_NAME}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "q": q}
+# @app.get("/items/{item_id}")
+# def read_item(item_id: int, q: str | None = None):
+#     return {"item_id": item_id, "q": q}
 
 
-app.include_router(event_router)
+app.include_router(event_router,prefix=settings.API_V1)
 
 
 @app.exception_handler(Exception)
