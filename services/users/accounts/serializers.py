@@ -3,15 +3,16 @@ from typing import Any
 from urllib import response
 
 from django.contrib.auth import authenticate, hashers, password_validation
+from django.forms.models import model_to_dict
 from psycopg import logger
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.events import UserEmailVerificationSendEvent
+from accounts.mailers.verification import send_verification_email
 from accounts.publishers import publish_history_event
 from accounts.utils import generate_user_otp_code
-from accounts.mailers import UserVerificationEmail 
 
 from .models import User, UserProfile
 
@@ -19,8 +20,8 @@ from .models import User, UserProfile
 def _send_otp_code(user: User):
     try:
         code = generate_user_otp_code(user)
-        email = UserVerificationEmail(user, code)
-        email.send()
+
+        email = send_verification_email.delay(user.id, code)
 
         if email:
             event = UserEmailVerificationSendEvent(

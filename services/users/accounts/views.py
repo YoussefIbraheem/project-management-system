@@ -308,7 +308,7 @@ class UserVerificationEmailView(views.APIView):
                 return response.Response("User verified successfully.")
             else:
                 return response.Response(
-                    f"Error With Verification Code :{e}",
+                    "Invalid verification code.",
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 

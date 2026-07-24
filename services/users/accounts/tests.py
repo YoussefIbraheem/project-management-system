@@ -1,6 +1,9 @@
+from datetime import datetime, timedelta, timezone
 import tempfile
+from types import SimpleNamespace
 from unittest.mock import patch
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.template import TemplateDoesNotExist
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -8,6 +11,8 @@ from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 import logging
 from . import views
+from . import mailers as mailers_pkg
+from .mailers import verification as verification_mailer
 from .models import User, UserProfile, UserVerification
 
 logger = logging.getLogger(__name__)
@@ -882,3 +887,133 @@ class UserVerificationEmailTestCase(BaseAPITestCase):
         )
 
         self.assertNotEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_verify_email_invalid_code_returns_clear_message(self):
+        response = self.client.post(
+            self.verify_url, {"email": self.user.email, "code": "000000"}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, "Invalid verification code.")
+
+    def test_verify_email_expired_code_requests_new_code(self):
+        expired_verification = UserVerification.objects.get(pk=self.verification.pk)
+        expired_verification.created_at = (
+            datetime.now(timezone.utc) - timedelta(hours=2)
+        )
+        expired_verification.save(update_fields=["created_at"])
+
+        with patch.object(views, "_send_otp_code", return_value=True) as mock_send_otp:
+            response = self.client.post(
+                self.verify_url, {"email": self.user.email, "code": "123456"}
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("A new code has been sent", response.data)
+        mock_send_otp.assert_called_once_with(self.user)
+
+
+class VerificationMailerTestCase(BaseAPITestCase):
+    def test_build_verification_url_returns_empty_when_not_configured(self):
+        user = SimpleNamespace(id=1, email="user@example.com")
+
+        with patch.object(verification_mailer.logger, "warning") as mock_warning:
+            url = verification_mailer._build_verification_url(user, "123456")
+
+        self.assertEqual(url, "")
+        mock_warning.assert_called_once()
+
+    def test_build_verification_url_includes_email_and_code(self):
+        user = SimpleNamespace(id=1, email="user@example.com")
+
+        with override_settings(
+            FRONTEND_VERIFICATION_URL="https://frontend.example/verify"
+        ):
+            url = verification_mailer._build_verification_url(user, "123456")
+
+        self.assertEqual(
+            url,
+            "https://frontend.example/verify?email=user@example.com&code=123456",
+        )
+
+    def test_send_email_renders_and_sends_message(self):
+        message = patch("accounts.mailers.EmailMultiAlternatives")
+        mock_email_class = message.start()
+        self.addCleanup(message.stop)
+        email_message = mock_email_class.return_value
+
+        with patch.object(
+            mailers_pkg, "render_to_string", return_value="<p>Hello <b>there</b></p>"
+        ) as mock_render:
+            result = mailers_pkg.send_email(
+                "email_templates/user_verification.html",
+                {"user": "dummy"},
+                "user@example.com",
+            )
+
+        self.assertTrue(result)
+        mock_render.assert_called_once_with(
+            "email_templates/user_verification.html", {"user": "dummy"}
+        )
+        mock_email_class.assert_called_once_with(
+            subject="User Verification",
+            to=["user@example.com"],
+            body="Hello there",
+        )
+        email_message.attach_alternative.assert_called_once_with(
+            "<p>Hello <b>there</b></p>", "text/html"
+        )
+        email_message.send.assert_called_once_with(fail_silently=False)
+
+    def test_send_email_returns_false_when_template_missing(self):
+        with patch.object(
+            mailers_pkg, "render_to_string", side_effect=TemplateDoesNotExist("missing")
+        ), patch.object(mailers_pkg.logger, "exception") as mock_exception:
+            result = mailers_pkg.send_email("missing.html", {}, "user@example.com")
+
+        self.assertFalse(result)
+        mock_exception.assert_called_once()
+
+    def test_send_verification_email_builds_context_and_sends(self):
+        user = User.objects.create_user(
+            email="taskuser@example.com",
+            username="taskuser",
+            password="TestPassword123",
+        )
+
+        with override_settings(
+            FRONTEND_VERIFICATION_URL="https://frontend.example/verify",
+            APP_NAME="Users Service",
+            SITE_URL="https://example.com",
+        ):
+            with patch.object(
+                verification_mailer, "send_email", return_value=True
+            ) as mock_send_email, patch.object(
+                verification_mailer.task_logger, "info"
+            ) as mock_info:
+                result = verification_mailer.send_verification_email(user.id, "999999")
+
+        self.assertTrue(result)
+        mock_info.assert_called_once_with(
+            "Sending verification email to %s", user.email
+        )
+        mock_send_email.assert_called_once()
+        template, context, email = mock_send_email.call_args.args
+        self.assertEqual(template, verification_mailer._VERIFICATION_TEMPLATE)
+        self.assertEqual(email, user.email)
+        self.assertEqual(context["user"].id, user.id)
+        self.assertEqual(context["verification_code"], "999999")
+        self.assertEqual(
+            context["verification_url"],
+            "https://frontend.example/verify?email=taskuser@example.com&code=999999",
+        )
+        self.assertEqual(context["app_name"], "Users Service")
+        self.assertEqual(context["site_url"], "https://example.com")
+
+    def test_send_verification_email_returns_false_for_missing_user(self):
+        with patch.object(
+            verification_mailer.User.objects, "get", side_effect=User.DoesNotExist
+        ):
+            result = verification_mailer.send_verification_email(999, "123456")
+
+        self.assertFalse(result)
