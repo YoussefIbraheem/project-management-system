@@ -29,7 +29,7 @@ class OpenAPIDocGenerator:
         openapi_schema = {
                 "openapi": "3.1.0",
                 "info": {
-                    "title": f"{settings.SERVICE_NAME} API DOC",
+                    "title": "Tasks Service API Documentation",
                     "version": "0.0.1",
                 },
                 "components": {

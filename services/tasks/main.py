@@ -20,13 +20,13 @@ def initiate_swagger_ui():
     try:
         generator.generate(output_path)
         api_doc(
-            app, config_path=output_path, url_prefix="/api/swagger", title="API Doc"
+            app, config_path=output_path, url_prefix="/docs", title="Task API Doc"
         )
     except Exception as e:
         print(f"OpenAPI generation Error:{e}")
 
 
-@app.route(f"{settings.API_V1_PREFIX}")
+@app.route(f"{settings.API_PREFIX}")
 def index():
     return f"Welcome to the {settings.SERVICE_NAME} service (version {settings.SERVICE_VERSION})!"
 

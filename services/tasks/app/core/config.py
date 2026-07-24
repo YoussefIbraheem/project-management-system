@@ -20,7 +20,7 @@ class Settings:
     TIMEZONE: str = "UTC"
 
     # API settings
-    API_V1_PREFIX: str = "/api/v1"
+    API_PREFIX: str = "/api/v1"
     SERVICE_NAME: str = "tasks"
     SERVICE_VERSION: str = "0.1.0"
     JWT_SECRET_KEY: str = ""
@@ -43,7 +43,7 @@ class Settings:
 
     def __post_init__(self):
         """Load from environment variables after initialization"""
-        self.API_V1_PREFIX = os.getenv("API_V1_PREFIX", self.API_V1_PREFIX)
+        self.API_PREFIX = os.getenv("API_V1_PREFIX", self.API_PREFIX)
         self.SERVICE_NAME = os.getenv("SERVICE_NAME", self.SERVICE_NAME)
         self.SERVICE_VERSION = os.getenv("SERVICE_VERSION", self.SERVICE_VERSION)
         self.JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", self.JWT_SECRET_KEY)
