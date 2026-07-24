@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "drf_yasg",
+    "django_rest_passwordreset"
 ]
 
 REST_FRAMEWORK = {
