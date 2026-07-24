@@ -34,7 +34,9 @@ def send_verification_email(user_id: int, code: str):
             "site_url": getattr(settings, "SITE_URL", ""),
         }
         task_logger.info("Sending verification email to %s", user.email)
-        return send_email(_VERIFICATION_TEMPLATE, context, user.email)
+        return send_email(
+            _VERIFICATION_TEMPLATE, context, user.email, "User Verification"
+        )
 
     except Exception as e:
         print(f"Error sending verification email: {e}")

@@ -1,17 +1,21 @@
-from datetime import datetime, timedelta, timezone
+import logging
 import tempfile
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import patch
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.template import TemplateDoesNotExist
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django_rest_passwordreset.models import ResetPasswordToken
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-import logging
-from . import views
+
 from . import mailers as mailers_pkg
+from . import views
+from .mailers import password_reset as password_reset_mailer
 from .mailers import verification as verification_mailer
 from .models import User, UserProfile, UserVerification
 
@@ -913,6 +917,93 @@ class UserVerificationEmailTestCase(BaseAPITestCase):
         mock_send_otp.assert_called_once_with(self.user)
 
 
+class PasswordResetTestCase(BaseAPITestCase):
+    def setUp(self):
+        super().setUp()
+        self.reset_request_url = reverse("password_reset:reset-password-request")
+        self.user = User.objects.create_user(
+            email="resetuser@example.com",
+            username="resetuser",
+            password="TestPassword123",
+        )
+        self.user.is_verified = True
+        self.user.save()
+
+    def test_password_reset_request_creates_token_and_queues_email(self):
+        with patch.object(
+            password_reset_mailer._dispatch_password_reset_email, "delay"
+        ) as mock_delay:
+            response = self.client.post(
+                self.reset_request_url, {"email": self.user.email}
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"status": "OK"})
+        token = ResetPasswordToken.objects.get(user=self.user)
+        mock_delay.assert_called_once()
+        user_id, reset_url = mock_delay.call_args.args
+        self.assertEqual(user_id, self.user.id)
+        self.assertIn(token.key, reset_url)
+        self.assertIn("/api/v1/auth/password-reset/confirm/", reset_url)
+
+    def test_password_reset_request_for_unknown_email_returns_ok_without_token(self):
+        with patch.object(
+            password_reset_mailer._dispatch_password_reset_email, "delay"
+        ) as mock_delay:
+            response = self.client.post(
+                self.reset_request_url, {"email": "missing@example.com"}
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"status": "OK"})
+        self.assertFalse(ResetPasswordToken.objects.exists())
+        mock_delay.assert_not_called()
+
+    def test_send_password_reset_email_queues_task_with_confirmation_url(self):
+        instance = SimpleNamespace(
+            request=SimpleNamespace(
+                build_absolute_uri=lambda path: f"https://api.example{path}"
+            )
+        )
+        reset_password_token = SimpleNamespace(user=self.user, key="abc123")
+
+        with patch.object(
+            password_reset_mailer._dispatch_password_reset_email, "delay"
+        ) as mock_delay:
+            password_reset_mailer.send_password_reset_email(
+                sender=object(),
+                instance=instance,
+                reset_password_token=reset_password_token,
+            )
+
+        mock_delay.assert_called_once_with(
+            self.user.id,
+            "https://api.example/api/v1/auth/password-reset/confirm/?token=abc123",
+        )
+
+    def test_dispatch_password_reset_email_builds_context_and_sends(self):
+        reset_url = (
+            "https://api.example/api/v1/auth/password-reset/confirm/?token=abc123"
+        )
+
+        with override_settings(
+            APP_NAME="Users Service", SITE_URL="https://example.com"
+        ), patch.object(password_reset_mailer, "send_email", return_value=True) as mock_send_email:
+            password_reset_mailer._dispatch_password_reset_email(
+                self.user.id, reset_url
+            )
+
+        mock_send_email.assert_called_once()
+        template, context, email, subject = mock_send_email.call_args.args
+        self.assertEqual(template, password_reset_mailer._PASSWORD_RESET_TEMPLATE)
+        self.assertEqual(email, self.user.email)
+        self.assertEqual(subject, "Password Reset")
+        self.assertEqual(context["user"].id, self.user.id)
+        self.assertEqual(context["app_name"], "Users Service")
+        self.assertEqual(context["site_url"], "https://example.com")
+        self.assertEqual(context["reset_url"], reset_url)
+
+
 class VerificationMailerTestCase(BaseAPITestCase):
     def test_build_verification_url_returns_empty_when_not_configured(self):
         user = SimpleNamespace(id=1, email="user@example.com")
@@ -949,6 +1040,7 @@ class VerificationMailerTestCase(BaseAPITestCase):
                 "email_templates/user_verification.html",
                 {"user": "dummy"},
                 "user@example.com",
+                "User Verification",
             )
 
         self.assertTrue(result)
@@ -969,7 +1061,9 @@ class VerificationMailerTestCase(BaseAPITestCase):
         with patch.object(
             mailers_pkg, "render_to_string", side_effect=TemplateDoesNotExist("missing")
         ), patch.object(mailers_pkg.logger, "exception") as mock_exception:
-            result = mailers_pkg.send_email("missing.html", {}, "user@example.com")
+            result = mailers_pkg.send_email(
+                "missing.html", {}, "user@example.com", "User Verification"
+            )
 
         self.assertFalse(result)
         mock_exception.assert_called_once()
@@ -985,22 +1079,22 @@ class VerificationMailerTestCase(BaseAPITestCase):
             FRONTEND_VERIFICATION_URL="https://frontend.example/verify",
             APP_NAME="Users Service",
             SITE_URL="https://example.com",
-        ):
-            with patch.object(
-                verification_mailer, "send_email", return_value=True
-            ) as mock_send_email, patch.object(
-                verification_mailer.task_logger, "info"
-            ) as mock_info:
-                result = verification_mailer.send_verification_email(user.id, "999999")
+        ), patch.object(
+            verification_mailer, "send_email", return_value=True
+        ) as mock_send_email, patch.object(
+            verification_mailer.task_logger, "info"
+        ) as mock_info:
+            result = verification_mailer.send_verification_email(user.id, "999999")
 
         self.assertTrue(result)
         mock_info.assert_called_once_with(
             "Sending verification email to %s", user.email
         )
         mock_send_email.assert_called_once()
-        template, context, email = mock_send_email.call_args.args
+        template, context, email, subject = mock_send_email.call_args.args
         self.assertEqual(template, verification_mailer._VERIFICATION_TEMPLATE)
         self.assertEqual(email, user.email)
+        self.assertEqual(subject, "User Verification")
         self.assertEqual(context["user"].id, user.id)
         self.assertEqual(context["verification_code"], "999999")
         self.assertEqual(
