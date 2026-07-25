@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
-#
-# run-all-tests.sh
-#
-# Runs the test suite for every Python microservice in this docker-compose
-# project and prints an aggregated summary at the end. Exits non-zero if
-# any service's tests fail (useful for CI).
-#
-# Usage:
-#   ./run-all-tests.sh                # run tests for all services
-#   ./run-all-tests.sh users tasks    # run tests only for specific services
-#
-# Requires: the stack to already be up (docker compose up -d), OR pass
-# --up to bring it up first (docker compose up -d --wait).
+# * run-all-tests.sh
+# *
+# * Runs the test suite for every Python microservice in this docker-compose
+# * project and prints an aggregated summary at the end. Exits non-zero if
+# * any service's tests fail (useful for CI).
+# *
+# * Usage:
+# *   ./run-all-tests.sh                # run tests for all services
+# *   ./run-all-tests.sh users tasks    # run tests only for specific services
+# *
+# * Requires: the stack to already be up (docker compose up -d), OR pass
+# * --up to bring it up first (docker compose up -d --wait).
 
 set -uo pipefail
 
