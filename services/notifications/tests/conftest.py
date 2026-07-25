@@ -1,6 +1,8 @@
 from pathlib import Path
 import sys
 
+import time
+
 import pytest
 from sqlalchemy import event
 from sqlalchemy.pool import StaticPool
@@ -17,6 +19,7 @@ from app.models.email_log import EmailLog  # noqa: F401
 from app.models.notification import Notification  # noqa: F401
 from app.models.user_replica import UserReplica  # noqa: F401
 
+from app.auth import auth_bearer as notification_auth_bearer
 from app.db import database as db_module
 from app.services import email_log_service, notification_service, user_replica_service
 
@@ -53,3 +56,22 @@ def patch_notification_db(engine, monkeypatch):
     monkeypatch.setattr(user_replica_service, "engine", engine)
     monkeypatch.setattr(email_log_service, "engine", engine)
     yield
+
+
+@pytest.fixture(autouse=True)
+def patch_notification_auth(monkeypatch):
+    monkeypatch.setattr(
+        notification_auth_bearer,
+        "decode_jwt",
+        lambda token: {  # noqa: ARG005
+            "sub": "1",
+            "is_superuser": True,
+            "exp": int(time.time()) + 3600,
+        },
+    )
+    yield
+
+
+@pytest.fixture()
+def superuser_token():
+    return "test-notification-token"
