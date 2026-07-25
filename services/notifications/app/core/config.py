@@ -11,14 +11,15 @@ class Settings(BaseSettings):
     PORT: int = 5006
     DEBUG: bool = True
 
-    DB_URL: str = (
-        "postgresql://youssef:password@postgresdb:5432/pms_notifications_db"
-    )
+    DB_URL: str = "postgresql://youssef:password@postgresdb:5432/pms_notifications_db"
     BROKER_URL: str = "amqp://guest:guest@rabbitmq:5672//"
     RABBITMQ_HOST: str = "rabbitmq"
     RABBITMQ_PORT: int = 5672
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASSWORD: str = "guest"
+
+    SECRET_KEY: str = ""
+    ALGORITHM: str = "HS256"
 
     SMTP_HOSTNAME: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
