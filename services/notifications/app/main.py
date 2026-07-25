@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 
 from app import logger
+from app.apis.email_log_api import router as email_log_router
+from app.apis.notification_api import router as notifications_router
 from app.apis.user_replica_api import router as user_replica_router
 from app.auth.auth_bearer import JWTBearer
 from app.core.config import settings
@@ -16,6 +18,12 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan,dependencies=[Depends(JWTBearer())] ,title="Notification Service API Documentation")
+app = FastAPI(
+    lifespan=lifespan,
+    dependencies=[Depends(JWTBearer())],
+    title="Notification Service API Documentation",
+)
 
-app.include_router(user_replica_router, prefix=f"{settings.API_PREFIX}")
+app.include_router(user_replica_router, prefix=f"{settings.API_PREFIX}",tags=["User Replica"])
+app.include_router(notifications_router, prefix=f"{settings.API_PREFIX}",tags=["Notifications"])
+app.include_router(email_log_router, prefix=f"{settings.API_PREFIX}",tags=["Email Log"])

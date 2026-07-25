@@ -26,3 +26,23 @@ request:
         name: ""
         scope: runtime
       disabled: true
+  scripts:
+    - type: after-response
+      code: |-
+        // let res_status =res.status
+        // console.log(res_status == 401)
+        // if (res_status == 401){
+        //   const ref_res = await bru.sendRequest({
+        //   method: 'POST',
+        //   url: "http://localhost:8000/api/v1/login/refresh/",
+        //   headers: {
+        //     'refresh': `Bearer ${bru.getVar("refreshToken")}`,
+        //     'Content-Type': 'application/json'
+        //   }
+        //   })
+        //   let accessToken = ref_res.body.access
+        //   let refreshToken = ref_res.body.refresh
+        //   bru.setVar("accessToken",accessToken)
+        //   bru.setVar("refreshToken", refreshToken)
+        //   console.log(ref_res.body)
+        // }
