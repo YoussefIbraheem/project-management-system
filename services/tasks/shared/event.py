@@ -1,8 +1,8 @@
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from enum import StrEnum
 
 from app.core.flask_enum import FlaskEnum
-from enum import StrEnum
 
 
 class SubjectType(FlaskEnum):

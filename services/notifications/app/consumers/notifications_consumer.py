@@ -1,9 +1,12 @@
 import asyncio
 import json
+
 import aio_pika
+
+from app import rmq_logger
 from app.core.config import settings
 from app.dispatchers import dispatch
-from app import rmq_logger
+
 
 async def callback(message: aio_pika.abc.AbstractIncomingMessage):
     async with message.process():

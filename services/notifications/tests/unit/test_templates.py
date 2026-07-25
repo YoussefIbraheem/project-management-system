@@ -1,5 +1,4 @@
 import pytest
-
 from app.templates import NotificationContext
 from app.templates.task_assign_template import task_assign_template
 from app.templates.task_create_template import task_create_template

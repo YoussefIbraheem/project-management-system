@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import uuid
+
 import environ
 import pika
 

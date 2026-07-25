@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from pydantic import ValidationError
 from app.services.event_service import create_event, get_event_by_id, get_events
+from pydantic import ValidationError
 
 
 @pytest.mark.asyncio

@@ -1,13 +1,11 @@
-from pathlib import Path
 import sys
-
 import time
+from pathlib import Path
 
 import pytest
 from sqlalchemy import event
 from sqlalchemy.pool import StaticPool
-from sqlmodel import SQLModel, Session, create_engine
-
+from sqlmodel import Session, SQLModel, create_engine
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -15,12 +13,11 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 # Import the ORM models so SQLModel.metadata knows about every table.
+from app.auth import auth_bearer as notification_auth_bearer
+from app.db import database as db_module
 from app.models.email_log import EmailLog  # noqa: F401
 from app.models.notification import Notification  # noqa: F401
 from app.models.user_replica import UserReplica  # noqa: F401
-
-from app.auth import auth_bearer as notification_auth_bearer
-from app.db import database as db_module
 from app.services import email_log_service, notification_service, user_replica_service
 
 

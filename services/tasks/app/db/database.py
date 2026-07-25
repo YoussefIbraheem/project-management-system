@@ -1,11 +1,12 @@
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import Session, sessionmaker
 from contextlib import contextmanager
-from app import settings
-from app.models import Base
 from typing import Iterator
 
 from shared.exceptions import APIException
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import Session, sessionmaker
+
+from app import settings
+from app.models import Base
 
 engine = create_engine(settings.DB_URL, pool_pre_ping=True, echo=True)
 

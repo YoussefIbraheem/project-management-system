@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from shared.event import Event, SubjectType, EventAction
+from shared.event import Event, EventAction, SubjectType
 from shared.publishers import publish_history_event
 from slugify import slugify
 

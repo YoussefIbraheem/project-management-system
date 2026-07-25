@@ -1,8 +1,11 @@
-from sqlmodel import Field, Relationship
-from . import utc_now , Base
+from datetime import datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, Optional
-from datetime import datetime
+
+from sqlmodel import Field, Relationship
+
+from . import Base, utc_now
+
 if TYPE_CHECKING:
     from .notification import Notification
 

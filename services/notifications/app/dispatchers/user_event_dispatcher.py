@@ -1,11 +1,11 @@
+from app import rmq_logger
 from app.constants.user_event_types import UserEventType
 from app.services.user_replica_service import (
+    check_user_replica_exists,
     create_user_replica,
     delete_user_replica,
     update_user_replica,
-    check_user_replica_exists,
 )
-from app import rmq_logger
 
 USER_EVENT_HANDLERS = {
     UserEventType.USER_REGISTER: create_user_replica,

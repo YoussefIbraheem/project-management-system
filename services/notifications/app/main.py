@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI , Depends
+from fastapi import Depends, FastAPI
 
 from app import logger
 from app.apis.user_replica_api import router as user_replica_router

@@ -1,5 +1,7 @@
 import asyncio
+
 from celery import Task
+
 from app.db.database import connect_db
 
 

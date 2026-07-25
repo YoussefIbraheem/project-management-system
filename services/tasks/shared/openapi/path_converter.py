@@ -1,5 +1,6 @@
 import re
 
+
 class FlaskPathConverter:
     """Knows only how to convert Flask path syntax to OpenAPI syntax."""
     

@@ -1,9 +1,9 @@
 from shared.exceptions import BadRequestException, ForbiddenException
-from app.validators.project_validator import get_member_or_404
 
 from app.models import Project
 from app.security.actor import Actor
 from app.security.roles import MemberRole, get_role_object, has_power
+from app.validators.project_validator import get_member_or_404
 
 
 def can_view_projects(db, actor: Actor):

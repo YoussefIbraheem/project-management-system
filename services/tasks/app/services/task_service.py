@@ -1,13 +1,14 @@
 from datetime import datetime, timezone
 from typing import List, Optional
+
+from shared.event import Event, EventAction, SubjectType
+from shared.publishers import publish_history_event, publish_notification_event
 from sqlalchemy import select
 from sqlalchemy.orm import load_only
-from app.models.project_member import ProjectMember
-from shared.event import Event, SubjectType, EventAction
-from shared.publishers import publish_history_event, publish_notification_event
 
 from app.db.database import get_db_session
 from app.models import Board, Task
+from app.models.project_member import ProjectMember
 from app.models.task_assignee import TaskAssignee
 from app.permissions.task_permission import (
     can_create_task,

@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
-
 from app.constants.task_event_types import TaskEventType
 from app.constants.user_event_types import UserEventType
 from app.dispatchers import task_event_dispatcher, user_event_dispatcher

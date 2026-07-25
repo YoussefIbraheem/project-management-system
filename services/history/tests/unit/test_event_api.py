@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 
-from fastapi.testclient import TestClient
-
 from app.apis import event_api
 from app.main import app
+from fastapi.testclient import TestClient
 
 
 def _auth_headers(token: str) -> dict[str, str]:

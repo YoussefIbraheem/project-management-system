@@ -1,11 +1,10 @@
-from app import settings, create_app
+from app import create_app, settings
+from shared.openapi.doc_generator import OpenAPIDocGenerator
+from shared.openapi.operations_builder import OperationBuilder
 from shared.openapi.path_converter import FlaskPathConverter
 from shared.openapi.route_collector import RouteCollector
 from shared.openapi.schema_collector import SchemaCollector
-from shared.openapi.doc_generator import OpenAPIDocGenerator
-from shared.openapi.operations_builder import OperationBuilder
 from swagger_ui import api_doc
-
 
 app = create_app()
 

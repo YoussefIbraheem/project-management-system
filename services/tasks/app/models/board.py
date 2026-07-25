@@ -1,4 +1,14 @@
-from . import Base, Column, Integer, String, Text, DateTime, ForeignKey, func , relationship
+from . import (
+    Base,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+    relationship,
+)
 
 
 class Board(Base):

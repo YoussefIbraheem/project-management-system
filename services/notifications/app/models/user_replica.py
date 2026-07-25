@@ -1,6 +1,8 @@
 from sqlmodel import Field, Relationship
-from . import datetime , utc_now , Base
+
+from . import Base, datetime, utc_now
 from .notification import Notification
+
 
 class UserReplica(Base, table=True):
      

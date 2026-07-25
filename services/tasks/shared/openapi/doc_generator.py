@@ -1,8 +1,10 @@
 import yaml
+from app import settings
+from pydantic.json_schema import models_json_schema
+
 from .route_collector import RouteCollector
 from .schema_collector import SchemaCollector
-from pydantic.json_schema import models_json_schema
-from app import settings
+
 
 class OpenAPIDocGenerator:
     def __init__(self, route_collector:RouteCollector, schema_collector:SchemaCollector):

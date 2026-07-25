@@ -1,7 +1,8 @@
 from typing import List
 
-from shared.event import Event, SubjectType, EventAction
+from shared.event import Event, EventAction, SubjectType
 from shared.publishers import publish_history_event, publish_notification_event
+
 from app.db.database import get_db_session
 from app.models import ProjectMember
 from app.models.project import Project

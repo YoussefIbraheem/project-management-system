@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
-from app.models import utc_now #type: ignore
+
+from app.models import utc_now  #type: ignore
 
 
 class NotificationSchema(BaseModel):

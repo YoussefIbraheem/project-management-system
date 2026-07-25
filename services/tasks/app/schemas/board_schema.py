@@ -1,7 +1,10 @@
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
+
 from .board_column_schema import BoardColumnResponse
+
 
 class BoardBase(BaseModel):
     id: int = Field(..., description="Board ID")

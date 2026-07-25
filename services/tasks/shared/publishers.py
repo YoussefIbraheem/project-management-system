@@ -3,6 +3,7 @@ import uuid
 
 import pika
 from app import logger, settings
+
 from .event import Event
 
 

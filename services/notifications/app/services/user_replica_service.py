@@ -3,7 +3,6 @@ from typing import Optional
 from sqlmodel import select
 
 from app.db.database import Session, engine
-
 from app.models.user_replica import UserReplica
 from app.schemas.user_replica_schema import (
     UserReplicaSchema,

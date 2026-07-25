@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from email.message import EmailMessage
+
 import aiosmtplib
 from app import rmq_logger
 from app.core.config import settings
@@ -7,10 +8,8 @@ from app.models.email_log import EmailStatus
 from app.services.email_log_service import create_email_log, update_email_log
 from app.templates import NotificationContent
 from stamina import retry_context
-from .email_validator import validate_email , EmailValidationError
 
-
-
+from .email_validator import EmailValidationError, validate_email
 
 
 class EmailService:

@@ -1,7 +1,9 @@
-from app.core.config import settings
-from sqlmodel import SQLModel, create_engine, Session
 from typing import Annotated
+
 from fastapi import Depends
+from sqlmodel import Session, SQLModel, create_engine
+
+from app.core.config import settings
 
 engine = create_engine(url=settings.DB_URL)
 

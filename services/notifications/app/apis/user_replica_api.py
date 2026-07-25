@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException
 
-from app.services.user_replica_service import get_user_replica_by_id, list_users_replicas
+from app.services.user_replica_service import (
+    get_user_replica_by_id,
+    list_users_replicas,
+)
 
 router = APIRouter(prefix="/users_replicas")
 

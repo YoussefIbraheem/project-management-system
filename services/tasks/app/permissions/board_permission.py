@@ -1,4 +1,5 @@
 from shared.exceptions import ForbiddenException
+
 from app.models import Board
 from app.security.roles import MemberRole, get_role_object, has_power
 from app.validators.project_validator import get_member_or_404

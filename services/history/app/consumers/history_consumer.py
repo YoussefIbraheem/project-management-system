@@ -1,12 +1,14 @@
-import json
 import asyncio
-from app.core.config import settings
-from app.services.event_service import create_event
-import aio_pika.abc
-import aio_pika
+import json
 import logging
-from app.db.database import connect_db
+
+import aio_pika
+import aio_pika.abc
 from aio_pika import logger
+
+from app.core.config import settings
+from app.db.database import connect_db
+from app.services.event_service import create_event
 
 logger.setLevel(logging.INFO)
 

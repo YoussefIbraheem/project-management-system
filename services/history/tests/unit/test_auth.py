@@ -2,7 +2,6 @@ import time
 
 import jwt
 import pytest
-
 from app.auth.auth_bearer import JWTBearer
 from app.auth.auth_handler import decode_jwt
 

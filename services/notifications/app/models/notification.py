@@ -1,12 +1,13 @@
+from typing import TYPE_CHECKING, Optional
+
 from sqlmodel import Field, Relationship
-from . import datetime , utc_now , Base
-from typing import Optional
+
+from . import Base, datetime, utc_now
 from .email_log import EmailLog
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .user_replica import UserReplica
     from .email_log import EmailLog
+    from .user_replica import UserReplica
 
 
 class Notification(Base,table=True):

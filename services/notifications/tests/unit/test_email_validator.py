@@ -5,7 +5,6 @@ import aiosmtplib
 import dns.resolver
 import pytest
 from email_validator import EmailNotValidError
-
 from utils import email_validator as validator
 
 

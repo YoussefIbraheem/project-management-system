@@ -1,4 +1,4 @@
-from . import NotificationContext, NotificationContent
+from . import NotificationContent, NotificationContext
 
 
 def task_unassign_template(ctx: NotificationContext):

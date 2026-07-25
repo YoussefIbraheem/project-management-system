@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
 import pytest
-
 from app.db.database import get_db_session
 from app.models import Board, BoardColumn, Project, ProjectMember
 from app.schemas.board_schema import BoardCreate, BoardUpdate
@@ -10,12 +9,12 @@ from app.security.roles import MemberRole
 from app.services.board_service import (
     create_board,
     delete_board,
+    delete_column,
     get_board_by_id,
     get_board_by_project,
     get_column,
     get_columns,
     update_board,
-    delete_column,
 )
 from shared.exceptions import NotFoundException
 

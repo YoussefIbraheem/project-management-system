@@ -1,4 +1,4 @@
-from . import NotificationContext, NotificationContent
+from . import NotificationContent, NotificationContext
 
 
 def task_update_template(ctx: NotificationContext):

@@ -1,9 +1,9 @@
-from app.security.actor import Actor
-from app.security.roles import MemberRole, get_role_object, has_power
 from shared.exceptions import BadRequestException, ForbiddenException
 
 from app.models import Task
 from app.permissions.project_permission import get_member_or_404
+from app.security.actor import Actor
+from app.security.roles import MemberRole, get_role_object, has_power
 
 
 def can_view_tasks(db, actor: Actor, project_id: int):

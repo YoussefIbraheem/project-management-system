@@ -1,8 +1,9 @@
 from typing import Optional
 
 from sqlmodel import select
-from app.models.notification import Notification
+
 from app.db.database import Session, engine
+from app.models.notification import Notification
 from app.models.user_replica import UserReplica
 from app.schemas.notification_schema import NotificationSchema
 

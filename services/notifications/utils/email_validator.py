@@ -1,10 +1,10 @@
+import aiosmtplib
 import dns.asyncresolver
 import dns.resolver
 from app import rmq_logger
 from app.core.config import settings
 from email_validator import EmailNotValidError
 from email_validator import validate_email as _validate_syntax
-import aiosmtplib
 
 
 class EmailValidationError(Exception):
