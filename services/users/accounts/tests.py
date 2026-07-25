@@ -177,7 +177,7 @@ class UserLoginTestCase(BaseAPITestCase):
 
     def setUp(self):
         super().setUp()
-        self.login_url = reverse("user-login")
+        self.login_url = reverse("token-obtain-pair")
         self.user = User.objects.create_user(
             email="testuser@example.com",
             username="testuser",
@@ -671,7 +671,7 @@ class UserLogoutTestCase(BaseAPITestCase):
         self.client.post(self.logout_url, {"refresh_token": self.refresh_token})
 
         refresh_response = self.client.post(
-            reverse("token_refresh"), {"refresh": self.refresh_token}
+            reverse("token-refresh"), {"refresh": self.refresh_token}
         )
         self.assertEqual(refresh_response.status_code, status.HTTP_401_UNAUTHORIZED)
 

@@ -18,9 +18,8 @@ from .views import (
 
 urlpatterns = [
     path("register/", UserRegisterationView.as_view(), name="user-registration"),
-    path("login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("login/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    path("login/", CustomTokenObtainPairView.as_view(), name="token-obtain-pair"),
+    path("login/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("update/", UserUpdateView.as_view(), name="user-update"),
     path("profile/", UserView.as_view(), name="user-profile"),
     path("delete/", UserDeleteView.as_view(), name="user-delete"),
