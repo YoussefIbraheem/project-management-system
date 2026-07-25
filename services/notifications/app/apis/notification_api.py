@@ -6,7 +6,7 @@ router = APIRouter(prefix="/notifications")
 
 
 @router.get("/")
-def notification_list():
+def notification_list(limit: int = 10, offset: int = 0):
     try:
         
         return list_notifications(limit=limit, offset=offset)
