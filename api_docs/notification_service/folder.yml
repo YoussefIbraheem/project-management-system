@@ -6,7 +6,7 @@ info:
 request:
   auth:
     type: bearer
-    token: "{{refreshToken}}"
+    token: "{{accessToken}}"
   variables:
     - name: url
       value: "{{baseUrl}}8081/api/v1"

@@ -1,0 +1,33 @@
+info:
+  name: refresh
+  type: http
+  seq: 14
+
+http:
+  method: POST
+  url: "{{url}}/login/refresh/"
+  headers:
+    - name: Accept
+      value: application/json
+  body:
+    type: multipart-form
+    data:
+      - name: refresh
+        type: text
+        value: "{{refreshToken}}"
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        let accessToken = res.body["access"]
+        let refreshToken = res.body["refresh"]
+        bru.setVar("accessToken",accessToken)
+        bru.setVar("refreshToken", refreshToken)
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
