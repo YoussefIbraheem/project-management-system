@@ -944,7 +944,7 @@ class PasswordResetTestCase(BaseAPITestCase):
         user_id, reset_url = mock_delay.call_args.args
         self.assertEqual(user_id, self.user.id)
         self.assertIn(token.key, reset_url)
-        self.assertIn("/api/v1/auth/password-reset/confirm/", reset_url)
+        self.assertIn("/api/v1/password-reset/confirm/", reset_url)
 
     def test_password_reset_request_for_unknown_email_returns_ok_without_token(self):
         with patch.object(
@@ -978,12 +978,12 @@ class PasswordResetTestCase(BaseAPITestCase):
 
         mock_delay.assert_called_once_with(
             self.user.id,
-            "https://api.example/api/v1/auth/password-reset/confirm/?token=abc123",
+            "https://api.example/api/v1/password-reset/confirm/?token=abc123",
         )
 
     def test_dispatch_password_reset_email_builds_context_and_sends(self):
         reset_url = (
-            "https://api.example/api/v1/auth/password-reset/confirm/?token=abc123"
+            "https://api.example/api/v1/password-reset/confirm/?token=abc123"
         )
 
         with override_settings(
