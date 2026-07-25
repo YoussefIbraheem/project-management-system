@@ -197,7 +197,7 @@ API_PREFIX = env.str("API_PREFIX")
 STATIC_URL = "static/"
 
 SIMPLE_JWT = {
-    "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.UserLoginJWTSerializer",
+    "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.CustomTokenObtainPairSerializer",
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=env.int("ACCESS_TOKEN_LIFETIME", default=2)
     ),

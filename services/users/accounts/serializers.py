@@ -133,7 +133,7 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
         return user
 
 
-class UserLoginJWTSerializer(TokenObtainPairSerializer):
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(required=True)
 

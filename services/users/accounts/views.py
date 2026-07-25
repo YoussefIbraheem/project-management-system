@@ -26,7 +26,7 @@ from .models import User, UserProfile, UserVerification
 from .publishers import publish_history_event, publish_notification_event
 from .serializers import (
     UserDeleteSerializer,
-    UserLoginJWTSerializer,
+    CustomTokenObtainPairSerializer,
     UserLogoutSerializer,
     UserPasswordChangeSerializer,
     UserRegisterationSerializer,
@@ -75,13 +75,13 @@ class UserRegisterationView(views.APIView):
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserLoginView(views.APIView):
+class CustomTokenObtainPairView(views.APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
 
-    @swagger_auto_schema(request_body=UserLoginJWTSerializer)
+    @swagger_auto_schema(request_body=CustomTokenObtainPairSerializer)
     def post(self, request):
-        serializer = UserLoginJWTSerializer(data=request.data)
+        serializer = CustomTokenObtainPairSerializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data
             user = data["user"]
