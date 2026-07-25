@@ -7,12 +7,8 @@ info:
 
 http:
   method: GET
-  url: "{{url}}/api/v1/tasks/"
+  url: "{{url}}/tasks/?project_id=1"
   params:
-    - name: project_id
-      value: ""
-      type: query
-      description: The ID of the project for which to retrieve tasks
     - name: board_id
       value: ""
       type: query
@@ -48,6 +44,9 @@ http:
       type: query
       description: The offset for pagination
       disabled: true
+    - name: project_id
+      value: "1"
+      type: query
   auth: inherit
 
 settings:

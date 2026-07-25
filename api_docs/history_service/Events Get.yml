@@ -27,9 +27,7 @@ http:
       type: query
       description: "The date range for the events starting from input data till current date (format: YYYY-MM-DD)"
       disabled: true
-  auth:
-    type: bearer
-    token: "{{token}}"
+  auth: inherit
 
 settings:
   encodeUrl: true

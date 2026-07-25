@@ -8,11 +8,9 @@ http:
   url: "{{url}}/events/:event_id"
   params:
     - name: event_id
-      value: ""
+      value: "1"
       type: path
-  auth:
-    type: bearer
-    token: "{{token}}"
+  auth: inherit
 
 settings:
   encodeUrl: true

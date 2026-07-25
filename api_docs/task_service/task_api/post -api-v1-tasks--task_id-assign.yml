@@ -7,7 +7,7 @@ info:
 
 http:
   method: POST
-  url: "{{url}}/api/v1/tasks/:task_id/assign"
+  url: "{{url}}/tasks/:task_id/assign"
   params:
     - name: task_id
       value: ""

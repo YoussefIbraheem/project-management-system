@@ -7,7 +7,7 @@ info:
 
 http:
   method: POST
-  url: "{{url}}/api/v1/tasks/"
+  url: "{{url}}/tasks/"
   body:
     type: json
     data: |-
