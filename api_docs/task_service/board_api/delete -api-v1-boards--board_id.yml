@@ -7,7 +7,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{url}}/boards/:board_id"
+  url: "{{url}}/api/v1/boards/:board_id"
   params:
     - name: board_id
       value: ""
@@ -24,7 +24,7 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/boards/:board_id"
+      url: "{{url}}/api/v1/boards/:board_id"
       method: DELETE
       params:
         - name: board_id

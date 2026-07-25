@@ -1,7 +1,7 @@
 info:
   name: profile-update
   type: http
-  seq: 9
+  seq: 12
 
 http:
   method: PUT

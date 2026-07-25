@@ -1,7 +1,7 @@
 info:
   name: login
   type: http
-  seq: 2
+  seq: 5
 
 http:
   method: POST
@@ -14,7 +14,7 @@ http:
     data:
       - name: email
         type: text
-        value: test@test.com
+        value: test1@test.com
       - name: password
         type: text
         value: password@123

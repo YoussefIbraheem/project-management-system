@@ -1,13 +1,13 @@
 info:
   name: post /api/v1/boards/:board_id/columns
   type: http
-  seq: 2
+  seq: 7
   tags:
-    - board_column_api
+    - board_api
 
 http:
   method: POST
-  url: "{{url}}/boards/:board_id/columns"
+  url: "{{url}}/api/v1/boards/:board_id/columns"
   params:
     - name: board_id
       value: ""
@@ -17,7 +17,6 @@ http:
     data: |-
       {
         "label": "",
-        "slug": "",
         "status_group": ""
       }
   auth: inherit
@@ -32,7 +31,7 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/boards/:board_id/columns"
+      url: "{{url}}/api/v1/boards/:board_id/columns"
       method: POST
       params:
         - name: board_id
@@ -43,7 +42,6 @@ examples:
         data: |-
           {
             "label": "",
-            "slug": "",
             "status_group": ""
           }
     response:

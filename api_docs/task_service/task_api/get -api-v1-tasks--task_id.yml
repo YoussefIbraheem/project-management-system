@@ -7,7 +7,7 @@ info:
 
 http:
   method: GET
-  url: "{{url}}/tasks/:task_id"
+  url: "{{url}}/api/v1/tasks/:task_id"
   params:
     - name: task_id
       value: ""
@@ -24,7 +24,7 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/tasks/:task_id"
+      url: "{{url}}/api/v1/tasks/:task_id"
       method: GET
       params:
         - name: task_id

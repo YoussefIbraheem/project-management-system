@@ -7,8 +7,12 @@ info:
 
 http:
   method: GET
-  url: "{{url}}/tasks/"
+  url: "{{url}}/api/v1/tasks/"
   params:
+    - name: project_id
+      value: ""
+      type: query
+      description: The ID of the project for which to retrieve tasks
     - name: board_id
       value: ""
       type: query
@@ -56,9 +60,13 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/tasks/"
+      url: "{{url}}/api/v1/tasks/"
       method: GET
       params:
+        - name: project_id
+          value: ""
+          type: query
+          description: The ID of the project for which to retrieve tasks
         - name: board_id
           value: ""
           type: query

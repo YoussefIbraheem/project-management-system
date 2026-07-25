@@ -7,7 +7,7 @@ info:
 
 http:
   method: GET
-  url: "{{url}}/projects/"
+  url: "{{url}}/api/v1/projects/"
   params:
     - name: owner_id
       value: ""
@@ -35,7 +35,7 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/projects/"
+      url: "{{url}}/api/v1/projects/"
       method: GET
       params:
         - name: owner_id

@@ -1,0 +1,10 @@
+info:
+  name: history_service
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit
+  variables:
+    - name: url
+      value: "{{baseUrl}}5006/api/v1"

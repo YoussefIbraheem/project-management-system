@@ -1,7 +1,0 @@
-info:
-  name: project_member_api
-  type: folder
-  seq: 1
-
-request:
-  auth: inherit

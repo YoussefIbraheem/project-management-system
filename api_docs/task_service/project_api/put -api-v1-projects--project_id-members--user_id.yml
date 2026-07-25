@@ -1,15 +1,18 @@
 info:
-  name: put /api/v1/roles/:role_id
+  name: put /api/v1/projects/:project_id/members/:user_id
   type: http
-  seq: 5
+  seq: 10
   tags:
-    - member_role_api
+    - project_api
 
 http:
   method: PUT
-  url: "{{url}}/roles/:role_id"
+  url: "{{url}}/api/v1/projects/:project_id/members/:user_id"
   params:
-    - name: role_id
+    - name: project_id
+      value: ""
+      type: path
+    - name: user_id
       value: ""
       type: path
   auth: inherit
@@ -24,10 +27,13 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/roles/:role_id"
+      url: "{{url}}/api/v1/projects/:project_id/members/:user_id"
       method: PUT
       params:
-        - name: role_id
+        - name: project_id
+          value: ""
+          type: path
+        - name: user_id
           value: ""
           type: path
     response:

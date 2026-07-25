@@ -7,7 +7,7 @@ info:
 
 http:
   method: POST
-  url: "{{url}}/boards/"
+  url: "{{url}}/api/v1/boards/"
   body:
     type: json
     data: |-
@@ -29,7 +29,7 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/boards/"
+      url: "{{url}}/api/v1/boards/"
       method: POST
       body:
         type: json

@@ -1,15 +1,18 @@
 info:
-  name: get /api/v1/projects/:project_id/members
+  name: delete /api/v1/boards/:board_id/columns/:column_id
   type: http
-  seq: 1
+  seq: 8
   tags:
-    - project_member_api
+    - board_api
 
 http:
-  method: GET
-  url: "{{url}}/projects/:project_id/members"
+  method: DELETE
+  url: "{{url}}/api/v1/boards/:board_id/columns/:column_id"
   params:
-    - name: project_id
+    - name: board_id
+      value: ""
+      type: path
+    - name: column_id
       value: ""
       type: path
   auth: inherit
@@ -24,10 +27,13 @@ examples:
   - name: 200 Response
     description: Successful Response
     request:
-      url: "{{url}}/projects/:project_id/members"
-      method: GET
+      url: "{{url}}/api/v1/boards/:board_id/columns/:column_id"
+      method: DELETE
       params:
-        - name: project_id
+        - name: board_id
+          value: ""
+          type: path
+        - name: column_id
           value: ""
           type: path
     response:
