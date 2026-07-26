@@ -379,7 +379,7 @@ class UserUpdateTestCase(BaseAPITestCase):
             is_verified=True
         )
         user_without_profile.save()
-        client = APIClient(raise_request_exception=False)
+        client = APIClient()
         client.force_authenticate(user=user_without_profile)
         response = client.put(self.update_url, {"first_name": "New"})
         print(response.content.decode("utf-8"))
