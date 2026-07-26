@@ -4,11 +4,13 @@ from fastapi import APIRouter
 
 from app.services.email_log_service import get_email_log, list_email_logs
 
-router = APIRouter(prefix="/email_logs")
+router = APIRouter(prefix="/email-logs")
 
 
 @router.get("/")
-def email_logs_list(notification_id: Optional[int], limit: int = 10, offset: int = 0):
+def email_logs_list(
+    notification_id: int | None = None, limit: int = 10, offset: int = 0
+):
     try:
         return list_email_logs(
             notification_id=notification_id, limit=limit, offset=offset

@@ -8,7 +8,9 @@ from app.models.email_log import EmailLog, EmailStatus
 from app.schemas.email_log_schema import EmailLogSchema
 
 
-def list_email_logs(notification_id: Optional[int], limit: int = 10, offset: int = 0):
+def list_email_logs(
+    notification_id: int | None = None, limit: int = 10, offset: int = 0
+):
     with Session(engine) as session:
         query = select(EmailLog).offset(offset).limit(limit)
         if notification_id:
@@ -34,7 +36,7 @@ def create_email_log(
     status: str = EmailStatus.PENDING.value,
     error_message: Optional[str] = None,
     attempts: int = 0,
-    sent_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None,
 ):
     with Session(engine) as session:
         new_email_log = EmailLog(
@@ -43,8 +45,8 @@ def create_email_log(
             recipient_email=recipient_email,
             status=status,
             error_message=error_message,
-            attempts= attempts,
-            sent_at= sent_at
+            attempts=attempts,
+            sent_at=sent_at,
         )
         session.add(new_email_log)
         session.commit()
@@ -58,7 +60,7 @@ def update_email_log(
     status: Optional[str],
     attempts: Optional[int],
     error_message: Optional[str] = None,
-    sent_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None,
 ):
     with Session(engine) as session:
         query = select(EmailLog).where(EmailLog.id == email_log_id)
@@ -79,7 +81,7 @@ def update_email_log(
 def delete_email_log(email_log_id: int):
     with Session(engine) as session:
         query = select(EmailLog).where(EmailLog.id == email_log_id)
-        email_logs = session.exec(query).first() #type: ignore
+        email_logs = session.exec(query).first()  # type: ignore
 
         if email_logs:
             session.delete(email_logs)
