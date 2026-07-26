@@ -25,7 +25,7 @@ def _send_otp_code(user: User):
 
         if email:
             event = UserEmailVerificationSendEvent(
-                actor_id="SYSTEM", subject_id=user.id, code=code, email=user.email
+                actor_id="SYSTEM", subject_id=str(user.id), code=code, email=user.email
             )
             publish_history_event(event.to_dict())
             return True
