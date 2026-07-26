@@ -41,6 +41,11 @@ services:
     depends_on:
       postgresdb:
         condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+
 
   # FastAPI History Service
   history-service:
@@ -112,7 +117,7 @@ services:
       redis:
         condition: service_started
       postgresdb:
-        condition: service_started
+        condition: service_healthy
   # DBs
   postgresdb:
     image: postgres:16-alpine
@@ -208,6 +213,8 @@ services:
       postgresdb:
         condition: service_started
       rabbitmq:
+        condition: service_started
+      notifications-service:
         condition: service_started
 
 volumes:
