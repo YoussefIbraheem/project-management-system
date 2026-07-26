@@ -1,10 +1,6 @@
-import json
-from typing import Any
-from urllib import response
+import logging
 
 from django.contrib.auth import authenticate, hashers, password_validation
-from django.forms.models import model_to_dict
-from psycopg import logger
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -15,6 +11,8 @@ from accounts.publishers import publish_history_event
 from accounts.utils import generate_user_otp_code
 
 from .models import User, UserProfile
+
+logger = logging.getLogger(__name__)
 
 
 def _send_otp_code(user: User):
@@ -221,7 +219,7 @@ class UserUpdateSerializer(serializers.Serializer):
         instance.first_name = validated_data.get("first_name", instance.first_name)
         instance.last_name = validated_data.get("last_name", instance.last_name)
         instance.profile_picture = validated_data.get(
-            "profile_picture", instance.last_name
+            "profile_picture", instance.profile_picture
         )
         instance.save()
         if hasattr(instance, "profile"):

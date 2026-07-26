@@ -10,23 +10,19 @@ from rest_framework import (
     status,
     views,
 )
-from rest_framework_simplejwt import tokens
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
 from .events import (
-    UserDeleteEvent,
     UserEmailChangeEvent,
     UserLoginEvent,
     UserLogoutEvent,
     UserPasswordChangeEvent,
-    UserProfileUpdateEvent,
     UserRegisterEvent,
 )
 from .models import User, UserProfile, UserVerification
 from .publishers import publish_history_event, publish_notification_event
 from .serializers import (
-    UserDeleteSerializer,
     CustomTokenObtainPairSerializer,
+    UserDeleteSerializer,
     UserLogoutSerializer,
     UserPasswordChangeSerializer,
     UserRegisterationSerializer,
@@ -277,7 +273,7 @@ class UserVerificationEmailView(views.APIView):
                 )
 
             verification = UserVerification.objects.filter(user=user).last()
-            
+
             if not verification or verification.created_at < datetime.now(
                 timezone.utc
             ) - timedelta(hours=1):
@@ -288,9 +284,7 @@ class UserVerificationEmailView(views.APIView):
                 )
 
             if verification.code == code:
-                logger.info(
-                    f"Verifying user {user.email}..."
-                )
+                logger.info(f"Verifying user {user.email}...")
                 user.is_verified = True
                 user.save()
                 verification.delete()

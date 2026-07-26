@@ -498,7 +498,7 @@ class UserDeleteTestCase(BaseAPITestCase):
         # Authenticated requests to this endpoint currently blow up with an
         # uncaught TypeError. Disabling exception propagation lets us assert
         # on the resulting response instead of the test process crashing.
-        self.client = APIClient(raise_request_exception=False)
+        self.client = APIClient()
         self.delete_url = reverse("user-delete")
         self.user = User.objects.create_user(
             email="testuser@example.com",
