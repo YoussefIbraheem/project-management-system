@@ -7,7 +7,12 @@ info:
 
 http:
   method: GET
-  url: "{{url}}/email_logs/"
+  url: "{{url}}/email-logs/"
+  params:
+    - name: notification_id
+      value: "21"
+      type: query
+      disabled: true
   auth:
     type: bearer
     token: "{{accessToken}}"

@@ -7,10 +7,10 @@ info:
 
 http:
   method: GET
-  url: "{{url}}/email_logs/:email_log_id"
+  url: "{{url}}/email-logs/:email_log_id"
   params:
     - name: email_log_id
-      value: ""
+      value: "1"
       type: path
   auth:
     type: bearer

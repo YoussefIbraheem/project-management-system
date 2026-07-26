@@ -10,7 +10,7 @@ http:
   url: "{{url}}/notifications/:notification_id"
   params:
     - name: notification_id
-      value: ""
+      value: "1"
       type: path
   auth:
     type: bearer
