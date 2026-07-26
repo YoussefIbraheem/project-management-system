@@ -3,11 +3,9 @@ from logging.config import dictConfig
 
 from flask import Flask
 from flask_jwt_extended import JWTManager
-from flask_migrate import Migrate
 
 from .core.config import Settings
 
-migrate = Migrate()
 settings = Settings.get_instance()
 dictConfig(
     {
@@ -40,7 +38,9 @@ def create_app() -> Flask:
     app.config["JWT_SECRET_KEY"] = settings.JWT_SECRET_KEY
     JWTManager(app)
 
-    migrate.init_app(app=app, db=None, directory="./migrations")
+    from shared.exceptions import register_error_handlers
+
+    register_error_handlers(app)
 
     from .apis.project_api import project_bp
 

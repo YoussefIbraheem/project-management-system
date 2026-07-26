@@ -268,20 +268,3 @@ def unassign_task(actor: Actor, task_id: int, assignees_ids: list[str]) -> TaskR
         publish_history_event(event)
 
         return TaskResponse.model_validate(task)
-
-
-# def get_task_stats() -> dict:
-#     with get_db_session() as db:
-#         db_rows = db.query(Task.priority, Task.creator_id).all()
-
-#         tasks_by_priority = {p: 0 for p in TaskPriority}
-#         tasks_by_creator = {}
-#         for priority, creator_id in db_rows:
-#             tasks_by_priority[priority] += 1
-#             tasks_by_creator[creator_id] = tasks_by_creator.get(creator_id, 0) + 1
-
-#         return {
-#             "total_tasks": len(db_rows),
-#             "tasks_by_priority": tasks_by_priority,
-#             "tasks_by_user": tasks_by_creator,
-#         }

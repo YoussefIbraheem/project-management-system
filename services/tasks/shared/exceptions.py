@@ -1,4 +1,5 @@
 from flask import jsonify
+from werkzeug.exceptions import HTTPException
 
 
 class APIException(Exception):
@@ -96,5 +97,11 @@ def register_error_handlers(app):
     # a stack trace in production.
     @app.errorhandler(Exception)
     def handle_unexpected(e):
+        # Let Werkzeug/Flask's own HTTP errors (404 routing misses, 400 bad
+        # JSON bodies, etc.) keep their real status code instead of being
+        # coerced into a 500.
+        if isinstance(e, HTTPException):
+            return e
+
         app.logger.exception("Unhandled exception: %s", e)
         return InternalServerException().to_response()
