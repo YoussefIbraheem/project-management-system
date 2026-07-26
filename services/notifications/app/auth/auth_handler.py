@@ -17,7 +17,7 @@ def decode_jwt(token: str) -> dict | None:
         logger.info(f"TOKEN:{token}")
         decoded_token = jwt.decode(
             token,
-            settings.SECRET_KEY,
+            settings.JWT_SECRET_KEY,
             algorithms=[settings.ALGORITHM],
         )
         return decoded_token if decoded_token["exp"] >= time.time() else None

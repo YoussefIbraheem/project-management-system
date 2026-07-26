@@ -1,7 +1,7 @@
-from . import NotificationContent, NotificationContext
+from . import NotificationContent, TaskNotificationContext
 
 
-def task_create_template(ctx: NotificationContext) -> NotificationContent:
+def task_create_template(ctx: TaskNotificationContext) -> NotificationContent:
 
     return NotificationContent(
         recipient_email=ctx.recipient_email,

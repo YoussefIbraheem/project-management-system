@@ -1,19 +1,33 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class NotificationContent:
     subject: str
     body: str
-    recipient_email:str
-    notification_id: Optional[int] = None
+    recipient_email: str
+    notification_id: int | None = None
+
 
 @dataclass
-class NotificationContext:
-    recipient_email:str
+class BaseNotificationContext:
+    recipient_email: str
     username: str
     actor_username: str
-    task_title: Optional[str]
-    project_name: str | None
-    
+
+
+@dataclass
+class TaskNotificationContext(BaseNotificationContext):
+    task_title: str
+    project_name: str
+
+
+@dataclass
+class ProjectNotificationContext(BaseNotificationContext):
+    project_name: str
+
+
+@dataclass
+class TaskStatusNotificationContext(TaskNotificationContext):
+    current_column: str
+    new_column: str

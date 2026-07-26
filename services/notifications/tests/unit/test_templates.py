@@ -1,5 +1,5 @@
 import pytest
-from app.templates import NotificationContext
+from app.templates import TaskNotificationContext
 from app.templates.task_assign_template import task_assign_template
 from app.templates.task_create_template import task_create_template
 from app.templates.task_unassign_template import task_unassign_template
@@ -32,7 +32,7 @@ from app.templates.task_update_template import task_update_template
     ],
 )
 def test_task_notification_templates_format_content(builder, subject, body_snippet):
-    ctx = NotificationContext(
+    ctx = TaskNotificationContext(
         recipient_email="user@example.com",
         username="alice",
         actor_username="bob",

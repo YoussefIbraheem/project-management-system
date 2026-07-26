@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASSWORD: str = "guest"
 
-    SECRET_KEY: str = ""
+    JWT_SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
 
     SMTP_HOSTNAME: str = "smtp.gmail.com"

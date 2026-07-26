@@ -6,7 +6,7 @@ import pytest
 from app.constants.task_event_types import TaskEventType
 from app.constants.user_event_types import UserEventType
 from app.dispatchers import task_event_dispatcher, user_event_dispatcher
-from app.templates import NotificationContent
+from app.templates import NotificationContent, TaskNotificationContext
 
 
 @pytest.mark.parametrize(
@@ -64,7 +64,7 @@ def test_task_dispatch_creates_notifications_and_sends_email(monkeypatch):
     monkeypatch.setitem(
         task_event_dispatcher.TASK_NOTIFICATION_BUILDERS,
         TaskEventType.TASK_CREATE,
-        builder,
+        (builder, TaskNotificationContext),
     )
     monkeypatch.setattr(
         task_event_dispatcher,
@@ -171,7 +171,7 @@ def test_task_dispatch_falls_back_to_private_user_when_actor_missing(monkeypatch
     monkeypatch.setitem(
         task_event_dispatcher.TASK_NOTIFICATION_BUILDERS,
         TaskEventType.TASK_UPDATE,
-        builder,
+        (builder, TaskNotificationContext),
     )
     monkeypatch.setattr(
         task_event_dispatcher,

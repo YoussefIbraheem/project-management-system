@@ -8,8 +8,3 @@ def utc_now():
 
 class Base(SQLModel):
     pass
-
-# # Added for Alembic auto generation to recognize the base class for models
-# from .user_replica import UserReplica
-# from .notification import Notification
-# from .email_log import EmailLog

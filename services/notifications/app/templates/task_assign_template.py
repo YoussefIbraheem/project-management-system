@@ -1,7 +1,7 @@
-from . import NotificationContent, NotificationContext
+from . import NotificationContent, TaskNotificationContext
 
 
-def task_assign_template(ctx: NotificationContext):
+def task_assign_template(ctx: TaskNotificationContext):
     return NotificationContent(
         recipient_email=ctx.recipient_email,
         subject=f"Task {ctx.task_title} assigned",
