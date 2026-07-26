@@ -42,10 +42,6 @@ def publish_history_event(event_data):
                 channel.queue_declare(
                     queue="history",
                     durable=True,
-                    arguments={
-                        "x-dead-letter-exchange": "dlx",
-                        "x-dead-letter-routing-key": "history.failed",
-                    },
                 )
                 channel.basic_publish(routing_key="history", exchange="", body=message)
         logger.info("History event published successfully.")
@@ -71,10 +67,6 @@ def publish_notification_event(event_data):
                 channel.queue_declare(
                     queue="notifications",
                     durable=True,
-                    arguments={
-                        "x-dead-letter-exchange": "dlx",
-                        "x-dead-letter-routing-key": "notifications.failed",
-                    },
                 )
                 channel.basic_publish(
                     routing_key="notifications", exchange="", body=message

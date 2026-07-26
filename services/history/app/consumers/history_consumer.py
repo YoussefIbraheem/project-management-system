@@ -37,7 +37,6 @@ async def record_activity():
        queue = await channel.declare_queue(
                   "history",
                   durable=True,
-                  arguments= {"x-dead-letter-exchange": "dlx","x-dead-letter-routing-key": "history.failed",}
         )
        await queue.consume(callback)
        print("Listening for messages...")

@@ -31,10 +31,6 @@ async def record_activity():
         queue = await channel.declare_queue(
             "notifications",
             durable=True,
-            arguments={
-                "x-dead-letter-exchange": "dlx",
-                "x-dead-letter-routing-key": "notifications.failed",
-            },
         )
         await queue.consume(callback)
         rmq_logger.info("Listening for messages...")
