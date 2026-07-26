@@ -18,7 +18,7 @@ TEST_SECRET = "test-secret-key-0123456789abcdef"
 
 @pytest.fixture(autouse=True)
 def patch_history_settings(monkeypatch):
-    monkeypatch.setattr(history_main.settings, "SECRET_KEY", TEST_SECRET)
+    monkeypatch.setattr(history_main.settings, "JWT_SECRET_KEY", TEST_SECRET)
     monkeypatch.setattr(history_main.settings, "ALGORITHM", "HS256")
     monkeypatch.setattr(history_main, "connect_db", AsyncMock(return_value=None))
     monkeypatch.setattr(history_main, "close_db", AsyncMock(return_value=None))

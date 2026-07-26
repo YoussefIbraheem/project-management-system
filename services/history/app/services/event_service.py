@@ -9,7 +9,6 @@ from app.schemas.event_schema import EventCreate, EventResponse
 async def get_events(
     service: Optional[str] = None,
     actor_id: Optional[str] = None,
-    metadata: Optional[str] = None,
     date: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
@@ -20,8 +19,6 @@ async def get_events(
         filters.append(Event.service == service)
     if actor_id:
         filters.append(Event.actor_id == actor_id)
-    if metadata:
-        filters.append(re.compile(metadata, re.IGNORECASE))
     if date:
         date_obj = datetime.strptime(date, "%Y-%m-%d")
         filters.append(Event.timestamp >= date_obj)

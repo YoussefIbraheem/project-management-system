@@ -49,7 +49,7 @@ async def test_get_events_builds_query_and_maps_responses():
         events = await get_events(
             service="tasks",
             actor_id="1",
-            metadata="value",
+
             date="2026-01-01",
             limit=10,
             offset=5,
@@ -60,12 +60,10 @@ async def test_get_events_builds_query_and_maps_responses():
     assert events[0].action == "created"
     FakeEvent.find.assert_called_once()
     filters = FakeEvent.find.call_args.args
-    assert len(filters) == 4
+    assert len(filters) == 3
     assert filters[0] == ("service", "eq", "tasks")
     assert filters[1] == ("actor_id", "eq", "1")
-    assert filters[2].pattern == "value"
-    assert filters[2].flags & __import__("re").IGNORECASE
-    assert filters[3] == ("timestamp", "ge", datetime(2026, 1, 1))
+    assert filters[2] == ("timestamp", "ge", datetime(2026, 1, 1))
 
 
 @pytest.mark.asyncio

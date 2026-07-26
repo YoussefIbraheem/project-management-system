@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     MONGO_DB_URL: Optional[str] = ""
     MONGO_DB_NAME: Optional[str] = "history_db"
 
-    SECRET_KEY: Optional[str] = ""
+    JWT_SECRET_KEY: Optional[str] = ""
     ALGORITHM: Optional[str] = ""
     ACCESS_TOKEN_EXPIRE_MINUTES: Optional[int] = 30
 
