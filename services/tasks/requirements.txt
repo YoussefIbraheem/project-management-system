@@ -10,3 +10,4 @@ PyYAML==6.0.3
 SQLAlchemy==2.0.51
 swagger_ui_py==25.7.1
 Werkzeug==3.1.8
+gunicorn==26.0.0
