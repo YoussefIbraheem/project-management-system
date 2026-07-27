@@ -16,6 +16,7 @@ from .events import (
     UserLoginEvent,
     UserLogoutEvent,
     UserPasswordChangeEvent,
+    UserProfileUpdateEvent,
     UserRegisterEvent,
 )
 from .models import User, UserProfile, UserVerification
@@ -139,6 +140,18 @@ class UserUpdateView(views.APIView):
         serializer.is_valid(raise_exception=True)
 
         serializer.save()
+        user = request.user
+        
+        updated_fields = serializer.validated_data.keys()
+               
+        event = UserProfileUpdateEvent(
+            actor_id=str(user.id),
+            subject_id=str(user.id),
+            username=user.username,
+            email=user.email,
+            updated_fields=updated_fields
+        )
+        publish_history_event(event)
         return response.Response(serializer.data)
 
         # return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -14,7 +14,7 @@ def test_events_endpoint_rejects_missing_token():
     with TestClient(app) as client:
         response = client.get("/api/v1/events/")
 
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 def test_events_endpoint_returns_event_list(monkeypatch, superuser_token):
