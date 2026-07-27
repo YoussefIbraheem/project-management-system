@@ -1,39 +1,9 @@
 from app import create_app, settings
-from shared.openapi.doc_generator import OpenAPIDocGenerator
-from shared.openapi.operations_builder import OperationBuilder
-from shared.openapi.path_converter import FlaskPathConverter
-from shared.openapi.route_collector import RouteCollector
-from shared.openapi.schema_collector import SchemaCollector
-from swagger_ui import api_doc
 
 app = create_app()
 
-def initiate_swagger_ui():
-    converter = FlaskPathConverter()
-    operations_builder = OperationBuilder()
-    routes_c = RouteCollector(app, converter, operations_builder)
-    schemas_c = SchemaCollector("app.schemas")
-    generator = OpenAPIDocGenerator(routes_c, schemas_c)
-    output_path = settings.API_DOC_LOCATION
-
-    try:
-        generator.generate(output_path)
-        api_doc(
-            app, config_path=output_path, url_prefix="/docs", title="Task API Doc"
-        )
-    except Exception as e:
-        print(f"OpenAPI generation Error:{e}")
-
-
-@app.route(f"{settings.API_PREFIX}")
-def index():
-    return f"Welcome to the {settings.SERVICE_NAME} service (version {settings.SERVICE_VERSION})!"
-
 
 if __name__ == "__main__":
-
-    initiate_swagger_ui()
-
     print(
         f"Starting {settings.SERVICE_NAME} service (version {settings.SERVICE_VERSION}) on {settings.HOST}:{settings.PORT} with debug={settings.DEBUG}"
     )

@@ -30,7 +30,7 @@ class Settings:
 
     # Server settings
     HOST: str = "0.0.0.0"
-    PORT: int = 5005
+    PORT: int = 8080
     DEBUG: bool = True
 
     # Database settings

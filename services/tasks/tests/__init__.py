@@ -12,7 +12,7 @@ os.environ.setdefault("LOGGING_LEVEL", "CRITICAL")
 os.environ.setdefault("SERVICE_NAME", "tasks")
 os.environ.setdefault("SERVICE_VERSION", "test")
 os.environ.setdefault("HOST", "127.0.0.1")
-os.environ.setdefault("PORT", "5000")
+os.environ.setdefault("PORT", "8080")
 os.environ.setdefault("DEBUG", "false")
 os.environ.setdefault("API_V1_PREFIX", "/api/v1")
 

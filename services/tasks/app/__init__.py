@@ -3,6 +3,12 @@ from logging.config import dictConfig
 
 from flask import Flask
 from flask_jwt_extended import JWTManager
+from shared.openapi.doc_generator import OpenAPIDocGenerator
+from shared.openapi.operations_builder import OperationBuilder
+from shared.openapi.path_converter import FlaskPathConverter
+from shared.openapi.route_collector import RouteCollector
+from shared.openapi.schema_collector import SchemaCollector
+from swagger_ui import api_doc
 
 from .core.config import Settings
 
@@ -53,5 +59,23 @@ def create_app() -> Flask:
     from .apis.task_api import task_bp
 
     app.register_blueprint(task_bp)
+
+    @app.route(f"{settings.API_PREFIX}")
+    def index():
+        return f"Welcome to the {settings.SERVICE_NAME} service (version {settings.SERVICE_VERSION})!"
+
+# OpenAPI documentation setup
+    converter = FlaskPathConverter()
+    operations_builder = OperationBuilder()
+    routes_c = RouteCollector(app, converter, operations_builder)
+    schemas_c = SchemaCollector("app.schemas")
+    generator = OpenAPIDocGenerator(routes_c, schemas_c)
+    output_path = settings.API_DOC_LOCATION
+
+    try:
+        generator.generate(output_path)
+        api_doc(app, config_path=output_path, url_prefix="/docs", title="Task API Doc")
+    except Exception as e:
+        print(f"OpenAPI generation Error:{e}")
 
     return app
