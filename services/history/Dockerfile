@@ -1,31 +1,36 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
-FROM python:3.12-slim 
+FROM python:3.12-slim
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
 
-# Turns off buffering for easier container logging
+
+# Env Vars
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
+# Create a non-root user and group for running the application
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+RUN mkdir -p /home/appuser && chown -R appuser:appgroup /home/appuser
+
+
 WORKDIR /app
+
+# Upgrade pip
+RUN pip install --upgrade pip
 
 # Install pip requirements
 COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
 
+# Change ownership of the app directory to the non-root user
+RUN chown -R appuser:appgroup /app
 
-RUN apt-get update
-WORKDIR /app
-COPY . . 
+# Switch to the non-root user
+USER appuser
 
 EXPOSE 5006
 
-# # Creates a non-root user with an explicit UID and adds permission to access the /app folder
-# # For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
-# RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
-# USER appuser
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "5006", "--reload"]

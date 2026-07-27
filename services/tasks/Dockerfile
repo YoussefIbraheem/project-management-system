@@ -1,35 +1,37 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
-FROM python:3.12-slim 
+FROM python:3.12-slim
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Turns off buffering for easier container logging
+# Env Vars
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
+# Create a non-root user and group for running the application
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+RUN mkdir -p /home/appuser && chown -R appuser:appgroup /home/appuser
+
 WORKDIR /app
+
+# Upgrade pip
+RUN pip install --upgrade pip
 
 # Install pip requirements
 COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
-
-
-RUN apt-get update
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
+# Run Alembic migrations on container start
 COPY alembic_migration_entrypoint.sh /alembic_migration_entrypoint.sh
 RUN chmod +x /alembic_migration_entrypoint.sh
 
 ENTRYPOINT ["/alembic_migration_entrypoint.sh"]
 
-EXPOSE 5005
+# Change ownership of the app directory to the non-root user
+RUN chown -R appuser:appgroup /app
 
-# # Creates a non-root user with an explicit UID and adds permission to access the /app folder
-# # For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
-# RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
-# USER appuser
+# Switch to the non-root user
+USER appuser
 
-# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["python","main.py"]
+EXPOSE 8080
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:create_app()"]

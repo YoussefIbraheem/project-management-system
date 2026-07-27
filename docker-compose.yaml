@@ -33,7 +33,7 @@ services:
       dockerfile: Dockerfile
     container_name: tasks_service
     ports:
-      - "5005:5005"
+      - "8080:8080"
     env_file:
       - ./services/tasks/.env
     volumes:
