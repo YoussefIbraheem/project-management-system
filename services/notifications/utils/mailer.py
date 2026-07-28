@@ -2,8 +2,6 @@ from datetime import datetime, timezone
 from email.message import EmailMessage
 
 import aiosmtplib
-from app import rmq_logger
-from app.core.config import settings
 from app.models.email_log import EmailStatus
 from app.services.email_log_service import create_email_log, update_email_log
 from app.templates import NotificationContent
@@ -47,67 +45,66 @@ class EmailService:
         }
 
         email_log = None
+        try:
+            async for attempt in retry_context(
+                on=aiosmtplib.SMTPException, attempts=self.settings.SMTP_MAX_ATTEMPTS
+            ):
+                with attempt:
+                    smtp_client = self.smtp_client_factory(**smtp_params)
+                    try:
+                        if content.notification_id:
+                            if attempt.num == 1:  # INFO: the original attempt
+                                email_log = create_email_log(
+                                    notification_id=content.notification_id,
+                                    email_address=self.settings.SMTP_USERNAME,
+                                    recipient_email=recipient,
+                                    attempts=attempt.num,
+                                )
+                            else:  # INFO: attempt.num > 1
+                                update_email_log(
+                                    email_log_id=email_log.id,  # type: ignore
+                                    status=EmailStatus.RETRYING.value,
+                                    attempts=attempt.num,
+                                )
+                        # INFO: Connect SMTP
+                        await smtp_client.connect()
+                        self.logger.info("Connected to SMTP server...")
+                        # INFO: Send Mail
+                        await smtp_client.send_message(message)
+                        self.logger.info("Message sent...")
 
-        async for attempt in retry_context(
-            on=aiosmtplib.SMTPException, attempts=self.settings.SMTP_MAX_ATTEMPTS
-        ):
-            with attempt:
-                smtp_client = self.smtp_client_factory(**smtp_params)
-                try:
-                    # INFO: Connect SMTP
-                    await smtp_client.connect()
-                    rmq_logger.info("Connected to SMTP server...")
-
-                    if content.notification_id:
-                        if attempt.num == 1:  # INFO: the original attempt
-                            email_log = create_email_log(
-                                notification_id=content.notification_id,
-                                email_address=self.settings.SMTP_USERNAME,
-                                recipient_email=recipient,
-                                attempts=attempt.num,
-                            )
-                        else:  # INFO: attempt.num > 1
-                            update_email_log(
-                                email_log_id=email_log.id,
-                                status=EmailStatus.RETRYING.value,
-                                attempts=attempt.num,
-                            )
-
-                    # INFO: Send Mail
-                    await smtp_client.send_message(message)
-                    self.logger.info("Message sent...")
-
-                    if email_log is not None:
-                        update_email_log(
-                            email_log_id=email_log.id,
-                            status=EmailStatus.SENT.value,
-                            attempts=attempt.num,
-                            sent_at=datetime.now(
-                                timezone.utc
-                            ),  # NOTE: The time of which the email was sent successfully, not when the log created
-                        )
-
-                    self.logger.info("Email sent successfully!")
-                    return True
-
-                except aiosmtplib.SMTPException as e:
-                    self.logger.error(
-                        f"Attempt {attempt.num} failed due to SMTPException: {e}"
-                    )
-
-                    if attempt.num >= settings.SMTP_MAX_ATTEMPTS: # INFO: Exceeded all attempts (Fail Scenario)
                         if email_log is not None:
                             update_email_log(
                                 email_log_id=email_log.id,
-                                status=EmailStatus.FAILED.value,
+                                status=EmailStatus.SENT.value,
                                 attempts=attempt.num,
-                                error_message=str(e),
+                                sent_at=datetime.now(
+                                    timezone.utc
+                                ),  # NOTE: The time of which the email was sent successfully, not when the log created
                             )
-                            return False
-                    raise
-                finally:
-                    try:
-                        if smtp_client.is_connected:
-                            await smtp_client.quit()
-                    except Exception:
-                        pass
+
+                        self.logger.info("Email sent successfully!")
+                        return True
+                    except aiosmtplib.SMTPException as e:
+                        self.logger.error(
+                            "All attempts failed after %s: %s", attempt.num, e
+                        )
+                        raise
+                    finally:
+                        try:
+                            if smtp_client.is_connected:
+                                await smtp_client.quit()
+                        except OSError:
+                            self.logger.error("Failed to close SMTP connection.")
+
+        except aiosmtplib.SMTPException as e:
+            self.logger.error(f"Attempt {attempt.num} failed due to SMTPException: {e}")
+            if email_log is not None:
+                update_email_log(
+                    email_log_id=email_log.id,
+                    status=EmailStatus.FAILED.value,
+                    attempts=attempt.num,
+                    error_message=str(e),
+                )
+
+            return False

@@ -1,5 +1,7 @@
 import pytest
-from app.templates import TaskNotificationContext
+from app.templates import ProjectNotificationContext, TaskNotificationContext
+from app.templates.project_member_add_template import project_member_add_template
+from app.templates.project_member_remove_template import project_member_remove_template
 from app.templates.task_assign_template import task_assign_template
 from app.templates.task_create_template import task_create_template
 from app.templates.task_unassign_template import task_unassign_template
@@ -37,6 +39,37 @@ def test_task_notification_templates_format_content(builder, subject, body_snipp
         username="alice",
         actor_username="bob",
         task_title="Build API",
+        project_name="Platform",
+    )
+
+    content = builder(ctx)
+
+    assert content.recipient_email == ctx.recipient_email
+    assert content.subject == subject
+    assert body_snippet in content.body
+    assert "Project Management System Team" in content.body
+
+
+@pytest.mark.parametrize(
+    ("builder", "subject", "body_snippet"),
+    [
+        (
+            project_member_add_template,
+            "User alice Added to Project Platform",
+            "has added you to the project 'Platform'",
+        ),
+        (
+            project_member_remove_template,
+            "User alice Removed from Project Platform",
+            "has removed you from the project 'Platform'",
+        ),
+    ],
+)
+def test_project_member_templates_format_content(builder, subject, body_snippet):
+    ctx = ProjectNotificationContext(
+        recipient_email="user@example.com",
+        username="alice",
+        actor_username="bob",
         project_name="Platform",
     )
 

@@ -3,9 +3,9 @@ from dataclasses import fields
 from aiosmtplib import SMTP
 from utils.mailer import EmailService
 
-from app import rmq_logger
+from app import rmq_logger  # type: ignore
 from app.constants.task_event_types import TaskEventType
-from app.core.config import settings
+from app.core.config import settings  # type: ignore
 from app.services.notification_service import create_notification, update_notification
 from app.services.user_replica_service import (
     fetch_users_replicas_by_ids,
@@ -24,8 +24,14 @@ TASK_NOTIFICATION_BUILDERS = {
     TaskEventType.TASK_UPDATE: (task_update_template, TaskNotificationContext),
     TaskEventType.TASK_ASSIGN: (task_assign_template, TaskNotificationContext),
     TaskEventType.TASK_UNASSIGN: (task_unassign_template, TaskNotificationContext),
-    TaskEventType.PROJECT_MEMBER_ADD: (project_member_add_template,ProjectNotificationContext),
-    TaskEventType.PROJECT_MEMBER_DELETE: (project_member_remove_template,ProjectNotificationContext),
+    TaskEventType.PROJECT_MEMBER_ADD: (
+        project_member_add_template,
+        ProjectNotificationContext,
+    ),
+    TaskEventType.PROJECT_MEMBER_DELETE: (
+        project_member_remove_template,
+        ProjectNotificationContext,
+    ),
 }
 
 
@@ -62,7 +68,6 @@ async def _dispatch(payload):
         actor_username = actor_data.username if actor_data else "Private User"
         rmq_logger.info("Building notification content...")
         for recipient in recipients:
-
             ctx = _build_context(
                 ContextClass,
                 recipient=recipient,
