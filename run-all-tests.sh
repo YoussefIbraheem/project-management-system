@@ -25,6 +25,14 @@ declare -A SERVICES=([users]="users-service|python manage.py test"
   [history]="history-service|pytest -v"
   [notifications]="notifications-service|pytest -v")
 
+
+INTEGRATION_DIR="tests/integration"
+if [[ -x ".venv/bin/python" ]]; then
+  INTEGRATION_PYTHON="${INTEGRATION_PYTHON:-.venv/bin/python}"
+else
+  INTEGRATION_PYTHON="${INTEGRATION_PYTHON:-python3}"
+fi
+
 # ---- Arg parsing ------------------------------------------------------------
 ARGS=()
 for arg in "$@"; do
@@ -36,7 +44,7 @@ for arg in "$@"; do
 done
 
 if [[ ${#ARGS[@]} -eq 0 ]]; then
-  TO_RUN=("${!SERVICES[@]}")
+  TO_RUN=("${!SERVICES[@]}" integration)
 else
   TO_RUN=("${ARGS[@]}")
 fi
@@ -58,8 +66,25 @@ echo " Running test suites"
 echo "==================================================================="
 
 for key in "${TO_RUN[@]}"; do
+  if [[ "$key" == "integration" ]]; then
+    echo ""
+    echo "-------------------------------------------------------------------"
+    echo " [integration] -> host :: $INTEGRATION_PYTHON -m pytest $INTEGRATION_DIR"
+    echo "-------------------------------------------------------------------"
+
+    start_time=$(date +%s)
+    if "$INTEGRATION_PYTHON" -m pytest "$INTEGRATION_DIR"; then
+      RESULTS[$key]="PASS"
+    else
+      RESULTS[$key]="FAIL"
+      OVERALL_STATUS=1
+    fi
+    DURATIONS[$key]=$(($(date +%s) - start_time))
+    continue
+  fi
+
   if [[ -z "${SERVICES[$key]+x}" ]]; then
-    echo "!! Unknown service key: '$key' (known: ${!SERVICES[*]})"
+    echo "!! Unknown service key: '$key' (known: ${!SERVICES[*]} integration)"
     RESULTS[$key]="UNKNOWN"
     OVERALL_STATUS=1
     continue
