@@ -1,15 +1,13 @@
-import re
 from datetime import datetime, timezone
-from typing import Optional
 
 from app.models.event import Event
 from app.schemas.event_schema import EventCreate, EventResponse
 
 
 async def get_events(
-    service: Optional[str] = None,
-    actor_id: Optional[str] = None,
-    date: Optional[str] = None,
+    service: str | None = None,
+    actor_id: str | None = None,
+    date: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ):
@@ -20,12 +18,12 @@ async def get_events(
     if actor_id:
         filters.append(Event.actor_id == actor_id)
     if date:
-        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        date_obj = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
         filters.append(Event.timestamp >= date_obj)
 
     query = Event.find(*filters)
 
-    events = await query.sort(-Event.timestamp).skip(offset).limit(limit).to_list()
+    events = await query.sort("-timestamp").skip(offset).limit(limit).to_list()
 
     return [EventResponse(**event.model_dump(by_alias=True)) for event in events]
 

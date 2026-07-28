@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.event_schema import EventResponse
@@ -8,18 +6,15 @@ from app.services.event_service import get_event_by_id, get_events
 router = APIRouter(prefix="/events")
 
 
-@router.get("/", response_model=List[EventResponse])
+@router.get("/", response_model=list[EventResponse])
 async def events_get(
-    service: Optional[str] = Query(
+    service: str | None = Query(
         None, description="The service that generated the events"
     ),
-    actor_id: Optional[str] = Query(
+    actor_id: str | None = Query(
         None, description="The user ID associated with the events"
     ),
-    metadata: Optional[str] = Query(
-        None, description="Searchable metadata for the events using the given keyword"
-    ),
-    date: Optional[str] = Query(
+    date: str | None = Query(
         None,
         description="The date range for the events starting from input data till current date (format: YYYY-MM-DD)",
     ),
@@ -35,7 +30,6 @@ async def events_get(
             actor_id=actor_id,
             limit=limit,
             offset=offset,
-            metadata=metadata,
             date=date,
         )
 

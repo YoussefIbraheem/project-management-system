@@ -40,8 +40,8 @@ async def test_get_events_builds_query_and_maps_responses():
     }
 
     mock_query = MagicMock()
-    mock_query.sort.return_value.skip.return_value.limit.return_value.to_list = AsyncMock(
-        return_value=[mock_event]
+    mock_query.sort.return_value.skip.return_value.limit.return_value.to_list = (
+        AsyncMock(return_value=[mock_event])
     )
     FakeEvent.find.return_value = mock_query
 
@@ -49,7 +49,6 @@ async def test_get_events_builds_query_and_maps_responses():
         events = await get_events(
             service="tasks",
             actor_id="1",
-
             date="2026-01-01",
             limit=10,
             offset=5,
@@ -63,7 +62,7 @@ async def test_get_events_builds_query_and_maps_responses():
     assert len(filters) == 3
     assert filters[0] == ("service", "eq", "tasks")
     assert filters[1] == ("actor_id", "eq", "1")
-    assert filters[2] == ("timestamp", "ge", datetime(2026, 1, 1))
+    assert filters[2] == ("timestamp", "ge", datetime(2026, 1, 1, tzinfo=timezone.utc))
 
 
 @pytest.mark.asyncio

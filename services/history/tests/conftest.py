@@ -11,7 +11,7 @@ if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
 
-from app import main as history_main  # noqa: E402
+from app import main as history_main
 
 TEST_SECRET = "test-secret-key-0123456789abcdef"
 
