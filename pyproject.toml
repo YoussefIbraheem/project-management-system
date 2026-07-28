@@ -7,8 +7,8 @@ reportMissingTypeArgument = "none"
 reportArgumentType="warning"
 reportAny = "none"
 reportIndexIssue="hint"
-reportAttributeAccessIssue="warning"
-reportOptionalMemberAccess="warning"
+reportAttributeAccessIssue="information"
+reportOptionalMemberAccess="information"
 
 pythonVersion = "3.14"
 pythonPlatform = "Linux"
@@ -19,3 +19,6 @@ extraPaths = [
     "services/history",
     "services/notifications",
 ]
+
+[tool.ruff]
+ignore=["BLE001"]
