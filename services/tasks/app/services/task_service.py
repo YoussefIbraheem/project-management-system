@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import List, Optional
 
 from shared.event import Event, EventAction, SubjectType
 from shared.publishers import publish_history_event, publish_notification_event
@@ -39,14 +38,14 @@ from app.validators.task_validator import (
 def get_tasks(
     actor: Actor,
     project_id: int,
-    board_id: Optional[int] = None,
-    creator_id: Optional[str] = None,
-    assigned_to: Optional[str] = None,
-    column_id: Optional[int] = None,
-    priority: Optional[str] = None,
+    board_id: int | None = None,
+    creator_id: str | None = None,
+    assigned_to: str | None = None,
+    column_id: int | None = None,
+    priority: str | None = None,
     limit: int = 50,
     offset: int = 0,
-) -> List[TaskResponse]:
+) -> list[TaskResponse]:
     with get_db_session() as db:
         get_project_or_404(db, project_id)
         can_view_tasks(db, actor, project_id)
@@ -124,7 +123,6 @@ def create_task(actor: Actor, task_data: TaskCreate) -> TaskResponse:
             metadata={
                 "task_title": db_task.title,
                 "project_name": board.project.name,
-                "task_title": db_task.title,
                 "recipients_ids": project_members_ids,
             },
         )

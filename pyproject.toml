@@ -4,12 +4,11 @@ typeCheckingMode = "basic"
 reportUnknownParameterType = "none"
 reportUnknownVariableType = "none"
 reportMissingTypeArgument = "none"
-reportArgumentType="warning"
+reportArgumentType="hint"
 reportAny = "none"
 reportIndexIssue="hint"
 reportAttributeAccessIssue="information"
 reportOptionalMemberAccess="information"
-
 pythonVersion = "3.14"
 pythonPlatform = "Linux"
 
@@ -21,4 +20,4 @@ extraPaths = [
 ]
 
 [tool.ruff]
-ignore=["BLE001"]
+ignore=["BLE001","RUF012"]

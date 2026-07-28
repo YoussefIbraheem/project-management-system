@@ -68,7 +68,7 @@ async def validate_email(target_email: str) -> str:
             try:
                 if verify_client.is_connected:
                     await verify_client.quit()
-            except Exception:
+            except EmailNotValidError:
                 pass
 
     rmq_logger.warning(

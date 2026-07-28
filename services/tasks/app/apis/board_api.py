@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
 from shared.exceptions import (
     APIException,
@@ -78,7 +78,7 @@ def boards_get():
 @jwt_required()
 def board_get(board_id: int):
     try:
-        actor = actor = get_actor()
+        actor = get_actor()
         board = get_board_by_id(actor=actor, board_id=board_id)
         return jsonify(board.model_dump()), 200
     except APIException as e:

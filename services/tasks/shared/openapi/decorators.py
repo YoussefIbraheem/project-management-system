@@ -1,10 +1,10 @@
-from pydantic import BaseModel
+from typing import Any
 
 
 def document(
-    request_schema: BaseModel | None = None,
-    response_schema: BaseModel | None = None,
-    query_params: dict | None = None,
+    request_schema: type[Any] | None = None,
+    response_schema: type[Any] | None = None,
+    query_params: list[dict] | None = None,
 ):
     def decorator(func):
         func._openapi_metadata = {
