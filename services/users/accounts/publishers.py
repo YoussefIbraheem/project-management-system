@@ -5,6 +5,7 @@ import uuid
 
 import environ
 import pika
+from pika.exchange_type import ExchangeType
 
 env = environ.Env()
 env.read_env(os.path.join(os.path.dirname(__file__), ".env"))
@@ -39,11 +40,12 @@ def publish_history_event(event_data):
         message = json.dumps(data).encode("utf-8")
         with pika.BlockingConnection(params) as conn:
             with conn.channel() as channel:
-                channel.queue_declare(
-                    queue="history",
-                    durable=True,
+                channel.exchange_declare(
+                    exchange="mainhistoryexchange", exchange_type=ExchangeType.direct
                 )
-                channel.basic_publish(routing_key="history", exchange="", body=message)
+                channel.basic_publish(
+                    exchange="mainhistoryexchange", routing_key="history", body=message
+                )
         logger.info("History event published successfully.")
     except Exception as e:
         logger.error(f"Error publishing history event: {e}", exc_info=True)
