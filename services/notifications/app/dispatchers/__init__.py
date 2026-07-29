@@ -1,4 +1,3 @@
-import asyncio
 from inspect import iscoroutinefunction
 
 from .task_event_dispatcher import _dispatch as _dispatch_task
@@ -10,7 +9,8 @@ SERVICE_DISPATCHERS = {
 }
 
 
-def dispatch(payload):
+async def dispatch(payload):
+   
     print("Dispatching...")
     print(f"Payload: {payload}")
     service = payload["service"]
@@ -21,6 +21,6 @@ def dispatch(payload):
         return
 
     if iscoroutinefunction(dispatcher):
-        asyncio.create_task(dispatcher(payload))
+        await dispatcher(payload)
     else:
         dispatcher(payload)

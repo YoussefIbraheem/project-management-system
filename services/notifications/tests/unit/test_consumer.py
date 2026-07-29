@@ -7,7 +7,7 @@ delivery is proven by tests/integration at the repo root.
 
 import asyncio
 import json
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 
 import pytest
 from app.consumers import notifications_consumer  # type: ignore
@@ -17,12 +17,15 @@ class _ProcessContext:
     def __init__(self):
         self.entered = False
         self.exited = False
+        self.saw_exception = False
 
     async def __aenter__(self):
         self.entered = True
 
     async def __aexit__(self, exc_type, exc, tb):
         self.exited = True
+        self.saw_exception = exc_type is not None
+        return True  # swallow here too, so the test controls the assertion
 
 
 class _Message:
@@ -53,8 +56,9 @@ def _payload(**overrides):
 
 
 @pytest.mark.asyncio
-async def test_callback_unwraps_envelope_and_dispatches(monkeypatch):
-    dispatch = Mock()
+async def test_callback_awaits_dispatch_directly(monkeypatch):
+
+    dispatch = AsyncMock()
     monkeypatch.setattr(notifications_consumer, "dispatch", dispatch)
     payload = _payload()
     message = _Message(json.dumps(payload).encode("utf-8"))
@@ -62,15 +66,14 @@ async def test_callback_unwraps_envelope_and_dispatches(monkeypatch):
     await notifications_consumer.callback(message)
 
     # The dispatcher receives args[0], not the whole envelope.
-    dispatch.assert_called_once_with(payload["args"][0])
-    assert message.context.entered is True
-    assert message.context.exited is True
+    dispatch.assert_awaited_once_with(payload["args"][0])
+    assert message.context.saw_exception is False
 
 
 @pytest.mark.asyncio
-async def test_callback_acks_malformed_payload_without_raising(monkeypatch):
-    """A poison message must not escape and kill the consumer loop."""
-    dispatch = Mock()
+async def test_callback_reraises_on_malformed_payload(monkeypatch):
+    
+    dispatch = AsyncMock()
     monkeypatch.setattr(notifications_consumer, "dispatch", dispatch)
     message = _Message(b"not-json")
 
@@ -78,40 +81,50 @@ async def test_callback_acks_malformed_payload_without_raising(monkeypatch):
 
     dispatch.assert_not_called()
     assert message.context.exited is True
+    assert message.context.saw_exception is True
 
 
 @pytest.mark.asyncio
-async def test_callback_survives_a_failing_dispatcher(monkeypatch):
-    dispatch = Mock(side_effect=RuntimeError("handler blew up"))
+async def test_callback_reraises_when_dispatch_fails(monkeypatch):
+
+    dispatch = AsyncMock(side_effect=RuntimeError("handler blew up"))
     monkeypatch.setattr(notifications_consumer, "dispatch", dispatch)
     message = _Message(json.dumps(_payload()).encode("utf-8"))
 
     await notifications_consumer.callback(message)
 
-    assert message.context.exited is True
+    assert message.context.saw_exception is True
 
 
 @pytest.mark.asyncio
-async def test_record_activity_declares_durable_queue_and_consumes(monkeypatch):
+async def test_record_activity_consumes_both_the_main_and_dlx_queue(monkeypatch):
     consume = AsyncMock()
-    declared = {}
 
     class FakeQueue:
+        def __init__(self, name):
+            self.name = name
+
+        async def bind(self, *args, **kwargs):
+            return None
+
         async def consume(self, callback):
-            await consume(callback)
+            await consume(self.name, callback)
 
     class FakeChannel:
         def __init__(self):
             self.qos = None
-            self.queue = FakeQueue()
+            self.declared_queues = {}
 
         async def set_qos(self, prefetch_count):
             self.qos = prefetch_count
 
-        async def declare_queue(self, name, **kwargs):
-            declared["name"] = name
-            declared.update(kwargs)
-            return self.queue
+        async def declare_exchange(self, *args, **kwargs):
+            return None
+
+        async def declare_queue(self, name, *args, **kwargs):
+            queue = FakeQueue(name)
+            self.declared_queues[name] = queue
+            return queue
 
     class FakeConnection:
         def __init__(self):
@@ -136,9 +149,9 @@ async def test_record_activity_declares_durable_queue_and_consumes(monkeypatch):
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(notifications_consumer.record_activity(), timeout=0.05)
 
-    consume.assert_called_once()
-    assert consume.call_args.args[0] is notifications_consumer.callback
-    # Queue name and durability must match what the publishers declare.
-    assert declared["name"] == "notifications"
-    assert declared["durable"] is True
+    assert consume.call_count == 2, "both main_queue and dlx_queue must be consumed"
+    consumed_queues = {call.args[0] for call in consume.call_args_list}
+    assert consumed_queues == {"mainnotificationsexchangequeue", "mainnotificationsdlxqueue"}
+    for call in consume.call_args_list:
+        assert call.args[1] is notifications_consumer.callback
     assert connection.channel_obj.qos == 100

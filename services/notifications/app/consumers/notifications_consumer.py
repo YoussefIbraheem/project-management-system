@@ -10,16 +10,18 @@ from app.dispatchers import dispatch
 
 
 async def callback(message: aio_pika.abc.AbstractIncomingMessage):
+   
     async with message.process():
         try:
             body_json = json.loads(message.body.decode("utf-8"))
             data = body_json["args"][0]
             rmq_logger.info("Processing message...")
             rmq_logger.info(f"DATA: {data}")
-            dispatch(data)
+            await dispatch(data)
             rmq_logger.info("Message processed successfully")
         except Exception as e:
             rmq_logger.info(f"Error processing message: {e}")
+            raise
 
 
 async def record_activity():
@@ -46,6 +48,7 @@ async def record_activity():
         dlx_queue = await channel.declare_queue("mainnotificationsdlxqueue")
         await dlx_queue.bind("mainnotificationsdlx", routing_key="notifications")
 
+        await main_queue.consume(callback)
         await dlx_queue.consume(callback)
         rmq_logger.info("Listening for messages...")
         await asyncio.Future()
