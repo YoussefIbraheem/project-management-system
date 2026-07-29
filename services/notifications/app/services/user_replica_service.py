@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlmodel import select
 
@@ -17,7 +16,7 @@ def list_users_replicas(limit: int = 10, offset: int = 0):
         return [UserReplicaSchema.model_validate(user) for user in users_replicas]
 
 
-def get_user_replica_by_id(user_id: str) -> Optional[UserReplicaSchema]:
+def get_user_replica_by_id(user_id: str) -> UserReplicaSchema | None:
     with Session(engine) as session:
         query = select(UserReplica).where(UserReplica.user_id == user_id)
         user_replica = session.exec(query).first() #type: ignore
@@ -39,7 +38,7 @@ def create_user_replica(
     user_id: str,
     username: str,
     email: str,
-    display_name: Optional[str],
+    display_name: str | None,
 ):
     with Session(engine) as session:
         new_user_replica = UserReplica(
@@ -59,7 +58,7 @@ def check_user_replica_exists(
     user_id: str,
     username: str,
     email: str,
-    display_name: Optional[str],
+    display_name: str | None,
 ):
     with Session(engine) as session:
         query = select(UserReplica).where(UserReplica.user_id == user_id)
@@ -72,10 +71,10 @@ def check_user_replica_exists(
 
 
 def update_user_replica(
-    user_id: Optional[str],
-    username: Optional[str],
-    email: Optional[str],
-    display_name: Optional[str],
+    user_id: str | None,
+    username: str | None,
+    email: str | None,
+    display_name: str | None,
 ):
     with Session(engine) as session:
         query = select(UserReplica).where(UserReplica.user_id == user_id)

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship
 
@@ -15,7 +15,7 @@ class Notification(Base,table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: str = Field(index=True,foreign_key="userreplica.user_id")
     type: str = Field(index=True)
-    subject: Optional[str] = None
+    subject: str | None = None
     body: str
     is_read: bool = Field(default=False)
     created_at: datetime = Field(default_factory=utc_now)

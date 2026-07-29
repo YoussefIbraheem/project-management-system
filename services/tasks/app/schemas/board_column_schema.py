@@ -1,8 +1,6 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-
-from app.models.board_column import StatusGroup
 
 
 class BoardColumnBase(BaseModel):
@@ -18,7 +16,6 @@ class BoardColumnBase(BaseModel):
 class BoardColumnDetailsResponse(BoardColumnBase):
     """Class for responding with board column information. Inherits from BoardColumnBase and adds ID field."""
 
-    pass
 
 
 class BoardColumnResponse(BaseModel):
@@ -42,13 +39,13 @@ class BoardColumnCreate(BaseModel):
 class BoardColumnUpdate(BaseModel):
     """Class for updating an existing board column. Only allows updating slug, label, and status_group."""
 
-    slug: Optional[str] = Field(
+    slug: str | None = Field(
         None, min_length=1, max_length=50, description="Column Slug"
     )
-    label: Optional[str] = Field(
+    label: str | None = Field(
         None, min_length=1, max_length=100, description="Column Label"
     )
-    status_group: Optional[str] = Field(
+    status_group: str | None = Field(
         None,
         description="Status Group (pending, in_progress, done, cancelled)",
     )

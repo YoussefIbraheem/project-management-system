@@ -1,4 +1,3 @@
-from typing import List
 
 from shared.event import Event, EventAction, SubjectType
 from shared.publishers import publish_history_event, publish_notification_event
@@ -25,7 +24,7 @@ from app.validators.project_validator import (
 )
 
 
-def get_projects(limit: int = 50, offset: int = 0) -> List[ProjectResponse]:
+def get_projects(limit: int = 50, offset: int = 0) -> list[ProjectResponse]:
     """Get a list of projects for a specific owner.
 
     Keyword arguments:

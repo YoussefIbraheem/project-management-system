@@ -1,8 +1,6 @@
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from sre_compile import dis
-from typing import Optional
 
 
 @dataclass
@@ -13,7 +11,7 @@ class BaseEvent:
     service: str = "users"
     action: str = field(init=False)
     timestamp: str = field(init=False)
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
 
     def __post_init__(self):
         name = self.__class__.__name__.replace("Event", "")
@@ -34,7 +32,7 @@ class UserRegisterEvent(BaseEvent):
         email: str,
         username: str,
         actor_id: str,
-        display_name: Optional[str] = None,
+        display_name: str | None = None,
     ):
         self.metadata = {
             "email": email,
@@ -76,7 +74,7 @@ class UserProfileUpdateEvent(BaseEvent):
         actor_id: str,
         email: str,
         username: str,
-        updated_fields: Optional[list] = [],
+        updated_fields: list | None = [],
     ):
         super().__init__(
             subject_id=subject_id,
@@ -96,10 +94,10 @@ class UserPasswordChangeEvent(BaseEvent):
         self,
         subject_id: str,
         actor_id: str,
-        change_source: Optional[str],
-        auth_method: Optional[str],
-        ip_address: Optional[str],
-        user_agent: Optional[str],
+        change_source: str | None,
+        auth_method: str | None,
+        ip_address: str | None,
+        user_agent: str | None,
         sessions_invalidated: bool = True,
     ):
         super().__init__(

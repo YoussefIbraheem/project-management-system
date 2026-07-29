@@ -1,7 +1,8 @@
+from typing import Annotated
+
 from bson import ObjectId as _ObjectId
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import BeforeValidator
-from typing_extensions import Annotated
 
 from app.models.event import DateTimeUTC, utc_now
 

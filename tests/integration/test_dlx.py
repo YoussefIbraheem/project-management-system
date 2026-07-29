@@ -1,7 +1,14 @@
 import time
 import uuid
 
-from conftest import HISTORY_URL, NOTIFICATIONS_URL, USERS_URL, auth, eventually, publish_raw
+from conftest import (
+    HISTORY_URL,
+    NOTIFICATIONS_URL,
+    USERS_URL,
+    auth,
+    eventually,
+    publish_raw,
+)
 
 # Comfortably below the 1000ms x-message-ttl on the main queues, so a pass
 # here is only possible if delivery does NOT route through the DLX's TTL.

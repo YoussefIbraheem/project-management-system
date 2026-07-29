@@ -15,7 +15,7 @@ class _ProcessContext:
     async def __aenter__(self):
         self.entered = True
 
-    async def __aexit__(self, exc_type, exc, tb):  # noqa: ARG002
+    async def __aexit__(self, exc_type, exc, tb):
         self.exited = True
         self.saw_exception = exc_type is not None
         return True  # swallow here too, so the test controls the assertion
@@ -94,7 +94,7 @@ async def test_record_activity_consumes_both_the_main_and_dlx_queue(monkeypatch)
         def __init__(self, name):
             self.name = name
 
-        async def bind(self, *args, **kwargs):  # noqa: ARG002
+        async def bind(self, *args, **kwargs):
             return None
 
         async def consume(self, callback):
@@ -108,10 +108,10 @@ async def test_record_activity_consumes_both_the_main_and_dlx_queue(monkeypatch)
         async def set_qos(self, prefetch_count):
             self.qos = prefetch_count
 
-        async def declare_exchange(self, *args, **kwargs):  # noqa: ARG002
+        async def declare_exchange(self, *args, **kwargs):
             return None
 
-        async def declare_queue(self, name, *args, **kwargs):  # noqa: ARG002
+        async def declare_queue(self, name, *args, **kwargs):
             queue = FakeQueue(name)
             self.declared_queues[name] = queue
             return queue
@@ -126,7 +126,7 @@ async def test_record_activity_consumes_both_the_main_and_dlx_queue(monkeypatch)
         async def __aenter__(self):
             return self
 
-        async def __aexit__(self, exc_type, exc, tb):  # noqa: ARG002
+        async def __aexit__(self, exc_type, exc, tb):
             return None
 
     fake_connection = FakeConnection()

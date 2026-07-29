@@ -91,7 +91,7 @@ def test_task_dispatch_creates_notifications_and_sends_email(monkeypatch):
     )
 
     class FakeEmailService:
-        def __init__(self, **kwargs):  # noqa: ARG002
+        def __init__(self, **kwargs):
             pass
 
         async def send_email(self, content):
@@ -195,7 +195,7 @@ def test_task_dispatch_falls_back_to_private_user_when_actor_missing(monkeypatch
     )
 
     class FakeEmailService:
-        def __init__(self, **kwargs):  # noqa: ARG002
+        def __init__(self, **kwargs):
             pass
 
         async def send_email(self, content):

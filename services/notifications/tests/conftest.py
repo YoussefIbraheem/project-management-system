@@ -30,7 +30,7 @@ def engine():
     )
 
     @event.listens_for(test_engine, "connect")
-    def _enable_foreign_keys(dbapi_connection, connection_record):  # noqa: ARG001
+    def _enable_foreign_keys(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
@@ -60,7 +60,7 @@ def patch_notification_auth(monkeypatch):
     monkeypatch.setattr(
         notification_auth_bearer,
         "decode_jwt",
-        lambda token: {  # noqa: ARG005
+        lambda token: {
             "sub": "1",
             "is_superuser": True,
             "exp": int(time.time()) + 3600,

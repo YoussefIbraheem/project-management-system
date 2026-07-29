@@ -188,7 +188,6 @@ class UserLogoutSerializer(serializers.Serializer):
         refresh_token = RefreshToken(token)
         refresh_token.blacklist()
 
-        return
 
 
 class UserUpdateSerializer(serializers.Serializer):
@@ -240,7 +239,6 @@ class UserDeleteSerializer(serializers.Serializer):
     def save(self, **kwargs):
         user = self.context["request"].user
         user.delete()
-        return
 
 
 class UserPasswordChangeSerializer(serializers.Serializer):

@@ -2,7 +2,6 @@ from __future__ import annotations  # For forward references in type hints
 
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -39,7 +38,7 @@ class Settings:
     # Broker URL
     BROKER_URL = "amqp://guest:guest@rabbitmq:5672/"
 
-    _instance: Optional[Settings] = None
+    _instance: Settings | None = None
 
     def __post_init__(self):
         """Load from environment variables after initialization"""

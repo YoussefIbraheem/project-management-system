@@ -1,8 +1,7 @@
-from collections.abc import Iterable
 
 from shared.exceptions import ConflictException, NotFoundException, ValidationException
 
-from app.models import Board, BoardColumn, Task
+from app.models import Task
 from app.models.project_member import ProjectMember
 from app.models.task_assignee import TaskAssignee
 

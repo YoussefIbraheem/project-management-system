@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -7,14 +6,13 @@ from pydantic import BaseModel, ConfigDict, Field
 class ProjectBase(BaseModel):
     """Shared project fields used by project creation and response models."""
     name: str = Field(..., min_length=1, max_length=255, description="Project Name")
-    description: Optional[str] = Field(None, description="Project Description")
+    description: str | None = Field(None, description="Project Description")
     
     model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectCreate(ProjectBase):
     """Model for creating a new project."""
-    pass
 
 
 class ProjectUpdate(BaseModel):
@@ -23,10 +21,10 @@ class ProjectUpdate(BaseModel):
     Only provides optional fields so partial updates are allowed.
     """
 
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None, min_length=1, max_length=255, description="Project Name"
     )
-    description: Optional[str] = Field(None, description="Project Description")
+    description: str | None = Field(None, description="Project Description")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -36,6 +34,6 @@ class ProjectResponse(ProjectBase):
 
     id: int = Field(..., description="Project ID")
     created_at: datetime = Field(..., description="Project Creation Date and Time")
-    updated_at: Optional[datetime] = Field(
+    updated_at: datetime | None = Field(
         ..., description="Project Updating Date and Time"
     )

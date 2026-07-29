@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -10,7 +9,7 @@ class NotificationSchema(BaseModel):
     id: int = Field(...)
     user_id: str = Field(...)
     type: str = Field(...)
-    subject: Optional[str] = Field(None)
+    subject: str | None = Field(None)
     body: str = Field(...)
     is_read: bool = False
     created_at: datetime = utc_now

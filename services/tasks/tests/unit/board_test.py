@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 
 import pytest
 from app.db.database import get_db_session

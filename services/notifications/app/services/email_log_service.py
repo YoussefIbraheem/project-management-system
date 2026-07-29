@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from sqlmodel import select
 
@@ -34,9 +33,9 @@ def create_email_log(
     email_address: str,
     recipient_email: str,
     status: str = EmailStatus.PENDING.value,
-    error_message: Optional[str] = None,
+    error_message: str | None = None,
     attempts: int = 0,
-    sent_at: Optional[datetime] = None,
+    sent_at: datetime | None = None,
 ):
     with Session(engine) as session:
         new_email_log = EmailLog(
@@ -57,10 +56,10 @@ def create_email_log(
 
 def update_email_log(
     email_log_id: int,
-    status: Optional[str],
-    attempts: Optional[int],
-    error_message: Optional[str] = None,
-    sent_at: Optional[datetime] = None,
+    status: str | None,
+    attempts: int | None,
+    error_message: str | None = None,
+    sent_at: datetime | None = None,
 ):
     with Session(engine) as session:
         query = select(EmailLog).where(EmailLog.id == email_log_id)

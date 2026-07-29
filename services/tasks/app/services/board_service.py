@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from shared.event import Event, EventAction, SubjectType
 from shared.publishers import publish_history_event
@@ -34,7 +33,7 @@ from app.validators.project_validator import get_project_or_404
 
 def get_board_by_project(
     actor: Actor, project_id: int, limit: int = 50, offset: int = 0
-) -> List[BoardResponse]:
+) -> list[BoardResponse]:
     """
     Retrieve a paginated list of boards associated with a specific project.
     Args:
@@ -60,7 +59,7 @@ def get_board_by_project(
         return [BoardResponse.model_validate(board) for board in db_boards]
 
 
-def get_board_by_id(actor: Actor, board_id: int) -> Optional[BoardResponse]:
+def get_board_by_id(actor: Actor, board_id: int) -> BoardResponse | None:
     """
     Get Board Details
 
@@ -124,7 +123,7 @@ def create_board(actor: Actor, board_data: BoardCreate) -> BoardResponse:
 
 def update_board(
     actor: Actor, board_id: int, board_data: BoardUpdate
-) -> Optional[BoardResponse]:
+) -> BoardResponse | None:
     """
     Update an existing board.
     Args:

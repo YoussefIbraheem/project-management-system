@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlmodel import select
 
@@ -29,7 +28,7 @@ def create_notification(
     user_id: str,
     type: str,
     body: str,
-    subject: Optional[str] = None,
+    subject: str | None = None,
     is_read: bool = False,
 ):
     with Session(engine) as session:
@@ -54,10 +53,10 @@ def create_notification(
 
 def update_notification(
     notification_id: int,
-    type: Optional[str] = None,
-    body: Optional[str] = None,
-    subject: Optional[str] = None,
-    is_read: Optional[bool] = None,
+    type: str | None = None,
+    body: str | None = None,
+    subject: str | None = None,
+    is_read: bool | None = None,
 ):
     with Session(engine) as session:
         query = select(Notification).where(Notification.id == notification_id)
