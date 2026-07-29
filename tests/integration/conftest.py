@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import time
@@ -6,7 +7,9 @@ from pathlib import Path
 
 import httpx
 import jwt
+import pika
 import pytest
+from pika.exchange_type import ExchangeType
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -14,6 +17,11 @@ USERS_URL = os.getenv("PMS_USERS_URL", "http://localhost:8000")
 TASKS_URL = os.getenv("PMS_TASKS_URL", "http://localhost:8080")
 HISTORY_URL = os.getenv("PMS_HISTORY_URL", "http://localhost:5006")
 NOTIFICATIONS_URL = os.getenv("PMS_NOTIFICATIONS_URL", "http://localhost:8081")
+
+RABBITMQ_HOST = os.getenv("PMS_RABBITMQ_HOST", "localhost")
+RABBITMQ_PORT = int(os.getenv("PMS_RABBITMQ_PORT", "5672"))
+RABBITMQ_USER = os.getenv("PMS_RABBITMQ_USER", "guest")
+RABBITMQ_PASSWORD = os.getenv("PMS_RABBITMQ_PASSWORD", "guest")
 
 JWT_SECRET_KEY = os.getenv(
     "PMS_JWT_SECRET_KEY",
@@ -199,3 +207,23 @@ def history_events(http, reader_token):
         return response.json()
 
     return _fetch
+
+
+def publish_raw(*, exchange: str, routing_key: str, body: dict) -> None:
+    
+    params = pika.ConnectionParameters(
+        host=RABBITMQ_HOST,
+        port=RABBITMQ_PORT,
+        credentials=pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD),
+    )
+    connection = pika.BlockingConnection(params)
+    try:
+        channel = connection.channel()
+        channel.exchange_declare(exchange=exchange, exchange_type=ExchangeType.direct)
+        channel.basic_publish(
+            exchange=exchange,
+            routing_key=routing_key,
+            body=json.dumps(body).encode("utf-8"),
+        )
+    finally:
+        connection.close()
