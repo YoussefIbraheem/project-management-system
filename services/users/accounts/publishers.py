@@ -38,14 +38,14 @@ def publish_history_event(event_data):
 
         params = _fetch_connection_params()
         message = json.dumps(data).encode("utf-8")
-        with pika.BlockingConnection(params) as conn:
-            with conn.channel() as channel:
-                channel.exchange_declare(
-                    exchange="mainhistoryexchange", exchange_type=ExchangeType.direct
-                )
-                channel.basic_publish(
-                    exchange="mainhistoryexchange", routing_key="history", body=message
-                )
+        conn = pika.BlockingConnection(params)
+        with conn.channel() as channel:
+            channel.exchange_declare(
+                exchange="mainhistoryexchange", exchange_type=ExchangeType.direct
+            )
+            channel.basic_publish(
+                exchange="mainhistoryexchange", routing_key="history", body=message
+            )
         logger.info("History event published successfully.")
     except Exception as e:
         logger.error(f"Error publishing history event: {e}", exc_info=True)
@@ -64,15 +64,17 @@ def publish_notification_event(event_data):
             "retries": 0,
         }
         message = json.dumps(data).encode("utf-8")
-        with pika.BlockingConnection(params) as conn:
-            with conn.channel() as channel:
-                channel.exchange_declare(
-                    exchange="mainnotificationsexchange", exchange_type=ExchangeType.direct
-                )
-                channel.basic_publish(
-                    exchange="mainnotificationsexchange", routing_key="notifications", body=message
-                )
-                logger.info("Notifications event published successfully.")
+        conn = pika.BlockingConnection(params)
+        with conn.channel() as channel:
+            channel.exchange_declare(
+                exchange="mainnotificationsexchange", exchange_type=ExchangeType.direct
+            )
+            channel.basic_publish(
+                exchange="mainnotificationsexchange",
+                routing_key="notifications",
+                body=message,
+            )
+            logger.info("Notifications event published successfully.")
     except Exception as e:
         logger.error(f"Error publishing notifications event: {e}", exc_info=True)
         raise
