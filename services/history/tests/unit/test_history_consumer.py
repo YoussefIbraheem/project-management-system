@@ -1,6 +1,5 @@
 import asyncio
 import json
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -11,12 +10,15 @@ class _ProcessContext:
     def __init__(self):
         self.entered = False
         self.exited = False
+        self.saw_exception = False
 
     async def __aenter__(self):
         self.entered = True
 
     async def __aexit__(self, exc_type, exc, tb):  # noqa: ARG002
         self.exited = True
+        self.saw_exception = exc_type is not None
+        return True  # swallow here too, so the test controls the assertion
 
 
 class _Message:
@@ -29,7 +31,8 @@ class _Message:
 
 
 @pytest.mark.asyncio
-async def test_callback_processes_message_and_schedules_create_event(monkeypatch):
+async def test_callback_awaits_create_event_directly(monkeypatch):
+  
     payload = {
         "id": "1",
         "args": [
@@ -44,51 +47,74 @@ async def test_callback_processes_message_and_schedules_create_event(monkeypatch
         ],
     }
     message = _Message(json.dumps(payload).encode("utf-8"))
-    create_event = Mock(return_value="task-scheduled")
-    create_task = Mock(return_value=SimpleNamespace(done=True))
+    create_event = AsyncMock(return_value="event-id-1")
+    create_task = Mock()
 
     monkeypatch.setattr(history_consumer, "create_event", create_event)
     monkeypatch.setattr(history_consumer.asyncio, "create_task", create_task)
 
     await history_consumer.callback(message)
 
-    create_event.assert_called_once_with(payload["args"][0])
-    create_task.assert_called_once_with("task-scheduled")
-    assert message.context.entered is True
-    assert message.context.exited is True
+    create_event.assert_awaited_once_with(payload["args"][0])
+    create_task.assert_not_called()
+    assert message.context.saw_exception is False
 
 
 @pytest.mark.asyncio
-async def test_callback_swallow_invalid_payload(monkeypatch):
+async def test_callback_reraises_on_malformed_payload():
+   
     message = _Message(b"not-json")
-    create_task = Mock()
-    monkeypatch.setattr(history_consumer.asyncio, "create_task", create_task)
 
     await history_consumer.callback(message)
 
-    create_task.assert_not_called()
     assert message.context.entered is True
     assert message.context.exited is True
+    assert message.context.saw_exception is True
 
 
 @pytest.mark.asyncio
-async def test_record_activity_wires_consumer_and_queue(monkeypatch):
+async def test_callback_reraises_when_create_event_fails(monkeypatch):
+
+    payload = {"id": "1", "args": [{"service": "tasks"}]}
+    message = _Message(json.dumps(payload).encode("utf-8"))
+    monkeypatch.setattr(
+        history_consumer, "create_event", AsyncMock(side_effect=ValueError("bad event"))
+    )
+
+    await history_consumer.callback(message)
+
+    assert message.context.saw_exception is True
+
+
+@pytest.mark.asyncio
+async def test_record_activity_consumes_both_the_main_and_dlx_queue(monkeypatch):
     consume = AsyncMock()
 
     class FakeQueue:
-        async def consume(self, callback):  # noqa: ARG002
-            await consume(callback)
+        def __init__(self, name):
+            self.name = name
+
+        async def bind(self, *args, **kwargs):  # noqa: ARG002
+            return None
+
+        async def consume(self, callback):
+            await consume(self.name, callback)
 
     class FakeChannel:
         def __init__(self):
             self.qos = None
-            self.queue = FakeQueue()
+            self.declared_queues = {}
 
         async def set_qos(self, prefetch_count):
             self.qos = prefetch_count
 
-        async def declare_queue(self, *args, **kwargs):  # noqa: ARG002
-            return self.queue
+        async def declare_exchange(self, *args, **kwargs):  # noqa: ARG002
+            return None
+
+        async def declare_queue(self, name, *args, **kwargs):  # noqa: ARG002
+            queue = FakeQueue(name)
+            self.declared_queues[name] = queue
+            return queue
 
     class FakeConnection:
         def __init__(self):
@@ -105,12 +131,16 @@ async def test_record_activity_wires_consumer_and_queue(monkeypatch):
 
     fake_connection = FakeConnection()
     monkeypatch.setattr(history_consumer, "connect_db", AsyncMock(return_value=None))
-    monkeypatch.setattr(history_consumer.aio_pika, "connect_robust", AsyncMock(return_value=fake_connection))
+    monkeypatch.setattr(
+        history_consumer.aio_pika, "connect_robust", AsyncMock(return_value=fake_connection)
+    )
 
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(history_consumer.record_activity(), timeout=0.05)
 
-    consume.assert_called_once()
-    callback = consume.call_args.args[0]
-    assert callback is history_consumer.callback
+    assert consume.call_count == 2, "both main_queue and dlx_queue must be consumed"
+    consumed_queues = {call.args[0] for call in consume.call_args_list}
+    assert consumed_queues == {"mainhistoryexchangequeue", "mainhistorydlxqueue"}
+    for call in consume.call_args_list:
+        assert call.args[1] is history_consumer.callback
     assert fake_connection.channel_obj.qos == 100

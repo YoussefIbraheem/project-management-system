@@ -22,10 +22,11 @@ async def callback(message: aio_pika.abc.AbstractIncomingMessage):
             print("Processing message...")
             print(f"event_id:{body_json['id']}")
             print(f"event_type: {data['action']}")
-            asyncio.create_task(create_event(data))
+            await create_event(data)
             print("Message processed successfully")
         except Exception as e:
             print(f"Error processing message: {e}")
+            raise
 
 
 async def record_activity():
