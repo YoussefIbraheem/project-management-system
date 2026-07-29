@@ -46,7 +46,7 @@ async def record_activity():
                 "x-message-ttl": 1000,
             },
         )
-        
+
         await main_queue.bind(
             "mainhistoryexchange",
             routing_key="history",
@@ -55,6 +55,7 @@ async def record_activity():
         dlx_queue = await channel.declare_queue("mainhistorydlxqueue")
         await dlx_queue.bind("mainhistorydlx", routing_key="history")
 
+        await main_queue.consume(callback)
         await dlx_queue.consume(callback)
         print("Listening for messages...")
         await asyncio.Future()
