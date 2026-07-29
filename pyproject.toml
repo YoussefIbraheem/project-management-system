@@ -20,4 +20,4 @@ extraPaths = [
 ]
 
 [tool.ruff]
-ignore=["BLE001","RUF012"]
+ignore=["BLE001","RUF012","G201"]
