@@ -61,7 +61,6 @@ class UserRegisterationView(views.APIView):
                 display_name=display_name,
             )
             publish_history_event(event.to_dict())
-            publish_notification_event(event.to_dict())
 
             return response.Response(
                 {
