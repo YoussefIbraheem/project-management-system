@@ -194,6 +194,8 @@ bash run-all-tests.sh
 
 ## API Documentation
 
+[<img src="https://fetch.usebruno.com/button.svg" alt="Fetch in Bruno" style="width: 130px; height: 30px;" width="128" height="32">](https://fetch.usebruno.com?url=git%40github.com%3AYoussefIbraheem%2Fproject-management-system.git "target=_blank rel=noopener noreferrer")
+
 Each FastAPI service exposes interactive OpenAPI docs at `/docs`; `tasks` (Flask) exposes the same via `swagger_ui` at `/docs`. A [Bruno](https://www.usebruno.com/) collection is also maintained under `api_docs/` for manual exploration and end-to-end request flows across services.
 
 ## Release
