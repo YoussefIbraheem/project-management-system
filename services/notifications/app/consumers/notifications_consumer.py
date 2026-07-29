@@ -2,6 +2,7 @@ import asyncio
 import json
 
 import aio_pika
+from aio_pika.exchange import ExchangeType
 
 from app import rmq_logger
 from app.core.config import settings
@@ -28,11 +29,24 @@ async def record_activity():
     async with connection:
         channel = await connection.channel()
         await channel.set_qos(prefetch_count=100)
-        queue = await channel.declare_queue(
-            "notifications",
-            durable=True,
+        await channel.declare_exchange(
+            "mainnotificationsexchange", type=ExchangeType.DIRECT
         )
-        await queue.consume(callback)
+        await channel.declare_exchange("mainnotificationsdlx", type=ExchangeType.FANOUT)
+        main_queue = await channel.declare_queue(
+            "mainnotificationsexchangequeue",
+            arguments={
+                "x-dead-letter-exchange": "mainnotificationsdlx",
+                "x-message-ttl": 1000,
+            },
+        )
+
+        await main_queue.bind("mainnotificationsexchange", routing_key="notifications")
+
+        dlx_queue = await channel.declare_queue("mainnotificationsdlxqueue")
+        await dlx_queue.bind("mainnotificationsdlx", routing_key="notifications")
+
+        await dlx_queue.consume(callback)
         rmq_logger.info("Listening for messages...")
         await asyncio.Future()
 

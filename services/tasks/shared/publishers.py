@@ -48,12 +48,8 @@ def publish_notification_event(event: Event):
         ) as connection:
             channel = connection.channel()
             event_data = event.to_dict()
-            logger.info("Publishing new history event...")
-            logger.info(f"Event: {event_data}")
-            channel.basic_publish(
-                exchange="",
-                routing_key="notifications",
-                body=json.dumps(
+            message = (
+                json.dumps(
                     {
                         "task": "app.consumers.notifications_consumer.record_activity",
                         "id": str(uuid.uuid4()),
@@ -62,6 +58,17 @@ def publish_notification_event(event: Event):
                         "retries": 0,
                     }
                 ),
+            )
+
+            logger.info("Publishing new history event...")
+            logger.info(f"Event: {event_data}")
+            channel.exchange_declare(
+                exchange="mainnotificationsexchange", exchange_type=ExchangeType.direct
+            )
+            channel.basic_publish(
+                exchange="mainnotificationsexchange",
+                routing_key="notifications",
+                body=message,
                 properties=pika.BasicProperties(
                     content_type="application/json",
                     delivery_mode=2,

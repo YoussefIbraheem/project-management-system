@@ -66,12 +66,11 @@ def publish_notification_event(event_data):
         message = json.dumps(data).encode("utf-8")
         with pika.BlockingConnection(params) as conn:
             with conn.channel() as channel:
-                channel.queue_declare(
-                    queue="notifications",
-                    durable=True,
+                channel.exchange_declare(
+                    exchange="mainnotificationsexchange", exchange_type=ExchangeType.direct
                 )
                 channel.basic_publish(
-                    routing_key="notifications", exchange="", body=message
+                    exchange="mainnotificationsexchange", routing_key="notifications", body=message
                 )
                 logger.info("Notifications event published successfully.")
     except Exception as e:
