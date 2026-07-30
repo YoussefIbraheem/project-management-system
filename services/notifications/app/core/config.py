@@ -1,4 +1,3 @@
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,6 +28,8 @@ class Settings(BaseSettings):
     DNS_TIMEOUT: float = 5
     SMTP_VERIFY_TIMEOUT: float = 8
     SMTP_MAX_ATTEMPTS: int = 3
+
+    DLX_TTL: int = 300000
 
 
 settings = Settings()

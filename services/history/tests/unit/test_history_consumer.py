@@ -139,8 +139,23 @@ async def test_record_activity_consumes_both_the_main_and_dlx_queue(monkeypatch)
         await asyncio.wait_for(history_consumer.record_activity(), timeout=0.05)
 
     assert consume.call_count == 2, "both main_queue and dlx_queue must be consumed"
-    consumed_queues = {call.args[0] for call in consume.call_args_list}
-    assert consumed_queues == {"mainhistoryexchangequeue", "mainhistorydlxqueue"}
-    for call in consume.call_args_list:
-        assert call.args[1] is history_consumer.callback
+    consumed = {call.args[0]: call.args[1] for call in consume.call_args_list}
+    assert consumed == {
+        "mainhistoryexchangequeue": history_consumer.callback,
+        "mainhistorydlxqueue": history_consumer.dlx_callback,
+    }
     assert fake_connection.channel_obj.qos == 100
+
+
+@pytest.mark.asyncio
+async def test_dlx_callback_logs_and_swallows_when_processing_fails_again(monkeypatch):
+    message = _Message(b"not-json")
+    error_log = Mock()
+    monkeypatch.setattr(history_consumer.logger, "error", error_log)
+
+    await history_consumer.dlx_callback(message)
+
+    assert message.context.saw_exception is False, (
+        "a second failure must not propagate - there's no further dead-letter target"
+    )
+    error_log.assert_called_once()

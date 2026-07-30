@@ -203,7 +203,7 @@ services:
     build:
       context: ./services/notifications
       dockerfile: Dockerfile
-    container_name: notification_worker
+    container_name: notifications_worker
     command: python app/consumers/notifications_consumer.py
     environment:
       - PYTHONUNBUFFERED=1

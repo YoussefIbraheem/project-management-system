@@ -23,5 +23,7 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str | None = "redis://redis:6379/0"
     ALLOW_INVALID_CERTS: bool | None = False
 
+    DLX_TTL: int = 300000
+
 
 settings = Settings()

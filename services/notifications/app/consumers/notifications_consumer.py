@@ -9,19 +9,30 @@ from app.core.config import settings
 from app.dispatchers import dispatch
 
 
+async def _process_event(message: aio_pika.abc.AbstractIncomingMessage) -> None:
+    body_json = json.loads(message.body.decode("utf-8"))
+    data = body_json["args"][0]
+    rmq_logger.info("Processing message...")
+    rmq_logger.info(f"DATA: {data}")
+    await dispatch(data)
+    rmq_logger.info("Message processed successfully")
+
+
 async def callback(message: aio_pika.abc.AbstractIncomingMessage):
-   
     async with message.process():
         try:
-            body_json = json.loads(message.body.decode("utf-8"))
-            data = body_json["args"][0]
-            rmq_logger.info("Processing message...")
-            rmq_logger.info(f"DATA: {data}")
-            await dispatch(data)
-            rmq_logger.info("Message processed successfully")
+            await _process_event(message)
         except Exception as e:
             rmq_logger.info(f"Error processing message: {e}")
             raise
+
+
+async def dlx_callback(message: aio_pika.abc.AbstractIncomingMessage):
+    async with message.process():
+        try:
+            await _process_event(message)
+        except Exception as e:
+            rmq_logger.error(f"Message permanently failed after DLX retry, dropping: {e}")
 
 
 async def record_activity():
@@ -39,7 +50,10 @@ async def record_activity():
             "mainnotificationsexchangequeue",
             arguments={
                 "x-dead-letter-exchange": "mainnotificationsdlx",
-                "x-message-ttl": 1000,
+                # Failed messages are already dead-lettered by the nack in
+                # `callback`'s except clause; this TTL is only a backlog
+                # safety valve for messages stuck unconsumed, not the retry path.
+                "x-message-ttl": settings.DLX_TTL,
             },
         )
 
@@ -49,7 +63,7 @@ async def record_activity():
         await dlx_queue.bind("mainnotificationsdlx", routing_key="notifications")
 
         await main_queue.consume(callback)
-        await dlx_queue.consume(callback)
+        await dlx_queue.consume(dlx_callback)
         rmq_logger.info("Listening for messages...")
         await asyncio.Future()
 
