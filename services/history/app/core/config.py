@@ -1,4 +1,3 @@
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,7 +21,8 @@ class Settings(BaseSettings):
     RABBITMQ_BROKER_URL: str | None = "amqp://guest:guest@rabbitmq:5672//"
     CELERY_RESULT_BACKEND: str | None = "redis://redis:6379/0"
     ALLOW_INVALID_CERTS: bool | None = False
-
+    CORS_ALLOWED_ORIGINS: str = "http://localhost:5173"
+    ADMIN_USER_MODEL: str = "http://localhost:5173/events"
     DLX_TTL: int = 300000
 
 

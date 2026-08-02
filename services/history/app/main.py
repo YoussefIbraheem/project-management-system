@@ -3,6 +3,8 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request, responses
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from app.apis.event_api import router as event_router
 from app.auth.auth_bearer import JWTBearer
@@ -23,12 +25,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await close_db()
 
 
-app = FastAPI(lifespan=lifespan, dependencies=[Depends(JWTBearer())],title="History Service API Documentation")
+app = FastAPI(
+    lifespan=lifespan,
+    title="History Service API Documentation",
+)
+
+allowed_origins = [settings.CORS_ALLOWED_ORIGINS]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-# @app.get("/")
-# def read_root():
-#     return {"project_name": settings.PROJECT_NAME}
+@app.get("/admin/")
+def admin():
+    return RedirectResponse(settings.ADMIN_USER_MODEL)
 
 
 # @app.get("/items/{item_id}")
@@ -36,7 +51,7 @@ app = FastAPI(lifespan=lifespan, dependencies=[Depends(JWTBearer())],title="Hist
 #     return {"item_id": item_id, "q": q}
 
 
-app.include_router(event_router,prefix=settings.API_PREFIX)
+app.include_router(event_router, prefix=settings.API_PREFIX)
 
 
 @app.exception_handler(Exception)

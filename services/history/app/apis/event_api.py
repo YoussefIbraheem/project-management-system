@@ -1,12 +1,13 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.auth.auth_bearer import JWTBearer
 from app.schemas.event_schema import EventResponse
 from app.services.event_service import get_event_by_id, get_events
 
 router = APIRouter(prefix="/events")
 
 
-@router.get("/", response_model=list[EventResponse])
+@router.get("/", response_model=list[EventResponse],dependencies=[Depends(JWTBearer())],)
 async def events_get(
     service: str | None = Query(
         None, description="The service that generated the events"
