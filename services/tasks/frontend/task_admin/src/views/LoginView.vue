@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { setTokens } from '../auth'
+import { jwtDecode } from 'jwt-decode'
 
 const router = useRouter()
 
@@ -20,6 +21,13 @@ async function handleLogin() {
       email: email.value,
       password: password.value,
     })
+    const decodedTokens = jwtDecode(response.data.tokens.refresh)
+    const isSuperuser = decodedTokens.is_superuser
+    console.log(isSuperuser)
+    if(!isSuperuser){
+      throw new Error("Unauthorized Access");
+    }
+    console.log(decodedTokens)
     setTokens(response.data.tokens)
     router.push('/projects')
   } catch (err) {
