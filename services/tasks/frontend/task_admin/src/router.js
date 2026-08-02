@@ -6,9 +6,7 @@ import ProjectMemberView from './views/ProjectMemberView.vue'
 import LoginView from './views/LoginView.vue'
 import { isAuthenticated } from './auth'
 
-export const routes = [
-  { path: '/projects', component: ProjectView, label: 'Projects' },
-]
+export const routes = [{ path: '/projects', component: ProjectView }]
 
 const detailRoutes = [
   { path: '/projects/:projectId/boards', component: BoardView, props: true },

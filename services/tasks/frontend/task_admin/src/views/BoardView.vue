@@ -41,7 +41,10 @@ async function fetchBoards() {
 }
 
 function goToTasks(board) {
-  router.push(`/projects/${props.projectId}/boards/${board.id}/tasks`)
+  router.push({
+    path: `/projects/${props.projectId}/tasks`,
+    query: { boardId: board.id },
+  })
 }
 
 onMounted(fetchBoards)
@@ -50,7 +53,9 @@ watch(() => props.projectId, fetchBoards)
 
 <template>
   <section class="board-view">
-    <RouterLink to="/projects" class="board-view__back">&larr; Back to Projects</RouterLink>
+    <button type="button" class="board-view__back" @click="router.push('/projects')">
+      &larr; Back to Projects
+    </button>
     <h1>Boards</h1>
     <Table
       :columns="columns"
@@ -76,7 +81,16 @@ watch(() => props.projectId, fetchBoards)
 .board-view__back {
   display: inline-block;
   margin-bottom: 1rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background);
   color: var(--color-text);
   font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.board-view__back:hover {
+  border-color: var(--color-border-hover);
 }
 </style>

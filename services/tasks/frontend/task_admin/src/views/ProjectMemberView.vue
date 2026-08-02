@@ -1,7 +1,10 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
 import Table from '../components/Table.vue'
+
+const router = useRouter()
 
 const props = defineProps({
   projectId: {
@@ -40,7 +43,9 @@ watch(() => props.projectId, fetchMembers)
 
 <template>
   <section class="member-view">
-    <RouterLink to="/projects" class="member-view__back">&larr; Back to Projects</RouterLink>
+    <button type="button" class="member-view__back" @click="router.push('/projects')">
+      &larr; Back to Projects
+    </button>
     <h1>Project Members</h1>
     <Table
       :columns="columns"
@@ -62,7 +67,16 @@ watch(() => props.projectId, fetchMembers)
 .member-view__back {
   display: inline-block;
   margin-bottom: 1rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background);
   color: var(--color-text);
   font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.member-view__back:hover {
+  border-color: var(--color-border-hover);
 }
 </style>

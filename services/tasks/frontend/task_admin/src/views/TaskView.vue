@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import axios from 'axios'
+import { useRoute, useRouter } from 'vue-router'
 import Table from '../components/Table.vue'
 
 const props = defineProps({
@@ -8,11 +9,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  boardId: {
-    type: String,
-    required: true,
-  },
 })
+
+const route = useRoute()
+const router = useRouter()
 
 const columns = [
   { key: 'id', label: 'ID', align: 'left' },
@@ -31,7 +31,7 @@ async function fetchTasks() {
   error.value = ''
   try {
     const response = await axios.get('http://localhost:8080/api/v1/tasks/', {
-      params: { project_id: props.projectId, board_id: props.boardId },
+      params: { project_id: props.projectId, board_id: route.query.boardId },
     })
     tasks.value = response.data
   } catch (err) {
@@ -42,14 +42,14 @@ async function fetchTasks() {
 }
 
 onMounted(fetchTasks)
-watch(() => [props.projectId, props.boardId], fetchTasks)
+watch(() => [props.projectId, route.query.boardId], fetchTasks)
 </script>
 
 <template>
   <section class="task-view">
-    <RouterLink :to="`/projects/${projectId}/boards`" class="task-view__back">
-      &larr; Back to Boards
-    </RouterLink>
+    <button type="button" class="task-view__back" @click="router.push('/projects')">
+      &larr; Back to Projects
+    </button>
     <h1>Tasks</h1>
     <Table
       :columns="columns"
@@ -74,7 +74,16 @@ watch(() => [props.projectId, props.boardId], fetchTasks)
 .task-view__back {
   display: inline-block;
   margin-bottom: 1rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background);
   color: var(--color-text);
   font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.task-view__back:hover {
+  border-color: var(--color-border-hover);
 }
 </style>
