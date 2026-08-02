@@ -1,10 +1,10 @@
 import { createMemoryHistory, createRouter } from 'vue-router'
-import ProjectView from './views/ProjectView.vue'
-import BoardView from './views/BoardView.vue'
+import ProjectView from './views/task_service/ProjectView.vue'
+import BoardView from './views/task_service/BoardView.vue'
 import TaskView from './views/TaskView.vue'
-import ProjectMemberView from './views/ProjectMemberView.vue'
+import ProjectMemberView from './views/task_service/ProjectMemberView.vue'
 import LoginView from './views/LoginView.vue'
-import { isAuthenticated } from './auth'
+import { isAuthenticated } from './auth.js'
 
 export const routes = [{ path: '/projects', component: ProjectView }]
 

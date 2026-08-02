@@ -2,7 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
-import Table from '../components/Table.vue'
+import Table from '../../components/Table.vue'
 
 const router = useRouter()
 

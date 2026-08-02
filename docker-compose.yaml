@@ -46,6 +46,26 @@ services:
       rabbitmq:
         condition: service_started
 
+  # Vue Task Admin Frontend
+  admin:
+    build:
+      context: ./services/admin
+      dockerfile: Dockerfile
+    container_name: admin
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./services/admin:/app
+      - /app/node_modules
+    depends_on:
+      tasks-service:
+        condition: service_started
+      users-service:
+        condition: service_started
+      history-service:
+        condition: service_started
+      notifications-service:
+        condition: service_started
 
   # FastAPI History Service
   history-service:
