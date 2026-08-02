@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { computed, ref, watch } from 'vue'
+
+const props = defineProps({
   columns: {
     // [{ key: 'title', label: 'Title', align: 'left' }]
     type: Array,
@@ -25,9 +27,49 @@ defineProps({
     type: String,
     default: 'No records found.',
   },
+  pageSize: {
+    type: Number,
+    default: 10,
+  },
 })
 
 defineEmits(['row-click'])
+
+const currentPage = ref(1)
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(props.rows.length / props.pageSize)),
+)
+
+const pagedRows = computed(() => {
+  const start = (currentPage.value - 1) * props.pageSize
+  return props.rows.slice(start, start + props.pageSize)
+})
+
+const rangeStart = computed(() =>
+  props.rows.length === 0 ? 0 : (currentPage.value - 1) * props.pageSize + 1,
+)
+
+const rangeEnd = computed(() =>
+  Math.min(currentPage.value * props.pageSize, props.rows.length),
+)
+
+watch(
+  () => props.rows,
+  () => {
+    currentPage.value = 1
+  },
+)
+
+watch(totalPages, (pages) => {
+  if (currentPage.value > pages) {
+    currentPage.value = pages
+  }
+})
+
+function goToPage(page) {
+  currentPage.value = Math.min(Math.max(1, page), totalPages.value)
+}
 </script>
 
 <template>
@@ -64,7 +106,7 @@ defineEmits(['row-click'])
         </tr>
         <tr
           v-else
-          v-for="row in rows"
+          v-for="row in pagedRows"
           :key="row[rowKey]"
           class="data-row"
           @click="$emit('row-click', row)"
@@ -81,6 +123,31 @@ defineEmits(['row-click'])
         </tr>
       </tbody>
     </table>
+
+    <div v-if="!loading && !error && rows.length" class="table-pagination">
+      <span class="table-pagination__summary">
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ rows.length }}
+      </span>
+      <div class="table-pagination__controls">
+        <button
+          type="button"
+          class="table-pagination__button"
+          :disabled="currentPage === 1"
+          @click="goToPage(currentPage - 1)"
+        >
+          Prev
+        </button>
+        <span class="table-pagination__page">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button
+          type="button"
+          class="table-pagination__button"
+          :disabled="currentPage === totalPages"
+          @click="goToPage(currentPage + 1)"
+        >
+          Next
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -139,5 +206,41 @@ defineEmits(['row-click'])
 .state-cell--error {
   color: #e04444;
   opacity: 1;
+}
+
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.table-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.table-pagination__button {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.table-pagination__button:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+}
+
+.table-pagination__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
