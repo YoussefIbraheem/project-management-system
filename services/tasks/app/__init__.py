@@ -1,7 +1,7 @@
 import logging
 from logging.config import dictConfig
 
-from flask import Flask
+from flask import Flask , redirect
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from shared.openapi.doc_generator import OpenAPIDocGenerator
@@ -62,10 +62,16 @@ def create_app() -> Flask:
     from .apis.task_api import task_bp
 
     app.register_blueprint(task_bp)
+    
+    @app.route("/admin/")
+    def admin():
+        return redirect(settings.ADMIN_URI)
 
     @app.route(f"{settings.API_PREFIX}")
     def index():
         return f"Welcome to the {settings.SERVICE_NAME} service (version {settings.SERVICE_VERSION})!"
+
+
 
 # OpenAPI documentation setup
     converter = FlaskPathConverter()

@@ -41,6 +41,8 @@ class Settings:
     # CORS settings
     CORS_ALLOWED_ORIGINS: str = "http://localhost:5173"
 
+    ADMIN_URI: str = "http://localhost:5173"
+
     _instance: Settings | None = None
 
     def __post_init__(self):
@@ -48,6 +50,7 @@ class Settings:
         self.API_PREFIX = os.getenv("API_V1_PREFIX", self.API_PREFIX)
         self.SERVICE_NAME = os.getenv("SERVICE_NAME", self.SERVICE_NAME)
         self.SERVICE_VERSION = os.getenv("SERVICE_VERSION", self.SERVICE_VERSION)
+        self.ADMIN_URI = os.getenv("ADMIN_URI", self.ADMIN_URI)
         self.JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", self.JWT_SECRET_KEY)
         self.JWT_TEST_SECRET_KEY = os.getenv(
             "JWT_TEST_SECRET_KEY", self.JWT_TEST_SECRET_KEY
