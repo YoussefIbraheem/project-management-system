@@ -65,11 +65,11 @@ watch(() => props.projectId, fetchBoards)
       empty-text="No boards found."
       @row-click="goToTasks"
     >
-      <template #cell(columns)="{ value }">
+       <template #cell(columns)="{ value }">
         {{ value?.length || 0 }}
-      </template>
+      </template> 
     </Table>
-  </section>
+  </section> 
 </template>
 
 <style scoped>
