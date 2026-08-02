@@ -2,6 +2,7 @@ import logging
 from logging.config import dictConfig
 
 from flask import Flask
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from shared.openapi.doc_generator import OpenAPIDocGenerator
 from shared.openapi.operations_builder import OperationBuilder
@@ -40,6 +41,8 @@ def create_app() -> Flask:
     # info and debug print on console and higher level logs to file
 
     app = Flask(__name__)
+
+    CORS(app, origins=settings.CORS_ALLOWED_ORIGINS.split(","))
 
     app.config["JWT_SECRET_KEY"] = settings.JWT_SECRET_KEY
     JWTManager(app)

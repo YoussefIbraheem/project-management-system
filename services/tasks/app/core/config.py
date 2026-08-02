@@ -38,6 +38,9 @@ class Settings:
     # Broker URL
     BROKER_URL = "amqp://guest:guest@rabbitmq:5672/"
 
+    # CORS settings
+    CORS_ALLOWED_ORIGINS: str = "http://localhost:5173"
+
     _instance: Settings | None = None
 
     def __post_init__(self):
@@ -60,6 +63,9 @@ class Settings:
         self.LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", self.LOGGING_LEVEL)
         self.DB_URL = os.getenv("DB_URL", self.DB_URL)
         self.BROKER_URL = os.getenv("BROKER_URL", self.BROKER_URL)
+        self.CORS_ALLOWED_ORIGINS = os.getenv(
+            "CORS_ALLOWED_ORIGINS", self.CORS_ALLOWED_ORIGINS
+        )
 
     @classmethod
     def get_instance(cls) -> Settings:
