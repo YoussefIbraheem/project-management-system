@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str | None = "redis://redis:6379/0"
     ALLOW_INVALID_CERTS: bool | None = False
     CORS_ALLOWED_ORIGINS: str = "http://localhost:5173"
-    ADMIN_USER_MODEL: str = "http://localhost:5173/events"
+    ADMIN_USER_MODEL: str = "http://localhost:5173/notifications"
     DLX_TTL: int = 300000
 
 
