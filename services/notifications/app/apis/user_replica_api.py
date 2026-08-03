@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.auth.auth_bearer import JWTBearer
 from app.services.user_replica_service import (
     get_user_replica_by_id,
     list_users_replicas,
@@ -8,7 +9,10 @@ from app.services.user_replica_service import (
 router = APIRouter(prefix="/users_replicas")
 
 
-@router.get("/")
+@router.get(
+    "/",
+    dependencies=[Depends(JWTBearer())],
+)
 def users_replicas_list(limit: int = 100, offset: int = 0):
     try:
         return list_users_replicas(limit=limit, offset=offset)
@@ -16,7 +20,10 @@ def users_replicas_list(limit: int = 100, offset: int = 0):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{user_id}")
+@router.get(
+    "/{user_id}",
+    dependencies=[Depends(JWTBearer())],
+)
 def users_replica_by_user_id(user_id: str):
     try:
         return get_user_replica_by_id(user_id=user_id)

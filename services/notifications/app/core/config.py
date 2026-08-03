@@ -31,5 +31,8 @@ class Settings(BaseSettings):
 
     DLX_TTL: int = 300000
 
+    CORS_ALLOWED_ORIGINS: str = "http://localhost:5173"
+    ADMIN_USER_MODEL: str = "http://localhost:5173"
+
 
 settings = Settings()
