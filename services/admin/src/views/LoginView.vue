@@ -15,7 +15,6 @@ const loading = ref(false)
 async function handleLogin() {
   loading.value = true
   error.value = ''
-  console.log(`USER:${email},${password}`)
   try {
     const response = await axios.post(`${import.meta.env.VITE_AUTH_API_URL}/api/v1/login/`, {
       email: email.value,
@@ -23,11 +22,9 @@ async function handleLogin() {
     })
     const decodedTokens = jwtDecode(response.data.tokens.refresh)
     const isSuperuser = decodedTokens.is_superuser
-    console.log(isSuperuser)
     if(!isSuperuser){
       throw new Error("Unauthorized Access");
     }
-    console.log(decodedTokens)
     setTokens(response.data.tokens)
     router.push('/projects')
   } catch (err) {
