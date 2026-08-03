@@ -1,10 +1,10 @@
 <mxfile host="Electron">
   <diagram name="Page-1" id="xmLA7bdcowl3_qAe-H5U">
-    <mxGraphModel dx="2175" dy="1298" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2357" dy="1407" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <UserObject label="" mermaidData="{&#xa;  &quot;data&quot;: &quot;flowchart TB\n    Client[\&quot;Client / Frontend\&quot;]\n\n    subgraph Users[\&quot;users service (Django + DRF)\&quot;]\n        UsersAPI[\&quot;REST API&lt;br/&gt;SimpleJWT auth\&quot;]\n        UsersDB[(PostgreSQL)]\n        CeleryWorker[\&quot;Celery worker&lt;br/&gt;(email tasks)\&quot;]\n    end\n\n    subgraph Tasks[\&quot;tasks service (Flask)\&quot;]\n        TasksAPI[\&quot;REST API&lt;br/&gt;JWT auth\&quot;]\n        TasksDB[(PostgreSQL)]\n        Alembic[\&quot;Alembic migrations\&quot;]\n    end\n\n    subgraph History[\&quot;history service (FastAPI)\&quot;]\n        HistoryAPI[\&quot;Events API&lt;br/&gt;JWT auth\&quot;]\n        HistoryDB[(MongoDB)]\n    end\n\n    subgraph Notifications[\&quot;notifications service (FastAPI)\&quot;]\n        NotifConsumer[\&quot;Task event dispatcher&lt;br/&gt;(RabbitMQ consumer)\&quot;]\n        NotifAPI[\&quot;Notifications API&lt;br/&gt;JWT auth\&quot;]\n        NotifDB[(PostgreSQL)]\n        Mailer[\&quot;SMTP mailer&lt;br/&gt;(aiosmtplib)\&quot;]\n    end\n\n    Broker{{\&quot;RabbitMQ&lt;br/&gt;(aio_pika / pika)\&quot;}}\n\n    Client --&gt;|HTTP + JWT| UsersAPI\n    Client --&gt;|HTTP + JWT| TasksAPI\n    Client --&gt;|HTTP + JWT| HistoryAPI\n    Client --&gt;|HTTP + JWT| NotifAPI\n\n    UsersAPI --&gt; UsersDB\n    UsersAPI --&gt;|register / verify| CeleryWorker\n    CeleryWorker --&gt;|send email| Mailer\n\n    TasksAPI --&gt; TasksDB\n    Alembic --&gt; TasksDB\n\n    UsersAPI --&gt;|publish: user events| Broker\n    TasksAPI --&gt;|publish: task/project events| Broker\n\n    Broker --&gt;|consume: all events| HistoryAPI\n    HistoryAPI --&gt; HistoryDB\n\n    Broker --&gt;|consume: task/project events| NotifConsumer\n    NotifConsumer --&gt; NotifDB\n    NotifConsumer --&gt;|fetch user replica| NotifDB\n    NotifConsumer --&gt;|send notification email| Mailer\n\n    NotifAPI --&gt; NotifDB\n\n    UsersDB -.-&gt;|user replica sync| NotifDB&quot;,&#xa;  &quot;config&quot;: null&#xa;}" id="nv32c7dz6Q9Sw9gS7Yyp-1">
+        <UserObject label="" mermaidData="{&#xa;  &quot;data&quot;: &quot;flowchart TB\n    Client[\&quot;Client / Frontend\&quot;]\n\n    subgraph Users[\&quot;users service (Django + DRF)\&quot;]\n        UsersAPI[\&quot;REST API&lt;br/&gt;SimpleJWT auth\&quot;]\n        UsersDB[(PostgreSQL)]\n        CeleryWorker[\&quot;Celery worker&lt;br/&gt;(email tasks)\&quot;]\n    end\n\n    subgraph Tasks[\&quot;tasks service (Flask)\&quot;]\n        TasksAPI[\&quot;REST API&lt;br/&gt;JWT auth\&quot;]\n        TasksDB[(PostgreSQL)]\n        Alembic[\&quot;Alembic migrations\&quot;]\n    end\n\n    subgraph History[\&quot;history service (FastAPI)\&quot;]\n        HistoryAPI[\&quot;Events API&lt;br/&gt;JWT auth\&quot;]\n        HistoryDB[(MongoDB)]\n    end\n\n    subgraph Notifications[\&quot;notifications service (FastAPI)\&quot;]\n        NotifConsumer[\&quot;Task event dispatcher&lt;br/&gt;(RabbitMQ consumer)\&quot;]\n        NotifAPI[\&quot;Notifications API&lt;br/&gt;JWT auth\&quot;]\n        NotifDB[(PostgreSQL)]\n        Mailer[\&quot;SMTP mailer&lt;br/&gt;(aiosmtplib)\&quot;]\n    end\n\n    Broker{{\&quot;RabbitMQ&lt;br/&gt;(aio_pika / pika)\&quot;}}\n\n    AdminPanel[\&quot;Admin Panel&lt;br/&gt;(Vue.js)\&quot;]\n\n    Client --&gt;|HTTP + JWT| UsersAPI\n    Client --&gt;|HTTP + JWT| TasksAPI\n    Client --&gt;|HTTP + JWT| HistoryAPI\n    Client --&gt;|HTTP + JWT| NotifAPI\n\n    AdminPanel --&gt;|HTTP + JWT| UsersAPI\n    AdminPanel --&gt;|HTTP + JWT| TasksAPI\n    AdminPanel --&gt;|HTTP + JWT| HistoryAPI\n    AdminPanel --&gt;|HTTP + JWT| NotifAPI\n\n    UsersAPI --&gt; UsersDB\n    UsersAPI --&gt;|register / verify| CeleryWorker\n    CeleryWorker --&gt;|send email| Mailer\n\n    TasksAPI --&gt; TasksDB\n    Alembic --&gt; TasksDB\n\n    UsersAPI --&gt;|publish: user events| Broker\n    TasksAPI --&gt;|publish: task/project events| Broker\n\n    Broker --&gt;|consume: all events| HistoryAPI\n    HistoryAPI --&gt; HistoryDB\n\n    Broker --&gt;|consume: task/project events| NotifConsumer\n    NotifConsumer --&gt; NotifDB\n    NotifConsumer --&gt;|fetch user replica| NotifDB\n    NotifConsumer --&gt;|send notification email| Mailer\n\n    NotifAPI --&gt; NotifDB\n\n    UsersDB -.-&gt;|user replica sync| NotifDB&quot;,&#xa;  &quot;config&quot;: null&#xa;}" id="nv32c7dz6Q9Sw9gS7Yyp-1">
           <mxCell connectable="0" parent="1" style="group;transparentBounds=1;editIcon=1;lockedGroup=0;groupPadding=10;rounded=1;labelBackgroundColor=none;sketch=1;curveFitting=1;jiggle=2;" vertex="1">
             <mxGeometry as="geometry" />
           </mxCell>
@@ -172,7 +172,7 @@
           </mxCell>
         </UserObject>
         <UserObject label="RabbitMQ&#xa;(aio_pika / pika)" mermaidId="n:Broker" mermaidBaseStyle="html=1;shape=hexagon;perimeter=hexagonPerimeter2;fixedSize=1;size=13.25;strokeWidth=1;whiteSpace=wrap;fillColor=light-dark(#ECECFF,#1f2020);strokeColor=light-dark(#9370DB,#cccccc);fontColor=light-dark(#333333,#cccccc);fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontSize=16;" mermaidBaseValue="RabbitMQ&#xa;(aio_pika / pika)" id="nv32c7dz6Q9Sw9gS7Yyp-28">
-          <mxCell parent="nv32c7dz6Q9Sw9gS7Yyp-1" style="html=1;shape=hexagon;perimeter=hexagonPerimeter2;fixedSize=1;size=13.25;strokeWidth=1;whiteSpace=wrap;fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontSize=16;rounded=1;labelBackgroundColor=none;sketch=1;curveFitting=1;jiggle=2;" vertex="1">
+          <mxCell parent="nv32c7dz6Q9Sw9gS7Yyp-1" style="html=1;shape=hexagon;perimeter=hexagonPerimeter2;fixedSize=1;size=13.25;strokeWidth=1;whiteSpace=wrap;fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontSize=16;rounded=1;labelBackgroundColor=none;sketch=1;curveFitting=1;jiggle=2;fillColor=#fa6800;fontColor=#000000;strokeColor=#C73500;" vertex="1">
             <mxGeometry height="53" width="147" x="1133" y="340" as="geometry" />
           </mxCell>
         </UserObject>
@@ -290,6 +290,56 @@
                 <mxPoint x="1086" y="497" />
                 <mxPoint x="1086" y="559" />
                 <mxPoint x="1086" y="630" />
+              </Array>
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Admin Panel&#xa;(Vue.js)" mermaidId="n:AdminPanel" mermaidBaseStyle="html=1;whiteSpace=wrap;strokeWidth=1;fillColor=light-dark(#ECECFF,#1f2020);strokeColor=light-dark(#9370DB,#cccccc);fontColor=light-dark(#333333,#cccccc);fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontSize=16;" mermaidBaseValue="Admin Panel&#xa;(Vue.js)" id="nv32c7dz6Q9Sw9gS7Yyp-100">
+          <mxCell parent="nv32c7dz6Q9Sw9gS7Yyp-1" style="html=1;whiteSpace=wrap;strokeWidth=1;fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontSize=16;rounded=1;labelBackgroundColor=none;sketch=1;curveFitting=1;jiggle=2;fillColor=#008a00;strokeColor=#005700;fontColor=light-dark(#FFFFFF,#FFFFFF);arcSize=31;" vertex="1">
+            <mxGeometry height="54" width="210" x="1101.5" y="930" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="HTTP + JWT" mermaidId="e:AdminPanel-&gt;UsersAPI#0" mermaidBaseStyle="curved=1;startArrow=none;endArrow=block;endSize=7;strokeColor=light-dark(#333333,#cccccc);html=1;fontSize=16;labelBackgroundColor=light-dark(#E8E8E88D,#2a2a2a8D);fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontColor=light-dark(#333333,#cccccc);exitX=1;exitY=0;entryX=0;entryY=0.5;" mermaidBaseValue="HTTP + JWT" id="nv32c7dz6Q9Sw9gS7Yyp-101">
+          <mxCell edge="1" parent="nv32c7dz6Q9Sw9gS7Yyp-1" source="nv32c7dz6Q9Sw9gS7Yyp-100" style="startArrow=none;endArrow=block;html=1;fontSize=16;labelBackgroundColor=none;fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontColor=default;entryX=0;entryY=0.5;rounded=1;sketch=1;curveFitting=1;jiggle=2;exitX=0.313;exitY=-0.029;exitDx=0;exitDy=0;exitPerimeter=0;edgeStyle=orthogonalEdgeStyle;" target="nv32c7dz6Q9Sw9gS7Yyp-3">
+            <mxGeometry relative="1" as="geometry">
+              <Array as="points">
+                <mxPoint x="1167.14" y="850" />
+                <mxPoint x="120" y="850" />
+                <mxPoint x="120" y="224.57" />
+              </Array>
+              <mxPoint x="1160" y="650" as="sourcePoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="HTTP + JWT" mermaidId="e:AdminPanel-&gt;TasksAPI#0" mermaidBaseStyle="curved=1;startArrow=none;endArrow=block;endSize=7;strokeColor=light-dark(#333333,#cccccc);html=1;fontSize=16;labelBackgroundColor=light-dark(#E8E8E88D,#2a2a2a8D);fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontColor=light-dark(#333333,#cccccc);exitX=1;exitY=0.2;entryX=0.5;entryY=1;" mermaidBaseValue="HTTP + JWT" id="nv32c7dz6Q9Sw9gS7Yyp-102">
+          <mxCell edge="1" parent="nv32c7dz6Q9Sw9gS7Yyp-1" source="nv32c7dz6Q9Sw9gS7Yyp-100" style="startArrow=none;endArrow=block;html=1;fontSize=16;labelBackgroundColor=none;fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontColor=default;exitX=1;exitY=0.5;rounded=1;sketch=1;curveFitting=1;jiggle=2;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="nv32c7dz6Q9Sw9gS7Yyp-9">
+            <mxGeometry relative="1" as="geometry">
+              <Array as="points">
+                <mxPoint x="2080" y="957" />
+                <mxPoint x="2080" y="224.52" />
+              </Array>
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="HTTP + JWT" mermaidId="e:AdminPanel-&gt;HistoryAPI#0" mermaidBaseStyle="curved=1;startArrow=none;endArrow=block;endSize=7;strokeColor=light-dark(#333333,#cccccc);html=1;fontSize=16;labelBackgroundColor=light-dark(#E8E8E88D,#2a2a2a8D);fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontColor=light-dark(#333333,#cccccc);exitX=1;exitY=0.8;entryX=1;entryY=0.5;" mermaidBaseValue="HTTP + JWT" id="nv32c7dz6Q9Sw9gS7Yyp-103">
+          <mxCell edge="1" parent="nv32c7dz6Q9Sw9gS7Yyp-1" source="nv32c7dz6Q9Sw9gS7Yyp-100" style="startArrow=none;endArrow=block;html=1;fontSize=16;labelBackgroundColor=none;fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontColor=default;entryX=1;entryY=0.5;rounded=1;sketch=1;curveFitting=1;jiggle=2;edgeStyle=orthogonalEdgeStyle;exitX=0.652;exitY=0.014;exitDx=0;exitDy=0;exitPerimeter=0;" target="nv32c7dz6Q9Sw9gS7Yyp-15">
+            <mxGeometry relative="1" as="geometry">
+              <Array as="points">
+                <mxPoint x="1240" y="930.81" />
+                <mxPoint x="1240" y="850" />
+                <mxPoint x="2000" y="850" />
+                <mxPoint x="2000" y="559" />
+              </Array>
+              <mxPoint x="1240" y="890" as="sourcePoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="HTTP + JWT" mermaidId="e:AdminPanel-&gt;NotifAPI#0" mermaidBaseStyle="curved=1;startArrow=none;endArrow=block;endSize=7;strokeColor=light-dark(#333333,#cccccc);html=1;fontSize=16;labelBackgroundColor=light-dark(#E8E8E88D,#2a2a2a8D);fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontColor=light-dark(#333333,#cccccc);exitX=0.6;exitY=1;entryX=0.5;entryY=1;" mermaidBaseValue="HTTP + JWT" id="nv32c7dz6Q9Sw9gS7Yyp-104">
+          <mxCell edge="1" parent="nv32c7dz6Q9Sw9gS7Yyp-1" source="nv32c7dz6Q9Sw9gS7Yyp-100" style="startArrow=none;endArrow=block;html=1;fontSize=16;labelBackgroundColor=none;fontFamily=Trebuchet MS,Verdana,Arial,sans-serif;fontColor=default;exitX=0;exitY=0.5;entryX=0;entryY=0.5;rounded=1;sketch=1;curveFitting=1;jiggle=2;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;entryDx=0;entryDy=0;" target="nv32c7dz6Q9Sw9gS7Yyp-20">
+            <mxGeometry relative="1" as="geometry">
+              <Array as="points">
+                <mxPoint x="200.03" y="956.97" />
+                <mxPoint x="200.03" y="559.03" />
               </Array>
             </mxGeometry>
           </mxCell>
