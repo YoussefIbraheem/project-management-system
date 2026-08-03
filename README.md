@@ -8,6 +8,7 @@ A portfolio project demonstrating event-driven microservices architecture in Pyt
 - [Project Anatomy](#project-anatomy)
 - [Architecture & Inter-Service Communication](#architecture--inter-service-communication)
 - [Getting Started](#getting-started)
+  - [Changing a service's host/port/route](#changing-a-services-hostportroute)
 - [Available Commands](#available-commands)
 - [Tech Stack](#tech-stack)
 - [Testing](#testing)
@@ -24,6 +25,9 @@ This system models a Trello/Jira-style project management tool split into four b
 | **tasks** | Projects, boards, columns, tasks, assignments | Flask | PostgreSQL |
 | **history** | Immutable audit log of every domain event | FastAPI | MongoDB |
 | **notifications** | Email notifications for task/project activity | FastAPI | PostgreSQL |
+| **admin** | Internal dashboard for browsing data across all four services | Vue 3 + Vite | — |
+
+`admin` is a thin operator-facing client, not a bounded-context service in the event-driven sense described below: it talks directly to each service's REST API over plain HTTP to list/inspect records (projects, events, notifications, etc.) and does not publish or consume RabbitMQ events itself.
 
 Rather than services calling each other directly over HTTP, state-changing actions in `users` and `tasks` publish domain events to RabbitMQ. `history` consumes every event to build an audit trail; `notifications` consumes task/project events to email the relevant users. This keeps services independently deployable and decoupled from each other's availability — if `notifications` is down, task creation in `tasks` still succeeds.
 
@@ -58,13 +62,18 @@ project_management_system/
     │       ├── models/             # Beanie (MongoDB ODM) documents
     │       ├── consumers/          # RabbitMQ consumer entrypoint
     │       └── apis/
-    └── notifications/            # FastAPI — email notifications
-        └── app/
-            ├── models/             # SQLModel models
-            ├── dispatchers/        # Maps incoming events -> notification templates
-            ├── templates/           # Notification content dataclasses
-            ├── consumers/           # RabbitMQ consumer entrypoint
-            └── services/
+    ├── notifications/            # FastAPI — email notifications
+    │   └── app/
+    │       ├── models/             # SQLModel models
+    │       ├── dispatchers/        # Maps incoming events -> notification templates
+    │       ├── templates/           # Notification content dataclasses
+    │       ├── consumers/           # RabbitMQ consumer entrypoint
+    │       └── services/
+    └── admin/                    # Vue 3 + Vite — read-only dashboard over the other services' APIs
+        └── src/
+            ├── views/              # One folder per service (tasks_service, events_service, notifications_service)
+            ├── components/         # Shared Navbar, Table
+            └── router.js           # Routes + navbar nav items (see .env.example for endpoint config)
 ```
 
 Each service is a self-contained Python project with its own `requirements.txt`, `Dockerfile`, `.env`, and `tests/` — there is no shared runtime dependency between them, only the shared RabbitMQ broker and a shared JWT signing secret for auth.
@@ -95,9 +104,11 @@ cp services/users/.example.env services/users/.env
 cp services/tasks/.example.env services/tasks/.env
 cp services/history/.example.env services/history/.env
 cp services/notifications/.example.env services/notifications/.env
+cp services/admin/.env.example services/admin/.env
 ```
 
-> All four services must share the same `JWT_SECRET_KEY` value — cross-service auth depends on it.
+> All four backend services must share the same `JWT_SECRET_KEY` value — cross-service auth depends on it.
+> `services/admin/.env` holds the base URL for each service's API (see [Changing a service's host/port/route](#changing-a-services-hostportroute) below) — it's a Vite frontend, so it uses `.env`/`.env.example` rather than the backend services' `.example.env` convention.
 
 ### 2. Bring up the stack
 
@@ -124,6 +135,32 @@ Follow the prompts for email, username, and password. This account can authentic
 | history | http://localhost:5006/docs |
 | notifications | http://localhost:8081/docs |
 | RabbitMQ management UI | http://localhost:15672 (guest/guest) |
+| admin panel | http://localhost:5173 (run separately, see below) |
+
+### 5. Run the admin panel
+
+The admin panel isn't in `docker-compose.yaml` yet — run it directly with Node:
+
+```bash
+cd services/admin
+npm install
+npm run dev
+```
+
+### Changing a service's host/port/route
+
+`services/admin` reads one base URL per backend service from `services/admin/.env` — each view appends its own path on top:
+
+| Env var | Used by | Default |
+|---|---|---|
+| `VITE_AUTH_API_URL` | `LoginView.vue`, `http.js` (token refresh) | `http://localhost:8000` |
+| `VITE_TASKS_API_URL` | `views/tasks_service/*` | `http://localhost:8080` |
+| `VITE_EVENTS_API_URL` | `views/events_service/*` (history service) | `http://localhost:5006` |
+| `VITE_NOTIFICATIONS_API_URL` | `views/notifications_service/*` | `http://localhost:8081` |
+
+If a service's host, port, or base path changes (e.g. a different `docker-compose` port mapping, or a reverse proxy in front of it in another environment), update the corresponding var in `services/admin/.env` and restart the Vite dev server (`npm run dev`) — env vars are inlined at build/dev-server start, so a running server won't pick up a `.env` edit. No application code needs to change. `services/admin/.env.example` documents the same vars and should be kept in sync when a new backend service gains an admin view.
+
+Admin-panel navigation (which links/dropdowns appear in the navbar) is driven by `navItems` in `services/admin/src/router.js`, not by the `.env` file — adding a new view means adding a route + a `navItems` entry there, in addition to any new env var for its service's base URL.
 
 ## Available Commands
 
@@ -199,5 +236,7 @@ bash run-all-tests.sh
 Each FastAPI service exposes interactive OpenAPI docs at `/docs`; `tasks` (Flask) exposes the same via `swagger_ui` at `/docs`. A [Bruno](https://www.usebruno.com/) collection is also maintained under `api_docs/` for manual exploration and end-to-end request flows across services.
 
 ## Release
+
+**v0.2.0** — added `admin`, a Vue 3 dashboard covering the services that lacked one (`history` events, `notifications` notifications/user-replicas/email-logs); navbar navigation replaces a per-service sidebar, with hover dropdowns for services with multiple views; all cross-service API base URLs moved out of view code into `services/admin/.env` (see [Changing a service's host/port/route](#changing-a-services-hostportroute)).
 
 **v0.1.0** — initial public release: all four services implemented and integration-tested, non-root Docker images, full test pyramid in place.
