@@ -24,7 +24,9 @@ async function fetchEvents() {
     loading.value = true;
     error.value = "";
     try {
-      const response = await axios.get("http://localhost:5006/api/v1/events/");
+      const response = await axios.get(
+            `${import.meta.env.VITE_EVENTS_API_URL}/api/v1/events/`,
+        );
         events.value = response.data;
     } catch (err) {
         error.value =

@@ -29,7 +29,7 @@ async function fetchBoards() {
   loading.value = true
   error.value = ''
   try {
-    const response = await axios.get('http://localhost:8080/api/v1/boards/', {
+    const response = await axios.get(`${import.meta.env.VITE_TASKS_API_URL}/api/v1/boards/`, {
       params: { project_id: props.projectId },
     })
     boards.value = response.data

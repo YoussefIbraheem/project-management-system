@@ -27,7 +27,7 @@ async function fetchEmailsLogs() {
     error.value = "";
     try {
         const response = await axios.get(
-            "http://localhost:8081/api/v1/email-logs/",
+            `${import.meta.env.VITE_NOTIFICATIONS_API_URL}/api/v1/email-logs/`,
         );
         emails_logs.value = response.data;
     } catch (err) {

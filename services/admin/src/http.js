@@ -2,7 +2,7 @@ import axios from 'axios'
 import { router } from './router'
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from './auth'
 
-const REFRESH_URL = 'http://localhost:8000/api/v1/login/refresh/'
+const REFRESH_URL = `${import.meta.env.VITE_AUTH_API_URL}/api/v1/login/refresh/`
 
 axios.interceptors.request.use((config) => {
   const token = getAccessToken()

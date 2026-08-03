@@ -25,7 +25,7 @@ async function fetchNotifications() {
     error.value = "";
     try {
         const response = await axios.get(
-            "http://localhost:8081/api/v1/notifications/",
+            `${import.meta.env.VITE_NOTIFICATIONS_API_URL}/api/v1/notifications/`,
         );
         notifications.value = response.data;
     } catch (err) {

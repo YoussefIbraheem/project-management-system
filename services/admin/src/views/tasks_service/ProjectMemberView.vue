@@ -27,7 +27,7 @@ async function fetchMembers() {
   error.value = ''
   try {
     const response = await axios.get(
-      `http://localhost:8080/api/v1/projects/${props.projectId}/members`,
+      `${import.meta.env.VITE_TASKS_API_URL}/api/v1/projects/${props.projectId}/members`,
     )
     members.value = response.data
   } catch (err) {
