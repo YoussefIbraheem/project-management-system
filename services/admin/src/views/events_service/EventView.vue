@@ -25,7 +25,6 @@ async function fetchEvents() {
     error.value = "";
     try {
       const response = await axios.get("http://localhost:5006/api/v1/events/");
-        console.log(response.data);
         events.value = response.data;
     } catch (err) {
         error.value =

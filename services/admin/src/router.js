@@ -6,10 +6,16 @@ import ProjectMemberView from "./views/tasks_service/ProjectMemberView.vue";
 import LoginView from "./views/LoginView.vue";
 import { isAuthenticated } from "./auth.js";
 import EventView from "./views/events_service/EventView.vue";
+import UserReplicaView from "./views/notifications_service/UserReplicaView.vue";
+import NotificationView from "./views/notifications_service/NotificationView.vue";
+import EmailLogView from "./views/notifications_service/EmailLogView.vue";
 
 export const routes = [
   { path: "/projects", component: ProjectView },
   { path: "/events", component: EventView },
+  { path: "/notifications/users-replicas", component: UserReplicaView },
+  { path: "/notifications", component: NotificationView },
+  { path: "/notifications/emails-logs", component: EmailLogView },
 ];
 
 // Drives Navbar.vue. Entries with a single `path` render as a plain link;
@@ -18,6 +24,14 @@ export const routes = [
 export const navItems = [
   { label: "Projects", path: "/projects" },
   { label: "Events", path: "/events" },
+  {
+    label: "Notifications",
+    path: "/notifications",
+    children: [
+      { label: "Users Replicas", path: "/notifications/users-replicas" },
+      { label: "Email Logs", path: "/notifications/emails-logs" },
+    ],
+  },
 ];
 
 const detailRoutes = [

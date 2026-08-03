@@ -1,19 +1,9 @@
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { clearTokens } from '../auth'
 import { navItems } from '../router.js'
 
 const router = useRouter()
-const openDropdown = ref(null)
-
-function toggleDropdown(label) {
-  openDropdown.value = openDropdown.value === label ? null : label
-}
-
-function closeDropdowns() {
-  openDropdown.value = null
-}
 
 function logout() {
   clearTokens()
@@ -22,8 +12,8 @@ function logout() {
 </script>
 
 <template>
-  <header class="navbar" @click="closeDropdowns">
-    <span class="navbar__brand">Task Admin</span>
+  <header class="navbar">
+    <span class="navbar__brand">Admin Services Dashboard</span>
     <nav class="navbar__links">
       <template v-for="item in navItems" :key="item.label">
         <RouterLink
@@ -34,22 +24,21 @@ function logout() {
         >
           {{ item.label }}
         </RouterLink>
-        <div v-else class="navbar__dropdown" @click.stop>
-          <button
-            type="button"
-            class="navbar__link navbar__dropdown-trigger"
-            @click="toggleDropdown(item.label)"
+        <div v-else class="navbar__dropdown">
+          <RouterLink
+            :to="item.path"
+            class="navbar__link"
+            active-class="navbar__link--active"
           >
             {{ item.label }}
-          </button>
-          <div v-if="openDropdown === item.label" class="navbar__dropdown-menu">
+          </RouterLink>
+          <div class="navbar__dropdown-menu">
             <RouterLink
               v-for="child in item.children"
               :key="child.path"
               :to="child.path"
               class="navbar__dropdown-item"
               active-class="navbar__link--active"
-              @click="closeDropdowns"
             >
               {{ child.label }}
             </RouterLink>
@@ -106,10 +95,6 @@ function logout() {
   position: relative;
 }
 
-.navbar__dropdown-trigger {
-  font: inherit;
-}
-
 .navbar__dropdown-menu {
   position: absolute;
   top: 100%;
@@ -122,6 +107,11 @@ function logout() {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   z-index: 10;
+  display: none;
+}
+
+.navbar__dropdown:hover .navbar__dropdown-menu {
+  display: block;
 }
 
 .navbar__dropdown-item {
