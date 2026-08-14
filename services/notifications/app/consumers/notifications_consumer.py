@@ -50,9 +50,6 @@ async def record_activity():
             "mainnotificationsexchangequeue",
             arguments={
                 "x-dead-letter-exchange": "mainnotificationsdlx",
-                # Failed messages are already dead-lettered by the nack in
-                # `callback`'s except clause; this TTL is only a backlog
-                # safety valve for messages stuck unconsumed, not the retry path.
                 "x-message-ttl": settings.DLX_TTL,
             },
         )
