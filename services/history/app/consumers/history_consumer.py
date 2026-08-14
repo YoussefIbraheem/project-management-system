@@ -34,10 +34,6 @@ async def callback(message: aio_pika.abc.AbstractIncomingMessage):
 
 
 async def dlx_callback(message: aio_pika.abc.AbstractIncomingMessage):
-    # This is the message's second and final attempt (it already failed once
-    # on the main queue). If it fails again here, log it loudly instead of
-    # letting the nack silently discard it - there's no further dead-letter
-    # target configured on this queue.
     async with message.process():
         try:
             await _process_event(message)
@@ -59,9 +55,6 @@ async def record_activity():
             "mainhistoryexchangequeue",
             arguments={
                 "x-dead-letter-exchange": "mainhistorydlx",
-                # Failed messages are already dead-lettered by the nack in
-                # `callback`'s except clause; this TTL is only a backlog
-                # safety valve for messages stuck unconsumed, not the retry path.
                 "x-message-ttl": settings.DLX_TTL,
             },
         )
